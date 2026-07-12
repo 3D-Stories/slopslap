@@ -65,11 +65,14 @@ verifier. Results: `docs/reviews/2026-07-12-slopslap-eval-results.md` (+ `-visua
 clears the decision-rule hard gates on 3 canonical fixtures, **abstains** on clean controls, is
 idempotent, repairs the real 421-line kukakuka PRD (flagging its `X, not Y` ×16 cadence, tightening
 2 local inflations, **zero invariant violations**), and beats a documented humanizer-emulation
-policy. Run it: `pytest -q` (the gate) or `python3 scripts/eval/run_eval.py --write`.
+policy. The kukakuka path now runs **Layer 3 end-to-end** — the fold reaches a shippable `ACCEPT`
+(`semantic_status: clean`) via a real fresh-context `claude -p` pass under `SLOPSLAP_LIVE=1`, or a
+deterministic recorded-clean replay offline (`scripts/eval/semantic.py`). Run it: `pytest -q` (the
+gate) or `python3 scripts/eval/run_eval.py --write`.
 
 ## Status
 
-- **Version:** 0.1.2 (v0.2 epic #16 in progress — live model-in-the-loop).
+- **Version:** 0.1.3 (v0.2 epic #16 in progress — live model-in-the-loop).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; wiring the
@@ -77,6 +80,17 @@ policy. Run it: `pytest -q` (the gate) or `python3 scripts/eval/run_eval.py --wr
 
 ## Changelog
 
+- **0.1.3** — eval exercises Layer 3 end-to-end (#17): the "working proof" now drives the full
+  fold on the kukakuka PRD through the real Layer-3 semantic seam, not just Layers 1–2. `_kukakuka()`
+  passes the seeded candidate's demonstrated repair spans as the authorized editable ranges and a
+  `semantic_fn`, so the fold reaches a **shippable `ACCEPT`** (`semantic_status: clean`,
+  `proposal_status: ACCEPT`) with **zero invariant violations** preserved. New helper
+  `scripts/eval/semantic.py::eval_semantic_fn` binds `functools.partial(invoke_semantic, …)` LIVE
+  (env `SLOPSLAP_LIVE=1` — a fresh-context `claude -p` pass) and replays a deterministic recorded
+  `clean` verdict OFFLINE (default; the live transport is never imported), so the proof stays
+  reproducible without a model call. A new DONE criterion (`kukakuka_l3_shippable`) and the
+  `semantic_status`/`proposal_status`/`decision` fields are surfaced in the results object and both
+  rendered reports.
 - **0.1.2** — corpus integration (#30): a provenance-first, lane-separated foundation for the
   before/after AI-slop corpus. `scripts/slopslap_corpus/` adds a fail-closed manifest loader
   (`manifest.py`) and a **source-family** disjoint split (`split.py`) — the leak guard is keyed
