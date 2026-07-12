@@ -18,6 +18,7 @@ from .editscript import (
     derive_edits,
     map_offset,
     map_region,
+    map_region_status,
     parse_edits,
     sha256_hex,
 )
@@ -30,6 +31,7 @@ __all__ = [
     "derive_edits",
     "map_offset",
     "map_region",
+    "map_region_status",
     "parse_edits",
     "sha256_hex",
 ]
