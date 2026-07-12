@@ -99,3 +99,43 @@ def test_committed_artifact_matches_live_render():
 
 def test_judge_status_is_surfaced():
     assert _R["judge"]["status"] in ("not_run", "failed", "completed")
+
+
+# ---- #17: the eval's e2e path exercises Layer 3 (was the remaining gap) ----
+def test_kukakuka_l3_semantic_clean_and_shippable():
+    # THE GAP (#17): the e2e path must actually run Layer 3 and reach a shippable ACCEPT.
+    # Before wiring: semantic_status=="not_run" and proposal_status=="BLOCKED".
+    k = _R["kukakuka"]
+    assert k["semantic_status"] == "clean", k.get("semantic_status")
+    assert k["proposal_status"] == "ACCEPT", k.get("proposal_status")
+    assert k["decision"] == "ACCEPT", k.get("decision")
+
+
+def test_kukakuka_l3_wiring_preserves_invariants():
+    # wiring Layer 3 must NOT introduce any invariant violation on the faithful candidate,
+    # and the primary DONE gate must stay green.
+    assert _R["kukakuka"]["invariant_violations"] == 0
+    assert _R["done"]["kukakuka_zero_violations"] is True
+    assert _R["done"]["ALL_PASS"] is True
+
+
+def test_eval_semantic_fn_offline_is_recorded_clean():
+    # OFFLINE (default env): a deterministic recorded 'clean' replay — no model call.
+    from eval.semantic import eval_semantic_fn
+    fn = eval_semantic_fn()
+    assert fn(b"x", "x", {}) == {"verdict": "clean", "concerns": []}
+
+
+def test_eval_semantic_fn_live_binds_invoke_semantic(monkeypatch):
+    # LIVE (SLOPSLAP_LIVE=1): a functools.partial over the real invoke_semantic seam.
+    # Assert the binding shape ONLY — never make a live call.
+    import functools
+
+    from eval.semantic import eval_semantic_fn
+    from slopslap_invoke.invoke import invoke_semantic
+
+    monkeypatch.setenv("SLOPSLAP_LIVE", "1")
+    fn = eval_semantic_fn(model="sonnet", timeout_s=99.0)
+    assert isinstance(fn, functools.partial)
+    assert fn.func is invoke_semantic
+    assert fn.keywords["model"] == "sonnet" and fn.keywords["timeout_s"] == 99.0
