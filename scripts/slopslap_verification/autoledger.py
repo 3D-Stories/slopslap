@@ -35,12 +35,14 @@ from .ledger import LedgerBuildError
 # because they have no whitespace after the dot.
 _BOUNDARY = re.compile(r"(?:\n[ \t]*\n)|(?:(?<=[.!?])\s+)")
 
-# conservative defined-term patterns (LOW false-positive): a markdown bold run, an explicit
-# definitional phrase, or a hereafter/hereinafter marker. Bare proper-noun runs are
-# advisory-only per atoms.py, so they are deliberately NOT auto-emitted as defined terms.
+# conservative defined-term patterns (LOW false-positive): an explicit definitional phrase
+# ("term" means / refers to / is defined as / shall mean) or a hereafter/hereinafter marker.
+# Markdown **bold** is deliberately NOT a signal: in real prose it is emphasis/labels/headings
+# (e.g. "**Date:**", "**Status:**"), not a definition — matching it froze ~46% of kukakuka
+# sentences lexically-exact and defeated the rewrite. Bare proper-noun runs are advisory-only
+# per atoms.py, likewise excluded. (A real definitional detector is a follow-up refinement.)
 _DEFINED_TERM = re.compile(
-    r"\*\*[^*\n]+\*\*"
-    r'|"[^"\n]+"\s+(?:means|refers\s+to|is\s+defined\s+as|shall\s+mean)\b'
+    r'"[^"\n]+"\s+(?:means|refers\s+to|is\s+defined\s+as|shall\s+mean)\b'
     r"|\b(?:hereafter|hereinafter)\b",
     re.IGNORECASE,
 )

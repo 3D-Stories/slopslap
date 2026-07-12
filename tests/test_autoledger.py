@@ -75,12 +75,22 @@ def test_output_feeds_build_ledger_and_validates():
 
 
 def test_cross_ref_and_defined_term_kinds_carry_r3_values():
-    doc = "See **Foo** and https://x.com now.".encode("utf-8")
+    # a GENUINE definitional phrase (not bare markdown bold) + a URL cross-ref.
+    doc = '"Foo" means the widget; see https://x.com now.'.encode("utf-8")
     regions = build_invariant_regions(doc)
     led = build_ledger(doc, {"invariant_regions": regions, "protected_spans": []})
     triples = {(e.kind, e.preservation, e.confidence) for e in led.entries}
     assert ("cross_reference", "lexically_exact", 950) in triples
     assert ("defined_term", "lexically_exact", 950) in triples
+
+
+def test_markdown_bold_is_not_a_defined_term():
+    # **bold** is emphasis/labels in real prose, NOT a definition: it must NOT freeze the
+    # sentence lexically-exact (regression guard for the #19 review High finding).
+    doc = "The **widget** provides the service to users.".encode("utf-8")
+    regions = build_invariant_regions(doc)
+    led = build_ledger(doc, {"invariant_regions": regions, "protected_spans": []})
+    assert not any(e.kind == "defined_term" for e in led.entries)
 
 
 def test_number_or_quantity_uses_r3_values():

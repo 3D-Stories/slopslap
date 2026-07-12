@@ -84,8 +84,9 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 - **0.1.5** — invariant-ledger auto-build for arbitrary prose (#19). New
   `scripts/slopslap_verification/autoledger.py::build_invariant_regions(doc: bytes)` derives
   manifest `invariant_regions` from arbitrary UTF-8 prose — numbers+units, dates, normative modals
-  (MUST/SHALL/SHOULD/MUST NOT), negation, conditions, cross-references, and defined terms — instead
-  of hand-declaring them. It REUSES the `atoms.py` detectors (no second parser) and defers
+  (MUST/SHALL/SHOULD/MUST NOT), negation, conditions, cross-references, and defined terms (explicit
+  definitional phrases only — markdown bold is emphasis, not a definition) — instead of
+  hand-declaring them. It REUSES the `atoms.py` detectors (no second parser) and defers
   kind/preservation/confidence to the ledger's `_CHECK_KIND` R3 table (extended with `cross_refs`
   and `defined_terms` checks). Segmentation is sentence-level so a multiset-preserving edit is
   checked against the whole sentence; byte offsets are exact (UTF-8, not char) and non-UTF-8 fails
