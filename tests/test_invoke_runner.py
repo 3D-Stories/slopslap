@@ -94,7 +94,28 @@ def test_model_mismatch(tmp_path):
 def test_cli_missing():
     res = invoke._run_claude("req", model=MODEL, timeout_s=5.0, executable="/nonexistent/claude-xyz")
     assert res.status == "cli_missing"
+
+
+def test_non_executable_permission_error_fails_closed(tmp_path):
+    # a non-executable file → PermissionError at Popen must fail closed, not raise out of the seam
+    p = tmp_path / "not_exec"
+    p.write_text("#!/bin/sh\necho hi\n")  # no +x bit
+    res = invoke._run_claude("req", model=MODEL, timeout_s=5.0, executable=str(p))
+    assert res.status in ("nonzero_exit", "cli_missing")
     assert res.diagnostic_code == "semantic_transport_error"
+
+
+def test_large_request_does_not_block_past_timeout(tmp_path):
+    # A child that never reads stdin + a request larger than the pipe buffer must NOT wedge the
+    # writer past the timeout. Fake sleeps forever ignoring stdin; big request > 64 KiB.
+    exe = _py_cli(tmp_path, "import time\ntime.sleep(30)\n", name="ignore_stdin.py")
+    big = "x" * (256 * 1024)  # 256 KiB, well past a 64 KiB pipe buffer
+    t0 = time.monotonic()
+    res = invoke._run_claude(big, model=MODEL, timeout_s=1.0, executable=exe)
+    elapsed = time.monotonic() - t0
+    assert res.status == "timeout"
+    assert elapsed < 10.0, f"timeout did not fire; blocked {elapsed:.1f}s on stdin write"
+    assert res.diagnostic_code == "semantic_timeout"
 
 
 def test_empty_model_raises(tmp_path):

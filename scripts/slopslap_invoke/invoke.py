@@ -169,6 +169,12 @@ def _run_claude(request: str, *, model: str, timeout_s: float, executable: str) 
         except FileNotFoundError:
             return InvocationResult(status="cli_missing", duration_s=time.monotonic() - start,
                                     diagnostic_code=_DIAG_TRANSPORT)
+        except OSError as err:
+            # PermissionError, ENOEXEC, resource exhaustion, bad cwd — any launch failure must
+            # fail closed as a transport error, never propagate out of the closed seam.
+            return InvocationResult(status="nonzero_exit", duration_s=time.monotonic() - start,
+                                    stderr_tail=repr(err)[-_STDERR_TAIL_BYTES:],
+                                    diagnostic_code=_DIAG_TRANSPORT)
 
         pgid = proc.pid  # start_new_session=True => proc is its own group leader (pgid == pid)
         over_cap = threading.Event()
@@ -179,12 +185,20 @@ def _run_claude(request: str, *, model: str, timeout_s: float, executable: str) 
         t_out.start()
         t_err.start()
 
-        # request is small (bounded by document size) — a single write+close cannot deadlock.
-        try:
-            proc.stdin.write(request.encode("utf-8"))
-            proc.stdin.close()
-        except (BrokenPipeError, OSError):
-            pass
+        # Write stdin from a thread. A request larger than the OS pipe buffer (~64 KiB) would
+        # block a synchronous write until the child drains it — and a child that never reads
+        # stdin would then wedge us BEFORE proc.wait's timeout could fire, defeating the hard
+        # bound. Off-thread, proc.wait(timeout) governs regardless of request size or child
+        # behavior; on timeout the process-group kill (below) unblocks this writer.
+        def _feed_stdin():
+            try:
+                proc.stdin.write(request.encode("utf-8"))
+                proc.stdin.close()
+            except (BrokenPipeError, OSError, ValueError):
+                pass
+
+        t_in = threading.Thread(target=_feed_stdin)
+        t_in.start()
 
         timed_out = False
         try:
@@ -203,6 +217,7 @@ def _run_claude(request: str, *, model: str, timeout_s: float, executable: str) 
         # past timeout_s. SIGKILL the whole group unconditionally (harmless if already gone) to
         # close every inherited pipe end, then bound the joins so no reader can wedge us.
         _killpg(pgid, signal.SIGKILL)
+        t_in.join(timeout=_KILL_GRACE_S)
         t_out.join(timeout=_KILL_GRACE_S)
         t_err.join(timeout=_KILL_GRACE_S)
         duration = time.monotonic() - start

@@ -50,11 +50,16 @@ def test_recorded_result_drives_a_coherent_verify_decision():
     led = Ledger(source_sha256=sha256_hex(original))
     edits = [{"start_byte": 4, "end_byte": 13,
               "replacement_b64": _b64(revision.encode("utf-8")[4:13])}]
+    # The committed fixture is a faithful (clean) edit; assert the REAL fold output, not just an
+    # echo of the injected verdict. A non-clean recorded verdict is a hard failure, so this test
+    # can never run vacuously.
+    assert recorded["verdict"] == "clean", "recorded fixture must be a clean verdict"
     out = verify(original, edits, led,
                  authorized_ranges=[{"start_byte": 4, "end_byte": 13}],
                  semantic_fn=lambda o, r, l: recorded)
-    if recorded["verdict"] == "clean":
-        assert out["semantic_status"] == "clean"
+    assert out["semantic_status"] == "clean"
+    assert out["decision"] == "ACCEPT"
+    assert out["proposal_status"] == "ACCEPT"
 
 
 def test_probe_evidence_shows_lockdown_differential():

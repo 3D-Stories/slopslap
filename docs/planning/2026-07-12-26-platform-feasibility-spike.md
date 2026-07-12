@@ -179,8 +179,9 @@ New module `scripts/slopslap_invoke/`:
 ## File changes
 
 - NEW `scripts/slopslap_invoke/__init__.py`, `invoke.py`, `contract.py`
-- NEW `tests/test_invoke.py` (deterministic), `tests/test_invoke_live.py` (env-gated),
-  `tests/fixtures/invoke/recorded_invocation.json`
+- NEW deterministic tests: `tests/test_invoke_contract.py`, `tests/test_invoke_runner.py`,
+  `tests/test_invoke_verify_roundtrip.py`; env-gated `tests/test_invoke_live.py`;
+  fixtures `tests/fixtures/invoke/probe_evidence.json`, `recorded_invocation.json`
 - THIS doc gains the evidence section; README + Changelog; version bump ×2
   (`.claude-plugin/plugin.json`, `tests/test_scaffold.py:69`)
 
