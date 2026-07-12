@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf-8><title>slopslap eval results</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:2em auto;padding:0 1em;line-height:1.5}table{margin:1em 0}code,pre{font-family:ui-monospace,monospace}</style></head><body><h1>slopslap eval results — the working proof</h1><p style='font-size:1.3em;color:#1a7f37;font-weight:700'>Overall: ✅ PASS</p><p>Engine: <code>opus-4.8</code> — authoring engine recorded, not selected by the plugin (advisory); Fable 5 = OWNER-VERIFY (Fable API — no access confirmed)</p><h2>Per-fixture × baseline (hard-gate pass)</h2><table border='1' cellpadding='6' style='border-collapse:collapse'><tr><th>fixture</th><th>slopslap</th><th>humanizer_emulation</th><th>original_unchanged</th></tr><tr><td>distinctive-essay</td><td>✅ repair</td><td>❌ repair</td><td>✅</td></tr><tr><td>normative-spec</td><td>✅ repair</td><td>✅ abstain</td><td>✅</td></tr><tr><td>underspecified-prd</td><td>✅ repair</td><td>❌ repair</td><td>✅</td></tr><tr><td>clean-personal (control)</td><td>✅ abstain</td><td>❌ repair</td><td>✅</td></tr><tr><td>clean-spec (control)</td><td>✅ abstain</td><td>❌ repair</td><td>✅</td></tr></table><p><b>vs humanizer-emulation:</b> BEATS</p><p><b>kukakuka-prd:</b> repair — 0 invariant violations, 119 bytes changed.</p><p><b>LLM-judge (secondary):</b> NOT_RUN — secondary + non-gating (contract §7). A cross-model blinded A/B (Codex gpt-5.6-sol) is a documented follow-up; the PRIMARY proof is the programmatic hard gates + abstention below.</p><h2>Full results object</h2><pre style='background:#f6f8fa;padding:12px;overflow:auto'>{
+<!doctype html><html><head><meta charset=utf-8><title>slopslap eval results</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:2em auto;padding:0 1em;line-height:1.5}table{margin:1em 0}code,pre{font-family:ui-monospace,monospace}</style></head><body><h1>slopslap eval results — the working proof</h1><p style='font-size:1.3em;color:#1a7f37;font-weight:700'>Overall: ✅ PASS</p><p>Engine: <code>opus-4.8</code> — authoring engine recorded, not selected by the plugin (advisory); Fable 5 = OWNER-VERIFY (Fable API — no access confirmed)</p><h2>Per-fixture × baseline (hard-gate pass)</h2><table border='1' cellpadding='6' style='border-collapse:collapse'><tr><th>fixture</th><th>slopslap</th><th>humanizer_emulation</th><th>original_unchanged</th></tr><tr><td>distinctive-essay</td><td>✅ repair</td><td>❌ repair</td><td>✅</td></tr><tr><td>normative-spec</td><td>✅ repair</td><td>✅ abstain</td><td>✅</td></tr><tr><td>underspecified-prd</td><td>✅ repair</td><td>❌ repair</td><td>✅</td></tr><tr><td>clean-personal (control)</td><td>✅ abstain</td><td>❌ repair</td><td>✅</td></tr><tr><td>clean-spec (control)</td><td>✅ abstain</td><td>❌ repair</td><td>✅</td></tr></table><p><b>vs humanizer-emulation:</b> BEATS</p><p><b>kukakuka-prd:</b> repair — 0 invariant violations, 119 bytes changed.</p><p><b>Layer-3 fold (end-to-end):</b> semantic_status clean, proposal_status ACCEPT, decision ACCEPT (offline these are by-construction: a hardcoded <code>clean</code> stub + candidate-span locality; a real <code>claude -p</code> judgement runs under <code>SLOPSLAP_LIVE=1</code>).</p><p><b>LLM-judge (secondary):</b> NOT_RUN — secondary + non-gating (contract §7). A cross-model blinded A/B (Codex gpt-5.6-sol) is a documented follow-up; the PRIMARY proof is the programmatic hard gates + abstention below.</p><h2>Full results object</h2><pre style='background:#f6f8fa;padding:12px;overflow:auto'>{
   "comparison": {
     "per_fixture": {
       "clean-personal": {
@@ -41,6 +41,7 @@
     "beats_or_ties_humanizer_emulation": true,
     "canonical_all_hard_gates_pass": true,
     "controls_all_abstain": true,
+    "kukakuka_l3_shippable": true,
     "kukakuka_zero_violations": true,
     "slopslap_idempotent": true
   },
@@ -526,6 +527,7 @@
       "units_scanned": 107
     },
     "changed_bytes": 119,
+    "decision": "ACCEPT",
     "disposition": "repair",
     "edits": 2,
     "flag_only_diagnoses": [
@@ -543,7 +545,9 @@
       "changed_byte_ratio": 0.00425,
       "headings_preserved": true
     },
-    "reason": "repaired 2 demonstrated-harm passage(s)"
+    "proposal_status": "ACCEPT",
+    "reason": "repaired 2 demonstrated-harm passage(s)",
+    "semantic_status": "clean"
   },
   "schema_version": 1
 }</pre></body></html>

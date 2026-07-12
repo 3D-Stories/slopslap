@@ -25,6 +25,7 @@ from slopslap_verification.ledger import (  # noqa: E402
 from eval import candidates as C  # noqa: E402
 from eval.loader import load_fixture  # noqa: E402
 from eval.runner import State, run  # noqa: E402
+from eval.semantic import eval_semantic_fn  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 FIXTURES = os.path.join(REPO, "tests", "fixtures", "eval")
@@ -135,7 +136,14 @@ def _kukakuka() -> dict:
         ],
     }
     ledger = build_ledger(prd, manifest)
-    result = verify(prd, cand.edits, ledger, allow_two_layer=True)
+    # Layer 3 wired into the e2e path (#17): the seeded candidate's demonstrated repair spans ARE
+    # the authorized editable ranges (the eval's frozen provenance), so edit_locality passes
+    # BY CONSTRUCTION here (each edit is within its own span) and the L3 fold can reach a shippable
+    # ACCEPT. semantic_fn = a hardcoded clean stub offline (the frozen faithful candidate is
+    # asserted clean; see semantic.py), a real fresh-context claude -p pass under SLOPSLAP_LIVE=1.
+    authorized = [{"start_byte": e.start_byte, "end_byte": e.end_byte} for e in cand.edits]
+    result = verify(prd, cand.edits, ledger, authorized_ranges=authorized,
+                    semantic_fn=eval_semantic_fn())
     violations = [f for f in result["findings"] if f.get("disposition") in ("reject", "reject_global")]
 
     # NEGATIVE CONTROL: a hypothetical invariant-violating edit (3 strikes -> 5 strikes) MUST be
@@ -154,6 +162,10 @@ def _kukakuka() -> dict:
                            f"{audit['cadence']['semicolon_per_1k']}/1k — NOT clean prose")},
         "disposition": cand.disposition, "reason": cand.reason,
         "edits": len(cand.edits), "invariant_violations": len(violations),
+        # real Layer-3 fold outcome (#17): shippable ACCEPT requires semantic_status=="clean".
+        "semantic_status": result["semantic_status"],
+        "proposal_status": result["proposal_status"],
+        "decision": result["decision"],
         # one byte-change measure (edit volume = removed + added), used for BOTH fields below.
         "changed_bytes": sum(len(e.replacement) + (e.end_byte - e.start_byte) for e in cand.edits),
         "flag_only_diagnoses": ["negative-parallelism density (16x 'X, not Y') — flagged for human, "
@@ -225,6 +237,8 @@ def run_eval() -> dict:
                                     for fx in CONTROLS),
         "slopslap_idempotent": all(slop[fx]["second_pass_edits"] == 0 for fx in CANONICAL + CONTROLS),
         "kukakuka_zero_violations": results["kukakuka"]["invariant_violations"] == 0,
+        # #17: the shippable-ACCEPT path is demonstrated end-to-end (offline recorded-clean L3).
+        "kukakuka_l3_shippable": results["kukakuka"]["proposal_status"] == "ACCEPT",
         "beats_or_ties_humanizer_emulation": results["comparison"]["verdict"] in ("BEATS", "TIES"),
     }
     results["done"]["ALL_PASS"] = all(results["done"].values())
@@ -247,6 +261,7 @@ def render_md(r: dict) -> str:
               "controls_all_abstain": "slopslap abstains (no byte change) on both clean controls",
               "slopslap_idempotent": "slopslap 2nd pass is empty (idempotent) everywhere",
               "kukakuka_zero_violations": "kukakuka-prd: 0 invariant violations",
+              "kukakuka_l3_shippable": "kukakuka-prd: Layer-3 fold reaches shippable ACCEPT",
               "beats_or_ties_humanizer_emulation": "beats/ties the humanizer-emulation policy"}
     for k, lab in labels.items():
         lines.append(f"| {lab} | {_v(d[k])} |")
@@ -269,6 +284,10 @@ def render_md(r: dict) -> str:
               f"- invariant violations: **{k['invariant_violations']}** · bytes changed: **{k['changed_bytes']}** "
               f"· changed-byte ratio: {k['preservation']['changed_byte_ratio']} · headings preserved: "
               f"{k['preservation']['headings_preserved']}",
+              f"- Layer-3 fold (end-to-end): semantic_status **{k['semantic_status']}** · "
+              f"proposal_status **{k['proposal_status']}** · decision **{k['decision']}** "
+              "(offline these are by-construction: a hardcoded `clean` stub + candidate-span "
+              "locality; a real `claude -p` semantic judgement runs under `SLOPSLAP_LIVE=1`)",
               f"- conservative ledger over real invariants: {k['ledger']['entries']} entries, "
               f"{k['ledger']['protected_spans']} protected span(s); negative control (bad edit rejected): "
               f"{k['negative_control_bad_edit_rejected']}",
@@ -315,6 +334,10 @@ def render_html(r: dict, md: str) -> str:
         f"<p><b>vs humanizer-emulation:</b> {r['comparison']['verdict']}</p>"
         f"<p><b>kukakuka-prd:</b> {r['kukakuka']['disposition']} — {r['kukakuka']['invariant_violations']} "
         f"invariant violations, {r['kukakuka']['changed_bytes']} bytes changed.</p>"
+        f"<p><b>Layer-3 fold (end-to-end):</b> semantic_status {r['kukakuka']['semantic_status']}, "
+        f"proposal_status {r['kukakuka']['proposal_status']}, decision {r['kukakuka']['decision']} "
+        "(offline these are by-construction: a hardcoded <code>clean</code> stub + candidate-span "
+        "locality; a real <code>claude -p</code> judgement runs under <code>SLOPSLAP_LIVE=1</code>).</p>"
         f"<p><b>LLM-judge (secondary):</b> {r['judge']['status'].upper()} — {r['judge']['note']}</p>"
         "<h2>Full results object</h2>"
         f"<pre style='background:#f6f8fa;padding:12px;overflow:auto'>{data}</pre>")

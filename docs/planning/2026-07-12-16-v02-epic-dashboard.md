@@ -10,13 +10,13 @@ source of truth; the hosted Artifact is a copy).
 
 ## Progress
 
-**1 / 14 children merged** · current: #30 PR open (Tier 0)
+**3 / 14 children merged** · current: Tier 1 — #17 shipped (PR #34); #18 next
 
 | Tier | Child | Title | Depth | Deps | Status | PR | Version | Gate delta |
 |---|---|---|---|---|---|---|---|---|
 | 0 | #26 | platform-feasibility spike | full WF2 | — | ✅ merged | #32 | 0.1.1 | 214→267 (+53), 0 reg |
-| 0 | #30 | corpus integration (manifest + split + fixtures + anchors) | full WF2 | — | PR open | (pending) | 0.1.2 | 267→302 (+35), 0 reg |
-| 1 | #17 | semantic verify (real Layer-3 semantic_fn) | lite | #26 | queued | — | — | — |
+| 0 | #30 | corpus integration (manifest + split + fixtures + anchors) | full WF2 | — | ✅ merged | #33 | 0.1.2 | 267→304 (+37), 0 reg |
+| 1 | #17 | semantic verify (real Layer-3 semantic_fn) | lite | #26 | ✅ merged | #34 | 0.1.3 | 304→308 (+4), 0 reg |
 | 1 | #18 | protected-span auto-extractor | lite | — | queued | — | — | — |
 | 1 | #19 | invariant-ledger auto-build | lite | — | queued | — | — | — |
 | 1 | #20 | live passage-local locality | lite | — | queued | — | — | — |

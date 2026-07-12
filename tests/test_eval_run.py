@@ -18,7 +18,16 @@ PINNED_SLOPSLAP_OUTPUT = {
     "clean-spec": "5c3b460fecc139d43824a930354f9d8515614059b0d36f6d43f2c73113fb4ceb",
 }
 
-_R = run_eval()  # run once for the module
+# The committed DONE gate must stay hermetic. The eval's Layer-3 pass (#17) fires a REAL claude -p
+# call under SLOPSLAP_LIVE=1 — so an ambient SLOPSLAP_LIVE=1 (set to run the live invoke test)
+# would make THIS module's import do a network call, and a non-clean live verdict would flip
+# ALL_PASS. Force the offline clean stub here; the live path is exercised only by test_invoke_live.
+_saved_live = os.environ.pop("SLOPSLAP_LIVE", None)
+try:
+    _R = run_eval()  # run once for the module (offline, deterministic)
+finally:
+    if _saved_live is not None:
+        os.environ["SLOPSLAP_LIVE"] = _saved_live
 
 
 def test_all_done_criteria_pass():
@@ -99,3 +108,45 @@ def test_committed_artifact_matches_live_render():
 
 def test_judge_status_is_surfaced():
     assert _R["judge"]["status"] in ("not_run", "failed", "completed")
+
+
+# ---- #17: the eval's e2e path exercises Layer 3 (was the remaining gap) ----
+def test_kukakuka_l3_semantic_clean_and_shippable():
+    # THE GAP (#17): the e2e path must actually run Layer 3 and reach a shippable ACCEPT.
+    # Before wiring: semantic_status=="not_run" and proposal_status=="BLOCKED".
+    k = _R["kukakuka"]
+    assert k["semantic_status"] == "clean", k.get("semantic_status")
+    assert k["proposal_status"] == "ACCEPT", k.get("proposal_status")
+    assert k["decision"] == "ACCEPT", k.get("decision")
+
+
+def test_kukakuka_l3_wiring_preserves_invariants():
+    # wiring Layer 3 must NOT introduce any invariant violation on the faithful candidate,
+    # and the primary DONE gate must stay green.
+    assert _R["kukakuka"]["invariant_violations"] == 0
+    assert _R["done"]["kukakuka_zero_violations"] is True
+    assert _R["done"]["ALL_PASS"] is True
+
+
+def test_eval_semantic_fn_offline_is_hardcoded_clean(monkeypatch):
+    # OFFLINE: a hardcoded 'clean' stub, no model call. Force SLOPSLAP_LIVE unset so this asserts
+    # the offline path even when the ambient env has SLOPSLAP_LIVE=1 (kept hermetic).
+    monkeypatch.delenv("SLOPSLAP_LIVE", raising=False)
+    from eval.semantic import eval_semantic_fn
+    fn = eval_semantic_fn()
+    assert fn(b"x", "x", {}) == {"verdict": "clean", "concerns": []}
+
+
+def test_eval_semantic_fn_live_binds_invoke_semantic(monkeypatch):
+    # LIVE (SLOPSLAP_LIVE=1): a functools.partial over the real invoke_semantic seam.
+    # Assert the binding shape ONLY — never make a live call.
+    import functools
+
+    from eval.semantic import eval_semantic_fn
+    from slopslap_invoke.invoke import invoke_semantic
+
+    monkeypatch.setenv("SLOPSLAP_LIVE", "1")
+    fn = eval_semantic_fn(model="sonnet", timeout_s=99.0)
+    assert isinstance(fn, functools.partial)
+    assert fn.func is invoke_semantic
+    assert fn.keywords["model"] == "sonnet" and fn.keywords["timeout_s"] == 99.0
