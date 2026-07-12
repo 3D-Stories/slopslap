@@ -69,7 +69,7 @@ policy. Run it: `pytest -q` (the gate) or `python3 scripts/eval/run_eval.py --wr
 
 ## Status
 
-- **Version:** 0.1.1 (v0.2 epic #16 in progress — live model-in-the-loop).
+- **Version:** 0.1.2 (v0.2 epic #16 in progress — live model-in-the-loop).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; wiring the
@@ -77,6 +77,20 @@ policy. Run it: `pytest -q` (the gate) or `python3 scripts/eval/run_eval.py --wr
 
 ## Changelog
 
+- **0.1.2** — corpus integration (#30): a provenance-first, lane-separated foundation for the
+  before/after AI-slop corpus. `scripts/slopslap_corpus/` adds a fail-closed manifest loader
+  (`manifest.py`) and a **source-family** disjoint split (`split.py`) — the leak guard is keyed
+  on `source_family`, not passage or content hash, so near-duplicate passages can never scatter
+  across the calibration/held-out boundary. `research/ai-slop-corpus/corpus_manifest.jsonl`
+  catalogs the corpus per ITEM with license assigned from each item's real origin (never per
+  file-number): Wikipedia (CC BY-SA, share-alike) and humanizer (MIT, CC-BY-SA derivative) as
+  fixture/calibration lanes; commercial blogs + research datasets as `inspiration` (metadata
+  only, zero verbatim bytes). Two-sided licensing + hash-drift tests
+  (`tests/test_corpus_licensing.py`) fail closed in both directions. Five authored thin-tell
+  fixtures (`tests/fixtures/eval/authored-*`) exercise the eval loader + `verify()` unchanged —
+  semicolon, false-range, voice-seam, laundering-question — plus a **negative preservation
+  anchor** whose fabricated number drives `verify()` to REJECT via `no_new_claim_atoms`, proving
+  it can never become a golden.
 - **0.1.1** — platform-feasibility spike (epic #16 / #26): `scripts/slopslap_invoke/` proves ONE
   fresh-context model invocation under the real plugin config — a subprocess `claude -p` adapter
   (`invoke_semantic`) that feeds the Layer-3 `verify(semantic_fn=…)` seam. Fresh context is
