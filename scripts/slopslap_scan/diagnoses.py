@@ -23,10 +23,16 @@ Three metrics are DOC-LEVEL and carry NO per-passage location, so they never con
 range (and we never fabricate one): ``sentence_length_distribution``,
 ``sentence_length_dispersion``, ``punctuation_rates``. Punctuation may ``soft_flag`` the whole
 document, but with no per-passage location it cannot be localized — inventing a whole-doc
-range would defeat the point of locality. A doc with no located diagnosis yields ``[]``; verify
-then REJECTs any edit (an empty authorized set means a clean doc must be left alone — the same
-abstention discipline as ``control_abstention``), whereas ``authorized_ranges=None`` remains
-the undecidable ASK.
+range would defeat the point of locality.
+
+``[]`` IS OVERLOADED. It means "no passage-local authorization", which arises from EITHER a
+genuinely clean doc OR a doc flagged ONLY by the doc-level metrics above. In both cases verify
+REJECTs every edit (an empty authorized set = leave the doc alone — the ``control_abstention``
+discipline), whereas ``authorized_ranges=None`` remains the undecidable ASK. CONSEQUENCE for the
+live orchestrator (#27): a doc-level-only-flagged doc (e.g. pervasive em-dash / cadence slop with
+no localizable passage) has NO passage-local rewrite path through this deriver; whether such
+whole-doc slop warrants a separate doc-wide rewrite lane is that seam's decision, not this
+deriver's. This deriver fails closed (no ranges → no edits) by design.
 
 Byte offsets are EXACT (UTF-8, via a byte-offset-per-line table — the ``slopslap_scan.protected``
 pattern; never char offsets). Input MUST be valid UTF-8; non-UTF-8 raises ``DiagnosisError``

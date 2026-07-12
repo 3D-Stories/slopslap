@@ -149,3 +149,16 @@ def test_empty_doc_is_empty():
 def test_unknown_format_fails_loud():
     with pytest.raises(DiagnosisError):
         authorized_ranges_from_diagnoses(b"hello", "rtf")
+
+
+def test_doc_level_only_flags_are_not_localizable():
+    # [] is OVERLOADED: a doc flagged ONLY by doc-level metrics (soft_flag True but empty
+    # per-passage locations) yields NO ranges — same as a clean doc — so verify rejects every
+    # edit. The live orchestrator (#27) owns the doc-wide rewrite lane for such slop; this
+    # deriver has no passage-local path for it (fails closed by design).
+    from slopslap_scan.diagnoses import _diagnosed_line_ranges
+    doc_level_only = {
+        "punctuation_rates": {"soft_flag": True, "locations": []},
+        "sentence_length_dispersion": {"soft_flag": True, "locations": []},
+    }
+    assert _diagnosed_line_ranges(doc_level_only) == []
