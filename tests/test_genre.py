@@ -204,3 +204,25 @@ def test_prd_adds_an_authorized_range_general_does_not():
     doc = b"The dashboard must be fast and the flow should be intuitive."
     assert authorized_ranges_from_diagnoses(doc, "text") == []
     assert authorized_ranges_from_diagnoses(doc, "text", genre="prd") != []
+
+
+def test_path_middle_substrings_do_not_masquerade():
+    # review fix: match whole path COMPONENTS, not raw substrings — 'proSPECtus'/'reSPECt'/
+    # 'aSPECt'/'SPECial' must NOT be read as spec; legitimate whole-token signals still do.
+    from slopslap_scan.genre import _from_path
+    assert _from_path("notes/prospectus.md") is None
+    assert _from_path("x/respect.md") is None
+    assert _from_path("docs/aspect-ratios.md") is None
+    assert _from_path("reports/special-report.md") is None
+    assert _from_path("docs/api-spec.md") == "spec"
+    assert _from_path("rfcs/2119.md") == "spec"
+    assert _from_path("product/requirements.md") == "spec"
+    assert _from_path("me/journal/2026.md") == "personal"
+    assert _from_path("epics/prd-v2.md") == "prd"
+
+
+def test_curly_apostrophe_first_person_classifies_personal():
+    # review fix: curly right-single-quote normalized to straight, so first-person contractions
+    # are counted. This doc's ONLY first-person signal is curly contractions (no bare i/my/me).
+    doc = "I’ve seen much. I’m here now. I’d go anywhere. I’ll try hard.".encode("utf-8")
+    assert classify_genre(doc)["genre"] == "personal"

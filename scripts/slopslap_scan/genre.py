@@ -76,20 +76,28 @@ def _normalize_declared(declared):
     return _DECL_ALIASES.get(str(declared).strip().lower())
 
 
+# whole-token path signals per genre. Matched against path COMPONENTS (split on separators),
+# never as a raw substring — else "proSPECtus" / "reSPECt" / "aSPECt" / "SPECial" would all
+# masquerade as spec. Plural/expanded forms are enumerated so "specification"/"requirements"
+# still hit. Repo context: a ``journal/`` or ``docs/`` DIRECTORY component is a valid signal.
+_PATH_SEP = re.compile(r"[/\\._\-\s]+")
+_PATH_TOKENS = (
+    ("prd", ("prd", "prds")),
+    ("spec", ("spec", "specs", "specification", "specifications", "rfc", "rfcs",
+              "requirement", "requirements")),
+    ("personal", ("journal", "journals", "diary", "diaries")),
+    ("general", ("readme", "readmes", "changelog", "changelogs", "guide", "guides",
+                 "guideline", "guidelines")),
+)
+
+
 def _from_path(path):
-    # repo context, so scan the whole path (a ``journal/`` or ``docs/`` DIRECTORY is a signal),
-    # not just the basename.
     if not path:
         return None
-    p = str(path).lower()
-    if "prd" in p:
-        return "prd"
-    if any(k in p for k in ("spec", "rfc", "requirement")):
-        return "spec"
-    if any(k in p for k in ("journal", "diary")):
-        return "personal"
-    if any(k in p for k in ("readme", "changelog", "guide")):
-        return "general"
+    toks = {t for t in _PATH_SEP.split(str(path).lower()) if t}
+    for genre, keywords in _PATH_TOKENS:  # precedence: prd > spec > personal > general
+        if toks & set(keywords):
+            return genre
     return None
 
 
@@ -97,7 +105,9 @@ def _from_structure(text):
     """Structural markers (medium confidence). Order = reliability: first-person density is a
     near-certain personal tell (specs/PRDs do not use it heavily), then PRD phrase markers, then
     strong-modal density for spec. Returns (genre, reason) or (None, None)."""
-    toks = [t.lower() for t in words(text)]
+    # normalize the curly right-single-quote to a straight apostrophe so "I’ve" matches the
+    # straight-apostrophe first-person set (words() preserves curly quotes).
+    toks = [t.lower().replace("’", "'") for t in words(text)]
     n = len(toks)
     if n:
         fp = sum(1 for t in toks if t in _FIRST_PERSON)
