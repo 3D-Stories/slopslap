@@ -1,0 +1,21 @@
+{
+  "name": "slopslap",
+  "version": "0.1.0",
+  "description": "Repairs prose carrying high editorial cost (genericness, unsupported claims, synthetic cadence, obscured responsibility, voice discontinuity) while preserving meaning, technical accuracy, requirements, uncertainty, and intentional voice. NOT an AI-authorship detector: it beats humanizer-style tools by never treating a stylistic tell as a contaminant. Ships a judgment skill, audit/suggest/apply commands, a measure-only scanner, and a byte-exact invariant verifier.",
+  "author": {
+    "name": "3D-Stories",
+    "url": "https://github.com/3D-Stories"
+  },
+  "homepage": "https://github.com/3D-Stories/slopslap",
+  "repository": "https://github.com/3D-Stories/slopslap",
+  "license": "MIT",
+  "keywords": [
+    "prose",
+    "editing",
+    "editorial-cost",
+    "invariant-preservation",
+    "voice-preservation",
+    "anti-slop",
+    "not-a-detector"
+  ]
+}
