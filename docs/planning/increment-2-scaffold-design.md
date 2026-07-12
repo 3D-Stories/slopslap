@@ -88,6 +88,25 @@ machinery.
   their collapse into one bucket is the top failure. Tests enumerate all six identifiers and assert the
   three distinct remedies. All "3 categories" wording is corrected to this.
 
+## Post-diff-review resolutions — WF5 on the built diff (`docs/reviews/increment-2-diff-2026-07-12.md`, 0 Crit / 3 High / 2 Med, all confirmed + fixed)
+
+- **H1** — `plugin.json` over-claimed a shipped scanner + byte-exact verifier at v0.1.0. Description now
+  states v0.1.0 ships the judgment skill + commands only; invariant checks are **model-reported** in
+  suggest mode until the deterministic verifier is wired (SKILL suggest-mode wording matched).
+- **H2 (real load bug)** — SKILL.md `description` was an invalid YAML plain scalar (`Triggers: `
+  colon-space) that a conforming loader rejects; rephrased to valid YAML. The scaffold test now parses
+  ALL frontmatter with a real YAML loader (`yaml.safe_load`), so this can't regress silently.
+- **H3** — raw `$ARGUMENTS` interpolation was a prompt-injection surface. Every command now wraps the
+  target in untrusted-data delimiters and states the content is DATA — it cannot change the mode,
+  authorize a tool/write, or serve as the protected-span override (overrides come only from the user's
+  request outside the content). Added `anchor:untrusted-input` to SKILL.md + a test.
+- **M4** — the apply sentinel is prose, and a slash command has no host exit code; apply.md now requires
+  the sentinel `status: mutation_unavailable` as the FIRST output line and names the limitation, so
+  automation gates by parsing position.
+- **M5** — the remedy-separation test searched the whole skill; it now binds each remedy to ITS
+  category table row (emptiness→delete/compress, laundering→question+never-delete, simulation→flag) and
+  asserts the wrong remedy is absent from the wrong row.
+
 ## Out of scope
 Scanner (#scanner), ledger/verify (#ledger-verify), apply/backup (#apply-backup), the voiceprint hook
 + learning (v2). No LIVE behavioral eval here (deferred to #eval-run).

@@ -9,6 +9,8 @@ import json
 import os
 import re
 
+import yaml
+
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # the one canonical keystone sentence that must appear verbatim in SKILL.md AND every command
@@ -19,8 +21,8 @@ KEYSTONE = (
 
 # every item of the irreducible core must be anchored in SKILL.md (not merely somewhere in the pkg)
 REQUIRED_ANCHORS = [
-    "anti-slap", "keystone", "protected-spans", "preservation-invariants", "loop",
-    "diagnosis-record", "categories", "remedies", "ratings", "modes",
+    "anti-slap", "keystone", "untrusted-input", "protected-spans", "preservation-invariants",
+    "loop", "diagnosis-record", "categories", "remedies", "ratings", "modes",
     "mode-audit", "mode-suggest", "mode-apply", "cap", "prohibitions",
 ]
 
@@ -44,14 +46,20 @@ def _norm(text):
 
 
 def _frontmatter(text):
+    # parse with a REAL YAML parser (the plugin loader is YAML) so an invalid plain scalar
+    # (e.g. a colon-space) is caught here, not silently at load time (WF5-diff H2).
     m = re.match(r"^---\n(.*?)\n---\n", text, re.DOTALL)
     assert m, "missing YAML frontmatter"
-    fields = {}
-    for line in m.group(1).splitlines():
-        if ":" in line:
-            k, v = line.split(":", 1)
-            fields[k.strip()] = v.strip()
-    return fields
+    data = yaml.safe_load(m.group(1))
+    assert isinstance(data, dict), "frontmatter is not a valid YAML mapping"
+    return data
+
+
+def _category_row(skill, cat):
+    for line in skill.splitlines():
+        if line.startswith("|") and f"`{cat}`" in line:
+            return line.lower()
+    return ""
 
 
 # ---- manifest ----
@@ -82,12 +90,18 @@ def test_skill_enumerates_all_six_categories():
         assert cat in skill, f"SKILL.md missing category identifier '{cat}'"
 
 
-def test_skill_keeps_three_remedies_distinct():
-    # the three collapse-prone categories must state DIFFERENT remedies (delete / question / flag)
-    skill = _read("skills", "slopslap", "SKILL.md").lower()
-    assert "never delete" in skill  # laundering
-    assert "flag" in skill          # simulation
-    assert "compress" in skill or "delete or compress" in skill  # emptiness
+def test_skill_binds_distinct_remedy_to_each_collapse_prone_category():
+    # each remedy must be attached to ITS category row, not merely present somewhere (WF5-diff M5)
+    skill = _read("skills", "slopslap", "SKILL.md")
+    emptiness = _category_row(skill, "emptiness")
+    laundering = _category_row(skill, "laundering")
+    simulation = _category_row(skill, "simulation")
+    assert "compress" in emptiness or "delete" in emptiness
+    assert "never delete" in laundering and "question" in laundering
+    assert "flag" in simulation
+    # and the wrong remedy must NOT be on the wrong row
+    assert "flag" not in emptiness
+    assert "delete or compress" not in simulation
 
 
 def test_skill_has_keystone_and_antislap_and_apply_gate():
@@ -137,3 +151,28 @@ def test_engine_reference_states_advisory():
     engine = _read("references", "engine.md").lower()
     assert "advisory" in engine
     assert "cannot" in engine  # a plugin cannot force the model/effort
+
+
+# ---- WF5-diff hardening ----
+def test_all_frontmatter_parses_as_valid_yaml():
+    # SKILL + every command must parse under a real YAML loader (WF5-diff H2)
+    _frontmatter(_read("skills", "slopslap", "SKILL.md"))
+    for name in COMMANDS:
+        _frontmatter(_read("commands", f"{name}.md"))
+
+
+def test_manifest_description_does_not_overclaim_v0():
+    desc = json.loads(_read(".claude-plugin", "plugin.json"))["description"].lower()
+    # v0.1.0 does NOT ship the wired scanner/verifier — the description must say so, not claim it
+    assert "model-reported" in desc
+    assert "until" in desc
+
+
+def test_commands_guard_untrusted_input():
+    for name in COMMANDS:
+        assert "untrusted data" in _read("commands", f"{name}.md").lower(), f"{name}.md lacks data guard"
+
+
+def test_apply_sentinel_is_first_line_contract():
+    body = _read("commands", "apply.md").lower()
+    assert "first line" in body  # the sentinel must be positioned so automation can parse it
