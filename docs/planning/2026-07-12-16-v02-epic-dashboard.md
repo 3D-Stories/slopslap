@@ -10,7 +10,7 @@ source of truth; the hosted Artifact is a copy).
 
 ## Progress
 
-**4 / 14 children merged** · current: Tier 1 — #18 shipped (PR #35); #19 next
+**5 / 14 children merged** · current: Tier 1 — #19 shipped (PR #37); #20 next
 
 | Tier | Child | Title | Depth | Deps | Status | PR | Version | Gate delta |
 |---|---|---|---|---|---|---|---|---|
@@ -18,7 +18,7 @@ source of truth; the hosted Artifact is a copy).
 | 0 | #30 | corpus integration (manifest + split + fixtures + anchors) | full WF2 | — | ✅ merged | #33 | 0.1.2 | 267→304 (+37), 0 reg |
 | 1 | #17 | semantic verify (real Layer-3 semantic_fn) | lite | #26 | ✅ merged | #34 | 0.1.3 | 304→308 (+4), 0 reg |
 | 1 | #18 | protected-span auto-extractor | lite | — | ✅ merged | #35 | 0.1.4 | 308→320 (+12), 0 reg |
-| 1 | #19 | invariant-ledger auto-build | lite | — | queued | — | — | — |
+| 1 | #19 | invariant-ledger auto-build | lite | — | ✅ merged | #37 | 0.1.5 | 320→333 (+13), 0 reg |
 | 1 | #20 | live passage-local locality | lite | — | queued | — | — | — |
 | 1 | #22 | genre classifier constrains diagnosis/verify | lite | — | queued | — | — | — |
 | 2 | #27 | live-orchestration seam (the assembler) | full WF2 | #26, #17–#20 | queued | — | — | — |

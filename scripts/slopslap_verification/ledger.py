@@ -35,6 +35,9 @@ _L2_EXTRACT = {
     "exception": lambda t: dict(atoms.conditions(t)),
     "literal": lambda t: {"text": " ".join(t.split())},
     "defined_term": lambda t: {"text": " ".join(t.split())},
+    # #19: cross-references are re-extractable deterministically (citation markers + urls),
+    # so L2 can actually REJECT a changed reference rather than only ASK.
+    "cross_reference": lambda t: {"cites": dict(atoms.citations(t)), "urls": dict(atoms.urls(t))},
 }
 
 DECISIONS = ("REJECT", "ASK", "SURFACE", "ACCEPT")
@@ -154,6 +157,11 @@ _CHECK_KIND = {
     "modality": ("normative_statement", "semantic_exact", 950),
     "negation": ("normative_statement", "semantic_exact", 900),
     "conditions": ("condition", "relationship_exact", 850),
+    # #19 auto-ledger checks. preservation per design decision R3/#5 (cross-refs + defined
+    # terms are lexically_exact); confidence inherits the R3 table's lexically_exact tier
+    # (950, the numbers/units value) — a table-derived value, not a new invented one.
+    "cross_refs": ("cross_reference", "lexically_exact", 950),
+    "defined_terms": ("defined_term", "lexically_exact", 950),
 }
 
 
