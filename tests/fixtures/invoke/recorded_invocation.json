@@ -1,5 +1,5 @@
 {
-  "note": "Recorded live invocation through invoke_semantic (slopslap #26). SYNTHETIC content, no secrets. Envelope model/id fields redacted where identifying.",
+  "note": "Recorded live invocation through invoke_semantic (slopslap #26). SYNTHETIC content, no secrets. Model id (non-secret) recorded to pin the alias->canonical match contract.",
   "cli_version": "2.1.207",
   "recorded_date": "2026-07-12",
   "request": {
@@ -7,7 +7,8 @@
     "revision": "The service handles up to 100 requests per second under nominal load.",
     "ledger_entry_ids": [
       "e0"
-    ]
+    ],
+    "requested_model_alias": "sonnet"
   },
   "argv_shape": [
     "-p",
@@ -23,6 +24,10 @@
     "{\"mcpServers\":{}}"
   ],
   "runner_status": "ok",
+  "envelope_is_error": false,
+  "envelope_reported_models": [
+    "claude-sonnet-5"
+  ],
   "duration_s_bucket": "<=120s",
   "semantic_result": {
     "verdict": "clean",

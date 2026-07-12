@@ -72,12 +72,36 @@ def _scrub_env() -> dict:
     }
 
 
-def _reported_model(envelope) -> Optional[str]:
-    if isinstance(envelope, dict):
-        m = envelope.get("model")
-        if isinstance(m, str):
-            return m
-    return None
+def _reported_models(envelope) -> list:
+    """The models the CLI says actually ran. `claude -p --output-format json` (v2.1.207) has NO
+    top-level `model` field; the resolved model id(s) live in the `modelUsage` dict keys
+    (e.g. {"claude-sonnet-5": {...}}). Return every reported id, or [] if none is available."""
+    if not isinstance(envelope, dict):
+        return []
+    out = []
+    mu = envelope.get("modelUsage")
+    if isinstance(mu, dict):
+        out.extend(k for k in mu if isinstance(k, str) and k)
+    m = envelope.get("model")  # tolerate a future/renamed top-level field too
+    if isinstance(m, str) and m:
+        out.append(m)
+    return out
+
+
+def _model_confirmed(requested: str, reported: list) -> bool:
+    """Confirm the requested model actually ran. The request uses an ALIAS (e.g. "sonnet"); the
+    CLI reports a canonical id (e.g. "claude-sonnet-5"). Match if the alias appears as a token in
+    any reported id (so "sonnet" ~ "claude-sonnet-5"), or exact-equals one. Empty `reported`
+    means the CLI told us nothing — NOT confirmed (fail closed: an unverifiable model identity is
+    never treated as a match)."""
+    if not reported:
+        return False
+    req = requested.lower()
+    for r in reported:
+        rl = r.lower()
+        if req == rl or req in rl.replace("-", " ").split() or req in rl:
+            return True
+    return False
 
 
 def _drain(stream, chunks: list, over_cap: threading.Event, pgid: int) -> None:
@@ -174,8 +198,13 @@ def _run_claude(request: str, *, model: str, timeout_s: float, executable: str) 
                 _killpg(pgid, signal.SIGKILL)
                 proc.wait()
 
-        t_out.join()
-        t_err.join()
+        # The leader has exited, but a backgrounded descendant may still hold the stdout/stderr
+        # pipe open, so a drain thread would block on EOF forever and the joins below would hang
+        # past timeout_s. SIGKILL the whole group unconditionally (harmless if already gone) to
+        # close every inherited pipe end, then bound the joins so no reader can wedge us.
+        _killpg(pgid, signal.SIGKILL)
+        t_out.join(timeout=_KILL_GRACE_S)
+        t_err.join(timeout=_KILL_GRACE_S)
         duration = time.monotonic() - start
         stderr_tail = b"".join(err_chunks)[-_STDERR_TAIL_BYTES:].decode("utf-8", "replace")
 
@@ -197,8 +226,16 @@ def _run_claude(request: str, *, model: str, timeout_s: float, executable: str) 
                                     duration_s=duration, stderr_tail=stderr_tail,
                                     diagnostic_code=_DIAG_INVALID)
 
-        reported = _reported_model(envelope)
-        if reported is not None and reported != model:
+        # An errored envelope can still exit 0 (max-turns, refusal). Consult it explicitly rather
+        # than relying on the result text coincidentally failing to parse as a verdict.
+        if isinstance(envelope, dict) and envelope.get("is_error"):
+            return InvocationResult(status="nonzero_exit", result_text=stdout_text,
+                                    envelope=envelope, duration_s=duration,
+                                    stderr_tail=stderr_tail, diagnostic_code=_DIAG_TRANSPORT)
+
+        # Confirm the model we asked for actually ran. Absent confirmation (empty reported list)
+        # fails closed to ambiguous — an unverifiable model identity is never a trusted verdict.
+        if not _model_confirmed(model, _reported_models(envelope)):
             return InvocationResult(status="model_mismatch", result_text=stdout_text,
                                     envelope=envelope, duration_s=duration,
                                     stderr_tail=stderr_tail, diagnostic_code=_DIAG_INVALID)
@@ -241,10 +278,17 @@ def invoke_semantic(
         _LOG.warning("%s: claude executable not found (which('claude') is None)", _DIAG_TRANSPORT)
         return dict(_AMBIGUOUS)
 
+    # The seam is documented as TOTAL: it never raises on any input. `original` is meant to be
+    # bytes and `ledger_canonical` a well-formed ledger, but both come from internal code — a
+    # str original (no .decode) or a structurally-bad ledger entry (missing id/source key) must
+    # still fail closed to ambiguous, not propagate out of the closed boundary.
     try:
         request = contract.build_request(original, revision, ledger_canonical)
     except contract.InvalidRequestError as err:
         _LOG.warning("%s: request build rejected: %s", _DIAG_INVALID, err)
+        return dict(_AMBIGUOUS)
+    except (AttributeError, KeyError, TypeError) as err:
+        _LOG.warning("%s: malformed original/ledger at request build: %r", _DIAG_INVALID, err)
         return dict(_AMBIGUOUS)
 
     result = _run_claude(request, model=model, timeout_s=timeout_s, executable=exe)
@@ -252,4 +296,8 @@ def invoke_semantic(
         _LOG.warning("%s: invocation failed (status=%s)", result.diagnostic_code, result.status)
         return dict(_AMBIGUOUS)
 
-    return contract.parse_response(result.result_text, ledger_canonical)
+    try:
+        return contract.parse_response(result.result_text, ledger_canonical)
+    except (AttributeError, KeyError, TypeError) as err:
+        _LOG.warning("%s: malformed ledger at response parse: %r", _DIAG_INVALID, err)
+        return dict(_AMBIGUOUS)

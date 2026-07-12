@@ -28,7 +28,8 @@ def _verdict_cli(tmp_path, result_obj, name):
         "#!/usr/bin/env python3\n"
         "import sys, json\n"
         f"result = {json.dumps(json.dumps(result_obj))}\n"
-        "sys.stdout.write(json.dumps({'type': 'result', 'result': result}))\n"
+        f"sys.stdout.write(json.dumps({{'type': 'result', 'is_error': False, "
+        f"'modelUsage': {{{MODEL!r}: {{'inputTokens': 1}}}}, 'result': result}}))\n"
     )
     p = tmp_path / name
     p.write_text(src)

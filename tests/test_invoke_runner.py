@@ -259,3 +259,64 @@ def test_invocation_result_never_crosses_public_boundary(tmp_path):
     out = invoke_semantic(orig, "rev", canon, model=MODEL, timeout_s=5.0, executable=exe)
     assert isinstance(out, dict) and not isinstance(out, InvocationResult)
     assert set(out.keys()) == {"verdict", "concerns"}
+
+
+# ---- model identity: real envelope shape (modelUsage keys), alias match, fail-closed ----
+def _modelusage_cli(tmp_path, result_obj, model_key, name="mu_cli.py"):
+    """A fake matching the REAL claude -p envelope: no top-level `model`, resolved id in
+    modelUsage keys, is_error/subtype present."""
+    body = (
+        "import sys, json\n"
+        f"result = {json.dumps(json.dumps(result_obj))}\n"
+        f"env = {{'type':'result','subtype':'success','is_error':False,"
+        f"'modelUsage':{{{model_key!r}:{{'inputTokens':1}}}},'result':result}}\n"
+        "sys.stdout.write(json.dumps(env))\n"
+    )
+    return _py_cli(tmp_path, body, name=name)
+
+
+def test_alias_request_matches_canonical_modelusage_key(tmp_path):
+    # request alias "sonnet"; envelope reports canonical "claude-sonnet-5" in modelUsage — MATCH.
+    _orig, canon = _canon()
+    exe = _modelusage_cli(tmp_path, {"verdict": "real", "concerns": []}, "claude-sonnet-5")
+    res = invoke._run_claude("req", model="sonnet", timeout_s=5.0, executable=exe)
+    assert res.status == "ok"
+
+
+def test_absent_model_identity_fails_closed(tmp_path):
+    # no modelUsage AND no top-level model -> identity unverifiable -> model_mismatch (fail closed)
+    body = ("import sys, json\n"
+            "env={'type':'result','subtype':'success','is_error':False,"
+            "'result':json.dumps({'verdict':'clean','concerns':[]})}\n"
+            "sys.stdout.write(json.dumps(env))\n")
+    exe = _py_cli(tmp_path, body, name="no_model.py")
+    res = invoke._run_claude("req", model="sonnet", timeout_s=5.0, executable=exe)
+    assert res.status == "model_mismatch"
+
+
+def test_is_error_envelope_is_transport_failure(tmp_path):
+    # exit 0 but is_error:true (e.g. max-turns) must NOT be trusted as ok
+    body = ("import sys, json\n"
+            "env={'type':'result','subtype':'error_max_turns','is_error':True,"
+            "'modelUsage':{'claude-sonnet-5':{}},'result':'hit max turns'}\n"
+            "sys.stdout.write(json.dumps(env))\n")
+    exe = _py_cli(tmp_path, body, name="err_env.py")
+    res = invoke._run_claude("req", model="sonnet", timeout_s=5.0, executable=exe)
+    assert res.status == "nonzero_exit"
+
+
+def test_malformed_ledger_fails_closed_not_raises(tmp_path):
+    # a ledger entry missing 'source' must collapse to ambiguous, never raise out of the seam
+    exe = _success_cli(tmp_path, {"verdict": "clean", "concerns": []})
+    bad_canon = {"schema_version": 1, "source_sha256": "0" * 64,
+                 "entries": [{"id": "e0", "kind": "literal"}], "protected_spans": []}
+    out = invoke_semantic(b"hello", "rev", bad_canon, model=MODEL, timeout_s=5.0, executable=exe)
+    assert out == {"verdict": "ambiguous", "concerns": []}
+
+
+def test_str_original_fails_closed_not_raises(tmp_path):
+    # `original` documented as bytes; a str must fail closed, not AttributeError out of the seam
+    _orig, canon = _canon()
+    exe = _success_cli(tmp_path, {"verdict": "clean", "concerns": []})
+    out = invoke_semantic("not-bytes", "rev", canon, model=MODEL, timeout_s=5.0, executable=exe)
+    assert out == {"verdict": "ambiguous", "concerns": []}
