@@ -142,3 +142,38 @@ def test_feeds_build_ledger_then_verify_rejects_bad_edit():
     # a no-op (no edits) is not rejected on protected-span grounds
     clean = verify(doc, [], ledger, allow_two_layer=True)
     assert clean["decision"] == "ACCEPT"
+
+
+# ---- fail-loud / observability (review fixups) ----------------------------
+def test_non_utf8_input_raises():
+    import pytest
+    from slopslap_scan.protected import ProtectedSpanError
+    # a non-utf-8 byte would silently shift re-encoded offsets -> fail loud instead.
+    with pytest.raises(ProtectedSpanError):
+        extract_protected_spans(b"bad\xffbyte then https://ex.example/z end")
+
+
+def test_nested_blockquote_stays_disjoint_through_build_ledger():
+    # a blockquote containing inline code AND a URL: nested candidates must resolve to a
+    # pairwise-DISJOINT set (blockquote subsumes its inner spans) that build_ledger accepts.
+    doc = "> quoted with `code` and https://ex.example/n inside\n".encode("utf-8")
+    spans = extract_protected_spans(doc)
+    ordered = sorted(spans, key=lambda s: s["start_byte"])
+    for a, b in zip(ordered, ordered[1:]):
+        assert a["end_byte"] <= b["start_byte"], (a, b)  # disjoint by construction
+    led = build_ledger(doc, {"protected_spans": spans, "invariant_regions": []})
+    assert len(led.protected_spans) == len(spans)  # validate_ledger accepts (no overlap)
+    assert any(s["kind"] == "blockquote" for s in spans)  # outer span subsumes inner
+
+
+def test_escaped_backtick_mismatch_is_logged_not_silent(caplog):
+    import logging
+    # escaped backticks beside real inline code make the escape-unaware regex miscount vs the
+    # parser -> this block's inline code is skipped. That MUST be observable (logged), never a
+    # silent under-protect.
+    doc = b"Here is \\`escaped\\` text and real `code` inline.\n"
+    with caplog.at_level(logging.WARNING, logger="slopslap_scan.protected"):
+        spans = extract_protected_spans(doc)
+    assert any("inline-code count mismatch" in r.message for r in caplog.records)
+    # documents the ceiling: the real `code` inline span is NOT protected in this block
+    assert not any(s["kind"] in ("inline_code", "identifier") for s in spans)

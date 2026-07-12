@@ -1,9 +1,9 @@
-"""Protected-span auto-extractor for arbitrary input (#18).
+"""Protected-span auto-extractor for arbitrary UTF-8 text input (#18).
 
-Emits ``protected_spans[]`` of ``{start_byte, end_byte, sha256, kind}`` for any document,
-so ``slopslap_verification.ledger.build_ledger`` can protect real docs the way the eval
-fixtures / kukakuka PRD were hand-authored. It REUSES the scan tokenizer rather than adding
-a second parser:
+Emits ``protected_spans[]`` of ``{start_byte, end_byte, sha256, kind}`` for any UTF-8 text
+document, so ``slopslap_verification.ledger.build_ledger`` can protect real docs the way the
+eval fixtures / kukakuka PRD were hand-authored. It REUSES the scan tokenizer rather than
+adding a second parser:
 
   * the vendored/pinned markdown-it CommonMark parser classifies code fences, indented code,
     blockquotes, and inline code — the same categories ``extract.extract_markdown`` drops
@@ -14,23 +14,28 @@ a second parser:
 markdown-it block tokens carry line maps but inline tokens carry NO source position, so
 inline code is located by scanning each inline block's source for CommonMark backtick runs
 IN ORDER and cross-checking the count against the parser's ``code_inline`` tokens; on any
-mismatch that block's inline code is skipped rather than risk a wrong offset (ponytail:
-documented completeness ceiling — byte-exactness is never traded away).
+mismatch that block's inline code is skipped (and a warning LOGGED, so the gap is observable)
+rather than risk a wrong offset (ponytail: documented completeness ceiling — byte-exactness
+is never traded away; escape-aware backtick parsing is the upgrade path).
 
-Byte offsets are EXACT (UTF-8, computed by encoding the char prefix — never char offsets)
-and spans are pairwise NON-OVERLAPPING as ``build_ledger``/``validate_ledger`` require. When
-candidates overlap, the higher-priority kind wins: block code/blockquote > inline
-code/identifier > url (a URL inside a fenced block is subsumed by the block).
+Byte offsets are EXACT (UTF-8, computed by encoding the char prefix — never char offsets):
+input MUST be valid UTF-8, and non-UTF-8 raises ``ProtectedSpanError`` rather than silently
+shifting offsets. Spans are pairwise NON-OVERLAPPING as ``build_ledger``/``validate_ledger``
+require. When candidates overlap, the higher-priority kind wins: block code/blockquote >
+inline code/identifier > url (a URL inside a fenced block is subsumed by the block).
 """
 
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 from typing import List
 
 from .capability import PINNED
 from .extract import _BARE, _SCHEME, _TRAIL, _WWW
+
+_LOG = logging.getLogger(__name__)
 
 # CommonMark inline code: a run of N backticks, content, a matching run of N backticks not
 # flanked by a backtick of the same run. DOTALL so a span may cover a soft line break.
@@ -87,11 +92,20 @@ def extract_protected_spans(doc: bytes) -> List[dict]:
     of ``doc[start_byte:end_byte]`` (the editscript.sha256_hex convention) and ``kind`` is one
     of ``code`` | ``blockquote`` | ``inline_code`` | ``identifier`` | ``url``. The list is
     sorted by ``start_byte`` and is safe to drop straight into a build_ledger manifest.
+
+    Raises ``ProtectedSpanError`` on non-UTF-8 input or an unavailable/mismatched pinned parser.
     """
     if not doc:
         return []
     markdown_it_cls = _markdown_it_cls()
-    text = doc.decode("utf-8", errors="replace")
+    # STRICT utf-8: a non-utf-8 byte would shift every re-encoded char->byte offset (U+FFFD is
+    # 3 bytes), silently emitting the WRONG span and leaving the real one editable. Fail loud
+    # instead — offsets are byte-exact ONLY for valid utf-8 text (contract.build_request is
+    # strict for the same reason). "Arbitrary input" here means arbitrary utf-8 text.
+    try:
+        text = doc.decode("utf-8")
+    except UnicodeDecodeError as err:
+        raise ProtectedSpanError(f"input is not valid utf-8: {err}") from err
     line_start = _line_starts(doc)
 
     def line_byte(ln: int) -> int:
@@ -123,11 +137,20 @@ def extract_protected_spans(doc: bytes) -> List[dict]:
             bq_depth = max(0, bq_depth - 1)
         elif tok.type == "inline" and tok.map:
             base = line_byte(tok.map[0])
-            seg_text = doc[base:line_byte(tok.map[1])].decode("utf-8", errors="replace")
+            # doc is validated strict utf-8 above and the slice is on line boundaries.
+            seg_text = doc[base:line_byte(tok.map[1])].decode("utf-8")
             code_tokens = [c for c in (tok.children or []) if c.type == "code_inline"]
             matches = list(_INLINE_CODE.finditer(seg_text))
-            # only trust the alignment when the count matches the parser exactly.
+            # only trust the alignment when the count matches the parser exactly. On mismatch
+            # (e.g. an escape-unaware backtick run beside real inline code) skip THIS block's
+            # inline code rather than risk a wrong offset — but LOG it, so an incomplete
+            # inline-code extraction is observable, never a silent under-protect. URLs and block
+            # spans are unaffected (found independently). ponytail: escape-aware backtick parsing
+            # is the upgrade path if this warning is ever seen on real docs.
             if len(matches) != len(code_tokens):
+                _LOG.warning("protected-span: inline-code count mismatch at line %d "
+                             "(regex %d vs parser %d); inline code in this block NOT protected",
+                             tok.map[0], len(matches), len(code_tokens))
                 continue
             for m in matches:
                 s = char_to_byte(base, seg_text, m.start())

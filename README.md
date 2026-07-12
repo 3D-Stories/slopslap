@@ -85,11 +85,13 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
   `scripts/slopslap_scan/protected.py::extract_protected_spans(doc: bytes)` REUSES the scan
   tokenizer (the vendored/pinned markdown-it parser + `extract.py`'s URL matchers) to emit
   `protected_spans[]` of `{start_byte, end_byte, sha256, kind}` — covering code fences, inline
-  code, URLs/link destinations, blockquotes, and identifiers — for **any** document, instead of
-  the fixtures + kukakuka PRD being hand-authored. Byte offsets are exact (UTF-8, not char) and
-  spans are pairwise non-overlapping, so the output drops straight into `build_ledger`; a bad edit
-  inside an extracted span then REJECTS at verify. Fails loud if the pinned parser is unavailable
-  rather than silently under-protecting.
+  code, URLs/link destinations, blockquotes, and identifiers — for **any UTF-8 text** document,
+  instead of the fixtures + kukakuka PRD being hand-authored. Byte offsets are exact (UTF-8, not
+  char) and spans are pairwise non-overlapping, so the output drops straight into `build_ledger`;
+  a bad edit inside an extracted span then REJECTS at verify. Fails loud (`ProtectedSpanError`) on
+  non-UTF-8 input or an unavailable pinned parser rather than silently mis-/under-protecting; an
+  escape-unaware inline-code count mismatch skips that block's inline code with a logged warning
+  (observable, never silent).
 - **0.1.3** — eval exercises Layer 3 end-to-end (#17): the "working proof" now drives the full
   fold on the kukakuka PRD through the real Layer-3 semantic seam, not just Layers 1–2. `_kukakuka()`
   passes the seeded candidate's demonstrated repair spans as the authorized editable ranges and a
