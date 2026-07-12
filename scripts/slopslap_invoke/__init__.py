@@ -13,10 +13,13 @@ from .contract import (
     build_request,
     parse_response,
 )
+from .invoke import InvocationResult, invoke_semantic
 
 __all__ = [
     "CONTRACT_VERSION",
     "InvalidRequestError",
     "build_request",
     "parse_response",
+    "InvocationResult",
+    "invoke_semantic",
 ]
