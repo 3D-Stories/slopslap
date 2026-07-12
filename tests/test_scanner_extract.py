@@ -71,3 +71,27 @@ def test_line_locations_are_one_indexed():
     u = _units("# H\n\nParagraph on line three.\n")
     para = [x for x in u if x.structural_type == "paragraph"][0]
     assert para.line_start == 3
+
+
+def test_no_fusion_across_inline_code():
+    # "foo." + `sep` + "com" must NOT fuse into the synthetic domain foo.com and be removed
+    # (WF5-diff M4). If fusion happened, strip_urls would delete both halves.
+    u = _units("The value foo.`sep`com stays as words.\n")
+    t = _alltext(u)
+    assert "foo" in t and "com" in t  # both survive => no synthetic-domain removal
+    assert "sep" not in t  # the inline code content itself is excluded
+
+
+def test_nested_list_item_keeps_outer_classification():
+    # after a nested list closes, the outer item's continuation stays list_item (WF5-diff M6)
+    src = "- outer start\n    - inner one\n\n  outer continuation prose here\n"
+    u = _units(src)
+    conts = [x for x in u if "outer continuation" in x.text]
+    assert conts and conts[0].structural_type == "list_item"
+
+
+def test_bare_domain_query_suffix_removed():
+    # example.com?q=1 — the whole URL incl. the ?query goes (WF5-diff M5)
+    u = _units("See example.com?q=1 for details.\n")
+    t = _alltext(u)
+    assert "example.com" not in t and "q=1" not in t

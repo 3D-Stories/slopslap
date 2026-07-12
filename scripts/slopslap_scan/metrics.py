@@ -126,15 +126,16 @@ def paragraph_sentence_count_runs(units, sw) -> Dict:
     return _result(len(paras), runs, None, locations, runs > 0, "normal", "para-runs-v1")
 
 
-_BOLD_LABEL = re.compile(r"(?m)^\s*(?:[-*+]\s+|\d+\.\s+)?\*\*[^*\n]+\*\*\s*:")
-
-
-def bold_label_density(units, sw, source="") -> Dict:
-    labels = list(_BOLD_LABEL.finditer(source))
-    paras = max(1, len([u for u in units if u.structural_type in ("paragraph", "list_item")]))
-    rate = round(len(labels) / paras, 3)
-    locs = [{"offset": m.start()} for m in labels]
-    return _result(paras, len(labels), rate, locs, None, "normal", "bold-label-v1")
+def bold_label_density(units, sw) -> Dict:
+    # counted from EXTRACTED eligible units (a **label**: opener detected via tokens), so labels
+    # inside excluded code/blockquote/HTML never count (WF5-diff H1). Text-path units are never
+    # labels (bold-label is a Markdown structural concept).
+    blocks = [u for u in units if u.structural_type in ("paragraph", "list_item")]
+    labels = [u for u in blocks if u.is_label]
+    denom = max(1, len(blocks))
+    locs = [{"line_start": u.line_start, "line_end": u.line_end} for u in labels]
+    return _result(len(blocks), len(labels), round(len(labels) / denom, 3), locs,
+                   None, "normal", "bold-label-v2")
 
 
 def _opener_tokens(sentence):
@@ -240,10 +241,7 @@ def compute_all(units: List[Unit], extraction_profile: str, source: str = "") ->
     sw = _sentences(units)
     out = {}
     for name, fn in ALL_METRICS:
-        if name == "bold_label_density":
-            res = fn(units, sw, source=source)
-        else:
-            res = fn(units, sw)
+        res = fn(units, sw)
         res["extraction_profile"] = extraction_profile
         out[name] = res
     return out

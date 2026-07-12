@@ -64,9 +64,32 @@ def test_paragraph_sentence_count_runs():
     assert m["paragraph_sentence_count_runs"]["count"] >= 1
 
 
-def test_bold_label_density():
-    m = _metrics("**Note**: something here.\n\n**Warning**: else here.")
+def test_bold_label_density_markdown():
+    from markdown_it import MarkdownIt
+
+    from slopslap_scan import EXTRACTION_PROFILE
+    from slopslap_scan.extract import extract_markdown
+
+    units = extract_markdown("**Note**: something here.\n\n**Warning**: else here.\n", MarkdownIt)
+    m = compute_all(units, EXTRACTION_PROFILE)
     assert m["bold_label_density"]["count"] == 2
+
+
+def test_bold_label_in_code_fence_not_counted():
+    from markdown_it import MarkdownIt
+
+    from slopslap_scan import EXTRACTION_PROFILE
+    from slopslap_scan.extract import extract_markdown
+
+    src = "Prose here.\n\n```\n**NotALabel**: in code\n```\n"
+    units = extract_markdown(src, MarkdownIt)
+    assert compute_all(units, EXTRACTION_PROFILE)["bold_label_density"]["count"] == 0
+
+
+def test_unicode_words_counted():
+    # accented + non-Latin letters must count as words (WF5-diff H2)
+    d = _metrics("Café niño déjà vu élan.")["sentence_length_distribution"]["distribution"]
+    assert d["max"] == 5  # five accented words, one sentence
 
 
 def test_abbreviation_not_a_sentence_boundary():

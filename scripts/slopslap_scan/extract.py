@@ -21,23 +21,28 @@ class Unit:
     line_start: int  # 1-indexed inclusive
     line_end: int
     structural_type: str  # paragraph | heading | list_item
+    is_label: bool = False  # markdown: a **bold label**: opener (detected from tokens)
 
 
 # ---- bare-URL removal ----------------------------------------------------
 _SCHEME = re.compile(r"(?i)\bhttps?://[^\s<>()\[\]]+")
 _WWW = re.compile(r"(?i)\bwww\.[^\s<>()\[\]]+")
 _TLD_ALT = "|".join(sorted((re.escape(t) for t in TLD_ALLOWLIST), key=len, reverse=True))
-# left boundary not a word char, '@' or '.' (so emails and sub-parts don't match)
+# left boundary not a word char, '@' or '.' (so emails and sub-parts don't match).
+# a suffix (path/query/fragment/port) may start with : / ? or # (design R5/M5).
 _BARE = re.compile(
     r"(?i)(?<![\w@.])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:" + _TLD_ALT + r")"
-    r"(?:[:/][^\s<>()\[\]]*)?"
+    r"(?:[:/?#][^\s<>()\[\]]*)?"
 )
-_TRAIL = ".,:;!?"
+# trailing sentence punctuation AND unmatched closing brackets are pushed back out of a match.
+_TRAIL = ".,:;!?)]}"
 
 
 def _sub_keep_trailing(pattern: re.Pattern, text: str) -> str:
-    """Replace each match with a space, but push trailing sentence punctuation back into the
-    text so punctuation-rate metrics aren't distorted by a URL swallowing a period."""
+    """Replace each match with a space, but push trailing sentence punctuation / unmatched
+    closing brackets back into the text so punctuation-rate metrics aren't distorted by a URL
+    swallowing them (a URL rarely ends in these; ponytail: balanced parens inside a URL are a
+    documented ceiling, not handled)."""
     out, last = [], 0
     for m in pattern.finditer(text):
         frag = m.group(0)
@@ -61,6 +66,11 @@ def strip_urls(text: str) -> str:
 
 
 # ---- markdown extraction -------------------------------------------------
+# inline tokens that carry content but are EXCLUDED: emit a space so opposite-side text can't
+# fuse into a synthetic domain / word across the boundary (WF5-diff M4).
+_CONTENT_SKIP = {"code_inline", "image", "html_inline"}
+
+
 def _visible(children) -> str:
     parts = []
     for c in children:
@@ -68,9 +78,34 @@ def _visible(children) -> str:
             parts.append(c.content)
         elif c.type in ("softbreak", "hardbreak"):
             parts.append(" ")
-        # code_inline, link_open/close (label text is a sibling), image (alt is nested),
-        # html_inline, and emphasis wrappers carry no eligible prose here.
+        elif c.type in _CONTENT_SKIP:
+            parts.append(" ")  # break the token boundary; content itself is dropped
+        # link_open/close and emphasis wrappers carry no content and wrap contiguous label text.
     return "".join(parts)
+
+
+def _is_bold_label(children) -> bool:
+    """A leading **bold**: opener at the start of a block (design R5/M4/H1).
+
+    markdown-it can emit a leading empty text token before strong_open, so skip
+    empty/whitespace-only leading text.
+    """
+    i = 0
+    while i < len(children) and children[i].type == "text" and not children[i].content.strip():
+        i += 1
+    if i >= len(children) or children[i].type != "strong_open":
+        return False
+    depth = 0
+    for j in range(i, len(children)):
+        c = children[j]
+        if c.type == "strong_open":
+            depth += 1
+        elif c.type == "strong_close":
+            depth -= 1
+            if depth == 0:
+                nxt = children[j + 1] if j + 1 < len(children) else None
+                return bool(nxt and nxt.type == "text" and nxt.content.lstrip().startswith(":"))
+    return False
 
 
 def extract_markdown(source: str, markdown_it_cls) -> List[Unit]:
@@ -78,25 +113,27 @@ def extract_markdown(source: str, markdown_it_cls) -> List[Unit]:
     tokens = md.parse(source)
     units: List[Unit] = []
     bq_depth = 0
-    struct = "paragraph"
+    struct_stack: List[str] = []  # nesting-aware structural context (WF5-diff M6)
     for t in tokens:
         if t.type == "blockquote_open":
             bq_depth += 1
         elif t.type == "blockquote_close":
             bq_depth = max(0, bq_depth - 1)
         elif t.type == "heading_open":
-            struct = "heading"
-        elif t.type == "heading_close":
-            struct = "paragraph"
+            struct_stack.append("heading")
         elif t.type == "list_item_open":
-            struct = "list_item"
-        elif t.type == "list_item_close":
-            struct = "paragraph"
+            struct_stack.append("list_item")
+        elif t.type in ("heading_close", "list_item_close"):
+            if struct_stack:
+                struct_stack.pop()
         elif t.type == "inline" and bq_depth == 0:
-            text = strip_urls(_visible(t.children or []))
+            children = t.children or []
+            text = strip_urls(_visible(children))
             if text.strip():
+                struct = struct_stack[-1] if struct_stack else "paragraph"
                 ls, le = (t.map[0] + 1, t.map[1]) if t.map else (0, 0)
-                units.append(Unit(text.strip(), ls, le, struct))
+                label = struct in ("paragraph", "list_item") and _is_bold_label(children)
+                units.append(Unit(text.strip(), ls, le, struct, is_label=label))
     return units
 
 
@@ -121,7 +158,8 @@ def extract_text(source: str) -> List[Unit]:
 
 
 # ---- sentence + word segmentation ---------------------------------------
-_LEX = re.compile(r"[A-Za-z]+(?:['’][A-Za-z]+)*")
+# Unicode-aware lexical word: letters (any script) with internal apostrophes; not digits/underscore.
+_LEX = re.compile(r"[^\W\d_]+(?:['’][^\W\d_]+)*", re.UNICODE)
 _END = re.compile(r"[.!?]+(?=\s|$)")
 
 

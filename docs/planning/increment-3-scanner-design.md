@@ -160,6 +160,28 @@ under `THIRD_PARTY_LICENSES/`.
   existing `sys.modules` entry; normal imports populate the fresh CLI process's cache, and a failed
   capability check leaves those entries untouched until process exit.
 
+## Post-diff-review resolutions — WF5 on the built diff (`docs/reviews/increment-3-diff-2026-07-12.md`, 0 Crit / 2 High / 5 Med)
+
+All confirmed against the code and fixed with regression tests, except M3 (a diff-filtering artifact):
+- **H1** — `bold_label_density` scanned raw source (would count `**x**:` inside code/blockquote). Now
+  detected from EXTRACTED tokens (`Unit.is_label`, set in `extract_markdown`), so excluded constructs
+  never count; text-path units are never labels. Fixture: a bold label in a code fence → 0.
+- **H2** — `[A-Za-z]` dropped accented/non-Latin words. `_LEX` is now Unicode-aware
+  (`[^\W\d_]+(?:['’][^\W\d_]+)*`). Fixture: five accented words count as five.
+- **M4** — `_visible` fused text across skipped inline tokens (synthetic `foo.com`). Content-skip
+  tokens (`code_inline`/`image`/`html_inline`) now emit a space, breaking the boundary. Fixture:
+  `foo.`+code+`com` keeps both words, removes neither.
+- **M5** — bare-URL matcher now accepts `?`/`#` suffixes and pushes trailing unmatched closers back
+  into prose. Fixture: `example.com?q=1` fully removed. (Balanced parens INSIDE a URL are a documented
+  ceiling — `ponytail:` in code.)
+- **M6** — scalar `struct` reset on every close (nested lists misclassified). Replaced with a
+  nesting-aware `struct_stack`. Fixture: outer-item continuation after a nested list stays `list_item`.
+- **M7** — the "git-tracked" test only checked `os.path.exists`; now uses `git ls-files
+  --error-unmatch` so an untracked vendor tree fails it.
+- **M3** — the vendor trees "not in the diff" is because the review diff intentionally EXCLUDED the 75
+  vendored third-party files (`git diff -- scripts references tests docs`); they ARE committed and
+  git-tracked (verified: `git ls-files vendor/python` → 75).
+
 ## Out of scope
 The ledger/verify (#ledger-verify), apply/backup (#apply-backup), wiring the scanner INTO the suggest
 command flow (later), cross-doc percentile baselines (post-MVP). The scanner measures; it never verdicts

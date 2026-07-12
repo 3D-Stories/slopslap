@@ -27,8 +27,14 @@ def _run_isolated(scan_path, args, cwd):
 
 
 def test_vendor_is_git_tracked_in_source():
+    # must be TRACKED (not merely present in the working tree) so the packaged/committed
+    # checkout includes the parser (WF5-diff M7).
     for rel in ("vendor/python/markdown_it/__init__.py", "vendor/python/mdurl/__init__.py"):
-        assert os.path.exists(os.path.join(REPO, rel)), f"{rel} missing (packaging must include vendor/)"
+        r = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", rel],
+            cwd=REPO, capture_output=True, text=True,
+        )
+        assert r.returncode == 0, f"{rel} is not git-tracked (packaging would drop vendor/)"
 
 
 def test_packaged_layout_isolated_ok(tmp_path):
