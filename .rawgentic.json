@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "project": {
+    "name": "slopslap",
+    "type": "library",
+    "description": "Claude Code plugin that repairs prose carrying high editorial cost (genericness, unsupported claims, synthetic cadence, obscured responsibility, voice discontinuity) while preserving meaning, technical accuracy, requirements, uncertainty, and intentional voice. Not an AI-authorship detector; aims to beat the humanizer skill by not treating stylistic features as contaminants. Bundles a SKILL.md (core judgment via the keystone rule), slash commands (audit/suggest/apply + voiceprint management), scan_prose.py (measures, never verdicts), and a v2 UserPromptSubmit voiceprint-capture hook."
+  },
+  "repo": {
+    "provider": "github",
+    "fullName": "3D-Stories/slopslap",
+    "defaultBranch": "main"
+  },
+  "techStack": ["python", "markdown", "claude-code-plugin"],
+  "testing": {
+    "frameworks": [
+      {
+        "name": "pytest",
+        "type": "unit",
+        "command": "pytest -q",
+        "testDir": "tests"
+      }
+    ]
+  },
+  "documentation": {
+    "primaryFiles": ["README.md", "docs/"],
+    "format": "markdown"
+  },
+  "protectionLevel": "sandbox",
+  "custom": {
+    "status": "design-approved-to-build",
+    "spec": "docs/planning/2026-07-12-slopslap-reconciled-spec.md",
+    "notLinkedTo": "kukakuka (reused only Kukakuka's doc design-language for the spec artifact)"
+  }
+}

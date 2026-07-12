@@ -1,0 +1,325 @@
+<title>slopslap — plugin design spec</title>
+<style>
+/* ============================================================
+   Rendered in the KUKAKUKA doc-language v1 (tokens reused).
+   NOTE: slopslap is NOT part of Kukakuka — it borrows the house
+   visual language only. Roles: ember=needs-attention · lagoon=
+   decided/settled · coral=risk. Dark is home.
+   ============================================================ */
+:root{
+  --bg:#0a121a; --bg2:#0d1722; --surface:#101b26; --surface2:#15222f;
+  --line:#1e2f3d; --line2:#2a4052;
+  --ink:#ede8df; --ink2:#b9c3c9; --mut:#8ca0ad;
+  --ember:#f2a05b; --ember-dim:rgba(242,160,91,.14);
+  --lagoon:#3ec4b4; --lagoon-dim:rgba(62,196,180,.13);
+  --coral:#e5655e; --coral-dim:rgba(229,101,94,.13);
+  --disp:"Seravek","Gill Sans Nova","Gill Sans","Trebuchet MS",Verdana,sans-serif;
+  --body:"Charter","Bitstream Charter","Sitka Text",Cambria,Georgia,serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#f7f4ec; --bg2:#f1ede2; --surface:#fffdf7; --surface2:#f4efe4;
+    --line:#e0d9c8; --line2:#cbc2ad; --ink:#1d2b33; --ink2:#3d5260; --mut:#6b7f8b;
+    --ember:#c96f1e; --ember-dim:rgba(201,111,30,.12);
+    --lagoon:#0e8d7f; --lagoon-dim:rgba(14,141,127,.12);
+    --coral:#c04740; --coral-dim:rgba(192,71,64,.10);
+  }
+}
+:root[data-theme="dark"]{--bg:#0a121a;--bg2:#0d1722;--surface:#101b26;--surface2:#15222f;--line:#1e2f3d;--line2:#2a4052;--ink:#ede8df;--ink2:#b9c3c9;--mut:#8ca0ad;--ember:#f2a05b;--ember-dim:rgba(242,160,91,.14);--lagoon:#3ec4b4;--lagoon-dim:rgba(62,196,180,.13);--coral:#e5655e;--coral-dim:rgba(229,101,94,.13)}
+:root[data-theme="light"]{--bg:#f7f4ec;--bg2:#f1ede2;--surface:#fffdf7;--surface2:#f4efe4;--line:#e0d9c8;--line2:#cbc2ad;--ink:#1d2b33;--ink2:#3d5260;--mut:#6b7f8b;--ember:#c96f1e;--ember-dim:rgba(201,111,30,.12);--lagoon:#0e8d7f;--lagoon-dim:rgba(14,141,127,.12);--coral:#c04740;--coral-dim:rgba(192,71,64,.10)}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 var(--body);-webkit-font-smoothing:antialiased}
+.shell{display:grid;grid-template-columns:236px minmax(0,1fr);max-width:1200px;margin:0 auto}
+@media (max-width:900px){.shell{grid-template-columns:1fr}.rail{display:none}}
+.rail{position:sticky;top:0;height:100vh;overflow-y:auto;padding:26px 18px 40px 22px;border-right:1px solid var(--line);background:var(--bg2)}
+.rail .mark{font:700 20px/1 var(--disp);letter-spacing:.02em;margin:0 0 2px}
+.rail .mark em{font-style:normal;color:var(--ember)}
+.rail .sub{font:10.5px/1.4 var(--mono);color:var(--mut);margin:0 0 20px}
+.rail h5{font:600 10.5px var(--disp);letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:18px 0 6px}
+.rail a{display:block;padding:5px 10px;margin:1px 0;border-radius:6px;color:var(--ink2);text-decoration:none;font:14px/1.35 var(--disp)}
+.rail a:hover{background:var(--surface2);color:var(--ink)}
+.rail a.on{background:var(--surface2);color:var(--ember)}
+.rail a:focus-visible,main a:focus-visible,summary:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+.rail a .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ember);margin-left:6px;vertical-align:1px}
+main{padding:0 44px 96px;min-width:0}
+@media (max-width:900px){main{padding:0 20px 72px}}
+section{padding-top:52px;scroll-margin-top:12px}
+.eyebrow{font:600 11px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin:0 0 8px}
+h2{font:700 clamp(22px,3vw,28px)/1.2 var(--disp);letter-spacing:-.01em;margin:0 0 14px;text-wrap:balance}
+h3{font:650 16px/1.3 var(--disp);margin:22px 0 6px}
+p,li{color:var(--ink2);max-width:70ch}
+p b,li b{color:var(--ink)}
+ul{padding-left:22px;margin:8px 0}
+li{margin:5px 0}
+a{color:var(--lagoon)}
+code{font:12.5px var(--mono);background:var(--surface2);padding:1px 5px;border-radius:4px}
+.borrowed{background:var(--surface2);border:1px dashed var(--line2);border-radius:8px;padding:8px 14px;font:12px/1.5 var(--mono);color:var(--mut);margin:18px 0 0}
+.borrowed b{color:var(--ink2)}
+/* hero */
+.hero{padding:56px 0 8px}
+.hero h1{font:800 clamp(38px,6vw,56px)/1.02 var(--disp);letter-spacing:-.02em;margin:8px 0 8px}
+.hero h1 span{color:var(--ember)}
+.hero .thesis{font-size:20px;line-height:1.5;color:var(--ink);max-width:58ch;margin:12px 0 20px;text-wrap:balance}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px}
+.chip{font:600 12px var(--mono);padding:5px 11px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2)}
+.chip.ok{border-color:transparent;background:var(--lagoon-dim);color:var(--lagoon)}
+.chip.hot{border-color:transparent;background:var(--ember-dim);color:var(--ember)}
+/* keystone callout */
+.keystone{background:var(--surface);border:1px solid var(--line2);border-left:4px solid var(--lagoon);border-radius:12px;padding:16px 20px;margin:6px 0 0}
+.keystone p{max-width:none;margin:0;font-size:16px;color:var(--ink)}
+/* attention ring */
+.ring{position:relative;display:inline-block;width:11px;height:11px;border-radius:50%;background:var(--ember);flex:none}
+.ring::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--ember);opacity:.55;animation:pulse 2.2s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.55);opacity:.7}70%{transform:scale(1.25);opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.ring::after{animation:none;opacity:.35}}
+.attn{background:var(--surface);border:1px solid var(--line2);border-left:4px solid var(--ember);border-radius:12px;padding:20px 22px;margin:32px 0 8px}
+.attn h2{font-size:20px;margin-bottom:4px}
+.attn p.lede{margin:.2em 0 14px;font-size:15px;color:var(--mut)}
+.attn ol{list-style:none;padding:0;margin:0;display:grid;gap:11px}
+.attn li{display:flex;gap:13px;align-items:baseline;max-width:none;margin:0}
+.attn li .ring{top:1px}
+.attn .why{color:var(--mut);font-size:14px}
+/* cards + tags */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin:16px 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.card h4{font:650 15px var(--disp);margin:0 0 6px;display:flex;gap:9px;align-items:baseline}
+.card p{font-size:14.5px;margin:.3em 0;max-width:none}
+.tag{font:700 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:5px;flex:none}
+.tag.dec{background:var(--lagoon-dim);color:var(--lagoon)}
+.tag.open{background:var(--ember-dim);color:var(--ember)}
+.tag.risk{background:var(--coral-dim);color:var(--coral)}
+.tag.out{background:var(--surface2);color:var(--mut)}
+.tblwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:12px 0}
+th{font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mut);text-align:left;padding:8px 12px;border-bottom:1px solid var(--line2)}
+td{padding:9px 12px;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:top}
+td b{color:var(--ink)}
+.loop{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font:600 13px var(--mono);margin:14px 0}
+.loop span{background:var(--surface2);border:1px solid var(--line2);border-radius:7px;padding:6px 12px;color:var(--ink)}
+.loop .arw{background:none;border:none;color:var(--mut);padding:0}
+.ship{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+@media (max-width:640px){.ship{grid-template-columns:1fr}}
+.ship .col{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px}
+.ship .col.now{border-left:4px solid var(--lagoon)}
+.ship .col.later{border-left:4px solid var(--mut)}
+.ship h4{font:650 14px var(--disp);margin:0 0 8px;color:var(--ink)}
+.ship li{font-size:14px;margin:4px 0}
+footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:var(--mut);font:12.5px var(--mono)}
+</style>
+
+<div class="shell">
+<nav class="rail" aria-label="Sections">
+  <p class="mark">slop<em>slap</em></p>
+  <p class="sub">plugin spec · 2026-07-12<br>APPROVED · WF5-clean</p>
+  <h5>Start</h5>
+  <a href="#decide">Decide / needs you<span class="dot" aria-hidden="true"></span></a>
+  <a href="#what">What it is</a>
+  <a href="#keystone">Keystone rule</a>
+  <h5>Design</h5>
+  <a href="#loop">The loop</a>
+  <a href="#taxonomy">Tell taxonomy</a>
+  <a href="#ledger">Ledger + verify</a>
+  <a href="#scanner">Scanner</a>
+  <a href="#genre">Genre</a>
+  <a href="#modes">Modes</a>
+  <h5>Build</h5>
+  <a href="#mvp">MVP cut<span class="dot" aria-hidden="true"></span></a>
+  <a href="#voice">Voiceprint (v2)</a>
+  <a href="#risks">Risks</a>
+  <a href="#evals">Evals</a>
+  <h5>Meta</h5>
+  <a href="#provenance">Provenance</a>
+</nav>
+
+<main>
+<header class="hero" id="top">
+  <p class="eyebrow">a claude code plugin · design spec · reconciled</p>
+  <h1>slopslap<span>.</span></h1>
+  <p class="thesis">Repairs prose that carries <b>high editorial cost</b> — genericness, unsupported claims, synthetic cadence, hidden responsibility — while preserving meaning, requirements, uncertainty, and your real voice. It is <b>not</b> an AI-authorship detector, and it does not treat style as contamination.</p>
+  <div class="chips">
+    <span class="chip ok">APPROVED TO BUILD (gpt-5.6-sol r3)</span>
+    <span class="chip ok">WF5 REVIEW · 8 FINDINGS FOLDED</span>
+    <span class="chip ok">BEATS HUMANIZER BY DESIGN</span>
+    <span class="chip hot">VOICEPRINT = v2</span>
+  </div>
+  <div class="borrowed">Rendered in the <b>Kukakuka doc-language v1</b> (palette, attention-ring, chips). <b>slopslap is NOT part of Kukakuka</b> — it reuses the house visual language only.</div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="card"><h4><span class="tag dec">decided</span>It's a plugin, not a skill</h4><p>The v2 voiceprint capture needs a <b>UserPromptSubmit hook</b> — hooks live in plugins, not bare skills. That, plus slash commands (audit/suggest/apply + voiceprint show/reset/export/delete) and the bundled <code>scan_prose.py</code>, makes it a plugin. The judgment still lives in one <code>SKILL.md</code> inside it.</p></div>
+    <div class="card"><h4><span class="tag dec">decided</span>Engine: any Claude; Fable = bonus</h4><p>Runs on the session's Claude tier — default <b>Opus 4.8 at high effort</b> for diagnosis/verify + rewrite. <b>Fable 5 is a bonus for the rewrite pass only if API access exists</b> — never required (Fable is going API-only; requiring it would strand subscription users). The eval loop A/Bs the available tiers.</p></div>
+  </div>
+</header>
+
+<section class="attn" id="decide" aria-labelledby="decide-h">
+  <h2 id="decide-h">Decide / needs you</h2>
+  <p class="lede">The design is settled, cross-model reviewed (WF5: 8 findings, 0 Critical, all folded), and being committed to the repo behind PR-required branch protection. What's left is the build.</p>
+  <ol>
+    <li><span class="ring" aria-hidden="true"></span><span><b>Name = <code>slopslap</code>?</b> Confirmed by you; keeping it. Note: "slap" primes aggressive editing, so the skill's first instruction counters it — <span class="why">"repair only demonstrated editorial harm; do not punish prose for matching a stylistic tell."</span></span></li>
+    <li><span class="ring" aria-hidden="true"></span><span><b>The one riskiest MVP failure</b> (Sol's r3 pick): scanner / genre / voiceprint signals silently becoming <i>edit authorization</i>. <span class="why">Guard test: a clean distinctive doc + one seeded high-harm defect + many stylistic soft-flags → only the seeded passage may change, everything else byte-identical, run-2 = no diff.</span></span></li>
+    <li><span class="ring" aria-hidden="true"></span><span><b>Voiceprint is v2, and defensive.</b> Confirm the staging: v1 ships with a manual voice sample only; the learned/evolving voiceprint comes after the engine + accepted-rewrites loop exist. <span class="why">Its job is to KEEP your genuine habits, not manufacture voice.</span></span></li>
+    <li><span class="ring" aria-hidden="true"></span><span><b>Build is next — fixtures-first.</b> The 3 canonical eval fixtures get pinned BEFORE scaffolding (they are the red test / acceptance contract), then <code>SKILL.md</code> + <code>scan_prose.py</code> + references, then slopslap vs humanizer vs original-unchanged. <span class="why">Everything below is spec-complete and WF5-clean.</span></span></li>
+  </ol>
+</section>
+
+<section id="what">
+  <p class="eyebrow">01 · the reframe</p>
+  <h2>Editorial cost, not AI-detection</h2>
+  <p>Detecting "was this written by AI" is unreliable and aims at the wrong target. slopslap instead finds where language <b>pretends to carry meaning</b> and repairs it — recovering intended content when the source supports it, and making missing content visible when it doesn't. That reframe is what lets it beat the humanizer skill, whose core flaw is treating stylistic features (em-dashes, lists, parallelism, passive voice) as contaminants regardless of genre or author.</p>
+</section>
+
+<section id="keystone">
+  <p class="eyebrow">02 · the rule that governs everything</p>
+  <h2>Keystone</h2>
+  <div class="keystone"><p><b>Edit authorization comes from demonstrated editorial harm.</b> Invariants constrain meaning; genre constrains function; the voiceprint only chooses among safe phrasings. Diagnosis authorizes <i>scope</i>; genre and voiceprint authorize <i>realization</i> — neither may independently authorize an edit or widen its boundary.</p></div>
+  <p>This single rule is the anti-normalization guard: "make it sound like me" can never become whole-document rewriting.</p>
+</section>
+
+<section id="loop">
+  <p class="eyebrow">03 · pipeline</p>
+  <h2>The loop</h2>
+  <div class="loop"><span>protect</span><b class="arw">→</b><span>diagnose</span><b class="arw">→</b><span>establish invariants</span><b class="arw">→</b><span>rewrite (minimal, passage-local)</span><b class="arw">→</b><span>verify</span></div>
+  <p>The invariant ledger is append-only during rewrite — new invariants may be added, never weakened or silently removed. The rewrite pass never verifies its own output.</p>
+</section>
+
+<section id="taxonomy">
+  <p class="eyebrow">04 · what counts as a tell</p>
+  <h2>Taxonomy — categories kept separate</h2>
+  <p>Clustered confidence: no single tell is dispositive. The critical discipline is <b>not collapsing</b> these three — each needs a different remedy, or "empty" becomes a license to delete load-bearing intent.</p>
+  <div class="tblwrap"><table>
+    <tr><th>Condition</th><th>Permitted response</th></tr>
+    <tr><td><b>Semantic emptiness</b> — words add nothing / repeat context</td><td>delete or compress — only if no intent is lost</td></tr>
+    <tr><td><b>Specification-laundering</b> — evaluative language posing as a requirement ("intuitive", "seamless", "unforgettable")</td><td>convert to a question or label non-testable — <b>do not delete</b> (it's real intent)</td></tr>
+    <tr><td><b>Content-simulation</b> — implies absent evidence / examples / analysis</td><td>flag the missing support — <b>do not repair substantively</b></td></tr>
+    <tr><td>Lexical / structural / rhetorical / formatting tells</td><td>candidates only; act only when redundant AND genre permits</td></tr>
+    <tr><td>Voice-discontinuity</td><td>evidence only when the doc is expected to have one voice (not interviews, RFCs, quotes, changelogs)</td></tr>
+    <tr><td>Epistemic distortion — false confidence, hedge-piles, actor-hiding passive</td><td>repair without inventing an actor or deleting necessary hedging</td></tr>
+  </table></div>
+  <p><b>Two ratings, never a single "AI %":</b> <span class="tag risk" style="text-transform:none">editorial-harm</span> low/med/high · <span class="tag open" style="text-transform:none">diagnosis-confidence</span> low/med/high. One number invites threshold-driven over-editing.</p>
+</section>
+
+<section id="ledger">
+  <p class="eyebrow">05 · the safety spine</p>
+  <h2>Invariant ledger + 3-layer verify</h2>
+  <div class="grid2">
+    <div class="card"><h4><span class="tag dec">decided</span>Machine-readable ledger</h4><p>JSON, shared by rewrite + verify. Closed <code>kind</code> enum (literal, number, normative_statement, condition, exception, causal_claim, attribution, defined_term, cross_reference, unsupported_intent, missing_support, intentional_repetition, protected_span) + closed <code>preservation</code> enum (byte / lexically / semantic / relationship exact, or surface_only = "preserve that it's unresolved", not the vague words).</p></div>
+    <div class="card"><h4><span class="tag dec">decided</span>Canonical coordinates <span class="why" style="font-weight:400">· r3 fix · WF5 #3</span></h4><p>All positions — including the ledger's <code>source</code> — use <b>original-byte offsets</b> as the one canonical system (line numbers are derived display-only) + an original→revision <b>edit map</b>. Without it, multi-hunk verification and the per-hunk rollback misattribute passages that shifted when an earlier hunk changed length.</p></div>
+    <div class="card"><h4><span class="tag dec">decided</span>3-layer verify <span class="why" style="font-weight:400">· WF5 #7</span></h4><p>(1) deterministic integrity — hashes, numbers, modality inventory, balanced fences, edits-in-range; <b>this layer is code and owns the hard accept/reject</b> — no model output overrides it. (2) extraction-then-compare — re-extract into the same ledger shape, match. (3) adversarial semantic check in a <b>fresh context</b> that never saw the rewriter's reasoning (may be a different model). The rewriter never grades itself.</p></div>
+    <div class="card"><h4><span class="tag dec">decided</span>Failure decision rule</h4><p><b>Hard</b> (protected-span mutation, changed number/modality, invented claim, dropped condition) → auto-reject. <b>Ambiguous</b> → surface, don't apply. <b>Soft style</b> → keep safer version, never escalate to satisfy style. <b>Ledger uncertainty</b> → ask. Per-hunk rollback, never whole-doc.</p></div>
+  </div>
+</section>
+
+<section id="scanner">
+  <p class="eyebrow">06 · signal, not verdict</p>
+  <h2>Scanner — <code>scan_prose.py</code></h2>
+  <p>Measures, never decides. Uses a CommonMark parser (excludes code, HTML, blockquotes, URLs, inline code; keeps headings + visible link text with structural type). Emits per metric: eligible-units, count, rate, locations, soft-flag. ~8 reliable metrics in MVP: sentence-length distribution, <code>sentence_length_dispersion</code> (<i>not</i> "burstiness" — that implies a validated authorship feature), repeated openers, transition clusters, punctuation rates, paragraph sentence-count runs, vague-attribution clusters, bold-label density, stock lexical clusters. Cadence-similarity flags only with a corroborating signal — its exact features/weights (and every metric's parameters) are pinned in <code>scanner-metrics.md</code> with fixtures before it ships (WF5 #6). <b>No cross-document percentiles in MVP</b> (needs a genre reference corpus). Thresholds are versioned triage aids — <code>purpose: candidate_selection_only</code>.</p>
+  <div class="grid2">
+    <div class="card"><h4><span class="tag dec">gpt-soul consult · WF5 #2/#5/#8</span>Markdown dependency: capability-gate + vendor</h4><p>Plugins have no managed venv, so a bare <code>import markdown_it</code> would fail for most users. Resolution: <b>gate by explicit <code>--format text|markdown</code></b> (never sniffed); plain-text is stdlib-only + always on; Markdown is either parsed by a conforming parser or reported unavailable — never routed through the plain-text path.</p></div>
+    <div class="card"><h4><span class="tag dec">decided</span>Fail loud, valid JSON</h4><p>On an absent/incompatible parser the scanner emits valid JSON <code>{"status":"capability_unavailable",…,"metrics":null}</code> + stderr + a dedicated advisory-skip <b>exit code 10</b> (0=ok, 1=defect) the caller turns into "skip these metrics". Never partial metrics that read as authoritative.</p></div>
+    <div class="card"><h4><span class="tag dec">decided</span>Vendor, never runtime-pip</h4><p>Real Markdown support = <b>vendored</b> pinned <code>markdown-it-py</code> + <code>mdurl</code> under a plugin-private <code>vendor/python/</code>, with licenses, provenance, and CommonMark fixtures on Linux/macOS/Windows. <b>Rejected:</b> runtime pip-install and a home-grown stdlib subset (the exclusion rules cross block+inline — a "subset" is just an approximate parser under another name).</p></div>
+    <div class="card"><h4><span class="tag dec">WF5 #8</span>Bare-URL = post-tokenization rule</h4><p>Bare-URL exclusion is a deterministic post-tokenization matcher bound to explicit extraction fixtures — <i>not</i> a dependency on a parser linkify extension — so counts/locations stay reproducible across parser versions. Since slopslap's inputs (specs, PRDs, essays) are Markdown, the vendored parser is <b>in MVP</b>.</p></div>
+  </div>
+</section>
+
+<section id="genre">
+  <p class="eyebrow">07 · context awareness</p>
+  <h2>Genre — per-region, asymmetric failure</h2>
+  <p>Not a whole-document label. Hierarchical: <code>document_genre</code> + <code>regions[]</code>, segmented at headings/blocks. Precedence: explicit user declaration &gt; file/repo context &gt; structural markers &gt; content inference. Profiles: general-prose · technical-doc · <b>spec</b> (repetition = correctness infrastructure — preserve) · <b>legal</b> (flag, audit-only) · <b>PRD</b> (challenge adjectives-posing-as-requirements) · marketing · personal (voice weighted high). <b>Asymmetric failure:</b> low confidence → the most preservation-heavy applicable profile (stiffening marketing &lt; changing a spec). Genre shapes diagnosis + rewrite constraints; it never decides prose is "bad."</p>
+</section>
+
+<section id="modes">
+  <p class="eyebrow">08 · how it's used</p>
+  <h2>Three modes</h2>
+  <div class="grid2">
+    <div class="card"><h4><span class="tag dec">MVP</span>audit</h4><p>Read-only diagnosis: passage → harm → confidence → class → why → repair kind → missing evidence. No edits.</p></div>
+    <div class="card"><h4><span class="tag dec">MVP · default</span>suggest</h4><p>Diagnosis + focused diff + questions <i>only</i> for facts that block a specific repair + invariant-check. Placeholders proposed <b>outside</b> the doc (inserting <code>[DEFINE X]</code> can make an invalid doc look complete).</p></div>
+    <div class="card"><h4><span class="tag dec">MVP</span>apply</h4><p>In-place, explicit request, <b>gated by a mandatory pre-mutation backup</b> written to a user-local dir <b>outside the repo</b> by default — an in-tree override must create + verify an ignore rule and <b>fail closed</b> if it can't (WF5 #4: an in-tree dir is not git-ignored just by living there). Universal safety net, git or not. Per-hunk <i>selective</i> rollback is now <b>in MVP</b> (reuses the edit-map machinery verification already needs).</p></div>
+  </div>
+</section>
+
+<section id="mvp">
+  <p class="eyebrow">09 · build order</p>
+  <h2 style="display:flex;align-items:center;gap:12px">MVP cut <span class="ring" aria-hidden="true"></span></h2>
+  <p>Sol vetoed audit-only: it proves the skill can <i>name</i> defects, not <i>safely repair</i> them — the hard part. So the MVP exercises the whole protect→verify loop, minus weakly-validated personalization. <b>Build order is fixtures-first:</b> pin the 3 canonical eval fixtures (the red test) before scaffolding, then the plugin, then the scanner, then the eval loop.</p>
+  <div class="ship">
+    <div class="col now"><h4>Ships in v1</h4><ul>
+      <li>audit + suggest modes</li>
+      <li>passage-local edits only</li>
+      <li>protected-span extraction</li>
+      <li>minimal invariant ledger</li>
+      <li>deterministic + separate semantic verify</li>
+      <li>~8 reliable scanner metrics (markdown via <b>vendored</b> CommonMark parser)</li>
+      <li>3 genre profiles (general, PRD/spec, personal)</li>
+      <li>3 canonical evals + clean-document controls</li>
+      <li><b>apply mode — backup-gated</b></li>
+      <li><b>byte-offset edit-map + per-hunk selective rollback</b></li>
+      <li>manual voice sample (no learning)</li>
+    </ul></div>
+    <div class="col later"><h4>Deferred, in order</h4><ul>
+      <li>1 · mixed-region genre classification</li>
+      <li>2 · expanded scanner heuristics</li>
+      <li>3 · persistent voiceprint learning</li>
+      <li>4 · legal profile (after dedicated tests)</li>
+    </ul></div>
+  </div>
+</section>
+
+<section id="voice">
+  <p class="eyebrow">10 · the learned voice — v2</p>
+  <h2>Voiceprint is defensive</h2>
+  <p>The strong framing (Claude's independent pass, confirmed by Sol): in a slop-stripping tool the voiceprint's primary job is a <b>per-author whitelist of genuine habits</b> — your em-dashes, fragments, "honestly" — so slopslap doesn't strip real voice as if it were AI-tell. It's permissive ("keep this, it's his"), not generative ("write like him"). That's exactly what humanizer can't do.</p>
+  <div class="grid2">
+    <div class="card"><h4>Source honesty</h4><p>Prompts teach diction / directness / hedging but are <b>blind to long-form rhythm</b> and full of mode-artifacts (typos, lowercase) that must never become prose style. Evidence weights: user long-form 1.0 · edits-to-a-rewrite 0.9 · accepted-as-voice 0.6 · prompt shell 0.35 · unchallenged output 0.0 · pasted 0.0.</p></div>
+    <div class="card"><h4>Authority order</h4><p>protected spans &gt; invariant ledger + no-fabrication &gt; genre &gt; <b>current explicit instruction</b> &gt; voiceprint &gt; neutral default. "Make this formal" beats a casual history; nothing overrides meaning.</p></div>
+    <div class="card"><h4>Anti-caricature</h4><p>Trait must recur across ≥3 sessions; never inject a tic just because frequent; on voiceprint-vs-local-document conflict prefer local continuity; idempotence — repeat runs must not amplify contractions / dashes / directness.</p></div>
+    <div class="card"><h4>Consent</h4><p>Opt-in, local-only, inspectable + editable (show / disable / reset / export / delete). Stores derived counts + approved examples, never raw prompts. Needs a companion opt-in UserPromptSubmit hook to capture.</p></div>
+  </div>
+</section>
+
+<section id="risks">
+  <p class="eyebrow">11 · what could break</p>
+  <h2>Second-order failure modes</h2>
+  <p>Beyond the obvious. These go in <code>eval-cases.md</code> as adversarial fixtures — the failures that make a "clean" edit actively harmful.</p>
+  <div class="grid2">
+    <div class="card" style="border-left:4px solid var(--coral)"><h4><span class="tag risk">signal→authorization</span></h4><p>The riskiest one: a scanner soft-flag / genre / voiceprint silently becomes permission to edit. The keystone rule + the guard test exist for exactly this.</p></div>
+    <div class="card" style="border-left:4px solid var(--coral)"><h4><span class="tag risk">voice erosion</span></h4><p>Iterative sanding (runs progressively flatten voice), non-native / dialect normalization, dialect suppression. Guarded by idempotence + "leave passed passages alone."</p></div>
+    <div class="card" style="border-left:4px solid var(--coral)"><h4><span class="tag risk">meaning drift</span></h4><p>Competence-laundering (cleaner prose making weak reasoning look authoritative), uncertainty deletion, responsibility reassignment (invented actor), diff-fragmentation (safe micro-edits jointly shift tone).</p></div>
+    <div class="card" style="border-left:4px solid var(--coral)"><h4><span class="tag risk">self-slop + over-reach</span></h4><p>Diagnosis theater, taxonomy leakage (outputting "specification-laundering" vs plain language), vision-policing (challenging every PRD aspiration), question-explosion, the audit itself reading as slop.</p></div>
+  </div>
+</section>
+
+<section id="evals">
+  <p class="eyebrow">12 · proof</p>
+  <h2>Evals</h2>
+  <p><b>Programmatic:</b> protected spans byte-identical; URLs / identifiers / defined-terms exact; numeric multiset preserved; modal inventory + negation + condition markers preserved; no edits outside authorized ranges; no invented numbers / names / citations / placeholders; Markdown parses pre+post; <b>idempotence</b> (run-2 = no material diff); scanner JSON schema-valid. <b>LLM-judge (blinded A/B, cites spans):</b> meaning + actor preservation, unsupported-claim introduction, unresolved-intent stays visible, edit locality, seeded defect fixed <i>without</i> normalizing surrounding distinctive prose. <b>Baselines:</b> humanizer AND original-unchanged (unchanged should win on clean/stylized prose). <b>Clean-document controls</b> — a system that always finds something to fix fails these.</p>
+  <h3>Decision rule — reproducible pass/fail (WF5 #1)</h3>
+  <p><b>Hard gates:</b> any programmatic failure = fixture fail, overriding every judge score. Each LLM-judge dimension scored <b>0/1/2</b> over ≥3 blinded trials, taking the per-dimension <b>median</b>. A fixture <b>beats</b> a baseline iff it clears all hard gates, its median dimension-sum ≥ the baseline's, and it wins ≥1 dimension with none worse by &gt;1; ties resolve to the <b>more preservation-heavy</b> output. On clean-document controls the pass criterion is <b>abstention</b> — original-unchanged must win or tie. Engine choice = the tier clearing the most fixtures' hard gates; per-tier results recorded, never one blended number.</p>
+  <h3>The 3 canonical fixtures (to pin in eval-cases.md — FIRST)</h3>
+  <p>distinctive human essay w/ 2 seeded generic paragraphs · normative spec w/ 1 vague non-requirement · underspecified PRD w/ real numeric constraints + missing decisions.</p>
+</section>
+
+<section id="provenance">
+  <p class="eyebrow">13 · how this spec was made</p>
+  <h2>Provenance</h2>
+  <p>Research (Exa + Wikipedia "Signs of AI writing" + editor field-guides + a full read of the humanizer skill) → gpt-5.6-sol consult <b>round 1</b> (proposal) → reconcile → <b>round 2</b> (adversarial stress-test + buildable mechanics + voiceprint) → Claude independent voiceprint pass (the defensive reframe) → reconcile all → gpt-5.6-sol <b>round 3</b> final review: <b>APPROVE, ready to build</b>, with the canonical-coordinate fix folded in.</p>
+  <p><b>Owner review (2026-07-12):</b> 3 findings decided — per-hunk rollback + edit-map into MVP, scanner dependency (a dedicated gpt-5.6-sol peer consult), fixtures-first build order → <b>WF5 cross-model adversarial review</b> (Codex / gpt-5.6-sol, high effort): <b>8 findings, 0 Critical / 4 High / 4 Medium, all confirmed against cited text and folded.</b> The spine (keystone rule, separate tell-categories, backup-gated apply) passed intact.</p>
+</section>
+
+<footer>
+  slopslap plugin spec · 2026-07-12 · reconciled from a 3-round cross-model consult (gpt-5.6-sol) + research + independent voiceprint pass, then WF5 cross-model review (8 findings folded).<br>
+  Canonical source: docs/planning/2026-07-12-slopslap-reconciled-spec.md · Reviews: docs/reviews/ · Rendered in the Kukakuka doc-language — NOT part of Kukakuka.
+</footer>
+</main>
+</div>
+
+<script>
+(function(){
+  var links=[].slice.call(document.querySelectorAll('.rail a[href^="#"]'));
+  var map={};links.forEach(function(a){var id=a.getAttribute('href').slice(1);var el=document.getElementById(id);if(el)map[id]=a;});
+  if('IntersectionObserver'in window){
+    var obs=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(a){a.classList.remove('on')});var a=map[e.target.id];if(a)a.classList.add('on')}})},{rootMargin:'-15% 0px -70% 0px'});
+    Object.keys(map).forEach(function(id){obs.observe(document.getElementById(id))});
+  }
+})();
+</script>
