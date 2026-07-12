@@ -10,7 +10,7 @@ source of truth; the hosted Artifact is a copy).
 
 ## Progress
 
-**5 / 14 children merged** · current: Tier 1 — #19 shipped (PR #37); #20 next
+**6 / 14 children merged** · current: Tier 1 — #20 shipped (PR #38); #22 last of Tier 1
 
 | Tier | Child | Title | Depth | Deps | Status | PR | Version | Gate delta |
 |---|---|---|---|---|---|---|---|---|
@@ -19,7 +19,7 @@ source of truth; the hosted Artifact is a copy).
 | 1 | #17 | semantic verify (real Layer-3 semantic_fn) | lite | #26 | ✅ merged | #34 | 0.1.3 | 304→308 (+4), 0 reg |
 | 1 | #18 | protected-span auto-extractor | lite | — | ✅ merged | #35 | 0.1.4 | 308→320 (+12), 0 reg |
 | 1 | #19 | invariant-ledger auto-build | lite | — | ✅ merged | #37 | 0.1.5 | 320→333 (+13), 0 reg |
-| 1 | #20 | live passage-local locality | lite | — | queued | — | — | — |
+| 1 | #20 | live passage-local locality | lite | — | ✅ merged | #38 | 0.1.6 | 333→344 (+11), 0 reg |
 | 1 | #22 | genre classifier constrains diagnosis/verify | lite | — | queued | — | — | — |
 | 2 | #27 | live-orchestration seam (the assembler) | full WF2 | #26, #17–#20 | queued | — | — | — |
 | 3 | #23 | suggest → deterministic verifier wiring | full WF2 | — | queued | — | — | — |

@@ -107,8 +107,8 @@ a{color:var(--lagoon)}
   </header>
 
   <!-- PROGRESS: update width% + caption on each merge -->
-  <div class="bar"><i style="width:36%"></i></div>
-  <p class="barcap">5 / 14 children merged · #26 · #30 · #17 · #18 · #19 (#37) ✅ · Tier 1 in progress · version 0.1.5</p>
+  <div class="bar"><i style="width:43%"></i></div>
+  <p class="barcap">6 / 14 children merged · #26 · #30 · #17 · #18 · #19 · #20 (#38) ✅ · Tier 1: #22 left · version 0.1.6</p>
 
   <div class="legend">
     <span class="chip merged"><span class="dot" style="background:var(--lagoon)"></span>merged + closed</span>
@@ -192,13 +192,16 @@ T4  #28 e2e golden (dep #27 #23 #17–#20 #30) · #25 calibration (dep #30)</div
       </ul>
       <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/37">#37</a> · v0.1.5 · gate 320→333 (+13, 0 reg)</div>
     </div>
-    <div class="card queued" id="c20">
+    <div class="card merged" id="c20">
       <div class="id">T1 · #20</div>
       <h3>Live passage-local locality</h3>
       <div class="dep">no deps</div>
-      <span class="st">queued</span>
-      <ul><li class="pending">Authorized ranges derived from diagnoses</li></ul>
-      <div class="kv">PR — · version — · gate —</div>
+      <span class="st">merged + closed</span>
+      <ul>
+        <li>Derives authorized_ranges (byte spans) from scan diagnoses → verify enforces edit_locality live</li>
+        <li>Line→byte + []=reject-all semantics review-confirmed correct; doc-level-only flags fail closed (#27 owns doc-wide lane)</li>
+      </ul>
+      <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/38">#38</a> · v0.1.6 · gate 333→344 (+11, 0 reg)</div>
     </div>
     <div class="card queued" id="c22">
       <div class="id">T1 · #22</div>
@@ -295,7 +298,7 @@ T4  #28 e2e golden (dep #27 #23 #17–#20 #30) · #25 calibration (dep #30)</div
   </ul>
 
   <div class="foot">
-    <b>Run:</b> autonomous · session 001b8b2c (resumed 93ac1943) · <b>5/14 merged</b> · baseline 214 passed / 0 failed @ 0bdbfa9.<br>
+    <b>Run:</b> autonomous · session 001b8b2c (resumed 93ac1943) · <b>6/14 merged</b> · baseline 214 passed / 0 failed @ 0bdbfa9.<br>
     <b>Repo:</b> 3D-Stories/slopslap · <b>Source of truth:</b> this committed HTML (hosted Artifact is a copy).
   </div>
 </div>
