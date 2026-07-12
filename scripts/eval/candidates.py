@@ -81,6 +81,15 @@ _SLOPSLAP_REPAIRS = {
          b"magical.",
          b"[Unsupported aspiration] State the measurable delivery requirement, or mark this a non-goal."),
     ],
+    # the real kukakuka PRD (issue #14): tighten the two clearest LOCALIZED inflation/anthropomorphism
+    # spots. The pervasive negative-parallelism cadence is FLAGGED (audit), not doc-wide flattened —
+    # slopslap surfaces the density for the human and repairs only the demonstrable local harm.
+    "kukakuka-prd": [
+        (b"honest about processes that didn't survive",
+         b"reports which processes didn't survive"),           # drop the "honest" anthropomorphism
+        (b"Two surfaces, two materials",
+         b"Two surfaces"),                                      # drop the inflated "materials" metaphor
+    ],
 }
 
 

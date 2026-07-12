@@ -18,11 +18,18 @@ from typing import Dict, List
 from .extract import Unit, split_sentences, unit_sentences, words
 from .tables import (
     DUALITY_TEMPLATES,
+    NEGATIVE_PARALLELISM_FLAG_AT,
+    NEGATIVE_PARALLELISM_PATTERNS,
+    PUNCT_FLAG_PER_1K,
+    RULE_OF_THREE_PATTERN,
     STOCK_CLUSTERS,
     TABLES_VERSION,
     TRANSITION_OPENERS,
     VAGUE_ATTRIBUTION,
 )
+
+_NEGPAR = re.compile("|".join(NEGATIVE_PARALLELISM_PATTERNS), re.IGNORECASE)
+_TRICOLON = re.compile(RULE_OF_THREE_PATTERN)
 
 PURPOSE = "candidate_selection_only"
 
@@ -98,11 +105,36 @@ def punctuation_rates(units, sw) -> Dict:
     em = text.count("—") + len(re.findall(r"(?<!-)--(?!-)", text))
     semi = text.count(";")
     per1k = lambda c: round(1000.0 * c / wc, 3) if wc else 0.0
+    em_r, semi_r = per1k(em), per1k(semi)
+    # candidate soft-flag when the appositive-punctuation density is high (issue #14)
+    soft = (em_r > PUNCT_FLAG_PER_1K["em_dash_per_1k"]
+            or semi_r > PUNCT_FLAG_PER_1K["semicolon_per_1k"])
     return _result(
-        wc, em + semi, None, [], None, "normal", "punct-v1",
-        rates={"em_dash_per_1k": per1k(em), "semicolon_per_1k": per1k(semi),
-               "em_dash": em, "semicolon": semi},
+        wc, em + semi, None, [], soft, "normal", "punct-v2",
+        rates={"em_dash_per_1k": em_r, "semicolon_per_1k": semi_r, "em_dash": em, "semicolon": semi},
+        thresholds=PUNCT_FLAG_PER_1K,
     )
+
+
+def negative_parallelism(units, sw) -> Dict:
+    """'X, not Y' / 'not X, but Y' cadence tic — medium confidence (issue #14)."""
+    wc = sum(len(words(u.text)) for u in units)
+    hits = []
+    for u in units:
+        for m in _NEGPAR.finditer(u.text):
+            hits.append({"match": re.sub(r"\s+", " ", m.group(0))[:48], "line_start": u.line_start})
+    rate = round(1000.0 * len(hits) / wc, 3) if wc else 0.0
+    return _result(wc, len(hits), rate, hits[:25], len(hits) >= NEGATIVE_PARALLELISM_FLAG_AT,
+                   "medium", "negparallel-v1", thresholds={"flag_at_count": NEGATIVE_PARALLELISM_FLAG_AT})
+
+
+def rule_of_three(units, sw) -> Dict:
+    """'A, B, and C' tricolon heuristic — low confidence, soft_flag null (issue #14)."""
+    hits = []
+    for u in units:
+        for m in _TRICOLON.finditer(u.text):
+            hits.append({"match": re.sub(r"\s+", " ", m.group(0))[:48], "line_start": u.line_start})
+    return _result(len(units), len(hits), None, hits[:25], None, "low", "tricolon-v1")
 
 
 def paragraph_sentence_count_runs(units, sw) -> Dict:
@@ -228,6 +260,8 @@ ALL_METRICS = [
     ("sentence_length_distribution", sentence_length_distribution),
     ("sentence_length_dispersion", sentence_length_dispersion),
     ("punctuation_rates", punctuation_rates),
+    ("negative_parallelism", negative_parallelism),
+    ("rule_of_three", rule_of_three),
     ("paragraph_sentence_count_runs", paragraph_sentence_count_runs),
     ("bold_label_density", bold_label_density),
     ("repeated_openers", repeated_openers),

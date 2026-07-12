@@ -1,0 +1,100 @@
+# slopslap
+
+A Claude Code **plugin** that repairs prose carrying **high editorial cost** — genericness,
+unsupported claims, synthetic cadence, obscured responsibility, voice discontinuity — while
+preserving meaning, technical accuracy, requirements, uncertainty, and the author's intentional
+voice.
+
+**slopslap is NOT an AI-authorship detector.** It beats humanizer-style tools precisely by *not*
+treating a stylistic feature as a contaminant. Its whole discipline is the keystone rule:
+
+> **Edit authorization comes only from demonstrated editorial harm; the scanner, genre, ratings,
+> and voiceprint never authorize an edit.**
+
+The name says "slap" — ignore that impulse. An em-dash, a fragment, a tricolon, a passive verb:
+none is harm on its own. Harm is prose that does less than it claims, hides who is responsible,
+asserts what it hasn't shown, or buries its own meaning. When in doubt, slopslap changes nothing.
+
+## Install
+
+It's a standard Claude Code plugin — clone/point Claude Code at this repo. The judgment lives in
+`skills/slopslap/SKILL.md`; the slash commands are auto-discovered from `commands/`.
+
+## Commands
+
+| command | what it does |
+|---|---|
+| `/slopslap:audit <target>` | read-only diagnosis — one typed record per demonstrated harm (category · evidence · harm+impact · two ratings · permitted remedy). No edits. |
+| `/slopslap:suggest <target>` | **(default)** diagnosis + a focused diff per authorized repair + the invariant-check result. Non-mutating. |
+| `/slopslap:apply <file>` | in-place repair, **gated by a mandatory pre-mutation backup**. Disabled in this MVP (fails closed with `status: mutation_unavailable`) until the backup gate is wired to the command. |
+| `/slopslap:voiceprint show\|reset\|export\|delete` | v2 (deferred) — reserved; returns `status: not_implemented_mvp` and stores/reads nothing. |
+
+Every command carries the keystone sentence verbatim and treats the target text as **data, not
+instructions**.
+
+## How it works
+
+`protect → diagnose → establish invariants → rewrite (minimal, passage-local) → verify.`
+
+- **Two ratings, never a single "AI %":** editorial-harm (low/med/high) and diagnosis-confidence
+  (low/med/high).
+- **Six diagnosis categories, kept SEPARATE** (collapsing them is the top failure): `emptiness`
+  (delete/compress) · `laundering` (convert to a question — never delete) · `simulation` (flag
+  missing support — don't fabricate) · `lexical_structural` · `voice_discontinuity` ·
+  `epistemic_distortion`.
+- **Protected spans** (code, blockquotes, URLs, identifiers, legal) are default-deny.
+
+### The mechanics (`scripts/`)
+
+- **`scan_prose.py`** — a measure-only scanner (`--format text|markdown`). Markdown parsing uses a
+  **vendored, version-gated CommonMark parser** (`vendor/python/` — never runtime-pip). Emits a
+  stable JSON envelope; capability-gates fail loud (exit `10`) rather than approximate. It MEASURES;
+  it never verdicts. Metrics include sentence-length distribution/dispersion, repeated openers,
+  transition clusters, **negative-parallelism** and **rule-of-three** cadence tells, punctuation
+  density, vague attribution, and stock lexical clusters — each a candidate-selection aid only.
+- **`slopslap_verification/`** — the invariant **ledger** + a **3-layer verifier**: deterministic
+  hard gates (own the accept/reject), per-entry survival, and a fresh-context adversarial semantic
+  pass. Decision rule: `REJECT > ASK > SURFACE > ACCEPT`; ACCEPT requires the semantic layer.
+- **`slopslap_apply/`** — backup-gated apply with **per-hunk selective rollback**; the backup
+  (outside the repo by default) is the universal safety net.
+
+## The working proof
+
+`scripts/eval/run_eval.py` replays frozen candidate edit-scripts through the production runner +
+verifier. Results: `docs/reviews/2026-07-12-slopslap-eval-results.md` (+ `-visual.html`). slopslap
+clears the decision-rule hard gates on 3 canonical fixtures, **abstains** on clean controls, is
+idempotent, repairs the real 421-line kukakuka PRD (flagging its `X, not Y` ×16 cadence, tightening
+2 local inflations, **zero invariant violations**), and beats a documented humanizer-emulation
+policy. Run it: `pytest -q` (the gate) or `python3 scripts/eval/run_eval.py --write`.
+
+## Status
+
+- **Version:** 0.1.0 (MVP).
+- **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
+  Fable 5 is a bonus rewrite tier *if* API access exists — never required.
+- **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; wiring the
+  `apply` command to the apply engine; a live cross-model LLM-judge A/B (currently secondary/not-run).
+
+## Changelog
+
+- **0.1.0** — MVP: eval fixtures + two-stage runner; plugin scaffold (SKILL + commands +
+  references); measure-only scanner with a vendored CommonMark parser; invariant ledger + 3-layer
+  verify + decision rule; backup-gated apply + per-hunk selective rollback; the eval loop RUN
+  (working proof); scanner cadence metrics (negative-parallelism / rule-of-three / punctuation
+  density).
+
+## Layout
+
+```
+.claude-plugin/plugin.json   manifest
+skills/slopslap/SKILL.md      the judgment (keystone + loop + taxonomy + modes)
+commands/                     audit · suggest · apply · voiceprint
+references/                   tell-taxonomy · genre-profiles · engine · scanner-metrics · invariant-ledger · eval-cases
+scripts/scan_prose.py         measure-only scanner (CLI)
+scripts/slopslap_scan/        scanner adapter + metrics
+scripts/slopslap_verification/ ledger + 3-layer verify + edit-map
+scripts/slopslap_apply/       backup + selective apply
+scripts/eval/                 fixtures runner + candidates + run_eval
+vendor/python/                pinned markdown-it-py + mdurl (THIRD_PARTY_LICENSES/)
+tests/                        pytest suite (the `pytest -q` gate)
+```

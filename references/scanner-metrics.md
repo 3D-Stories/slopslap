@@ -58,11 +58,13 @@ extraction_profile, confidence, purpose}` (distribution/dispersion metrics add a
 |---|---|---|
 | sentence_length_distribution | normal | word-count per sentence; min/p10/p25/median/p75/p90/max/mean/sd (population sd) |
 | sentence_length_dispersion | normal | IQR/median, CoV = sd/mean, median adjacent-diff (NOT "burstiness") |
-| punctuation_rates | normal | em-dash (`—` and standalone `--`) + `;` per 1k eligible words |
+| punctuation_rates | normal | em-dash (`—` and standalone `--`) + `;` per 1k eligible words; soft_flag when either exceeds `tables.PUNCT_FLAG_PER_1K` (appositive-density tell, issue #14) |
 | paragraph_sentence_count_runs | normal | ≥3 adjacent paragraphs with equal sentence count → one run |
 | bold_label_density | normal | `**label**:` at the start of a paragraph/list item ÷ eligible blocks (not every bold span) |
 | repeated_openers | medium | normalized 1/2/3-token openers; **gap≤7 cluster events** (see below) |
 | transition_clusters | medium | SENTENCE-INITIAL transition openers (`tables.TRANSITION_OPENERS`) per 1k words |
+| negative_parallelism | medium | `X, not Y` / `not X, but Y` occurrences (`tables.NEGATIVE_PARALLELISM_PATTERNS`); soft_flag at ≥5 (issue #14) |
+| rule_of_three | low | `A, B, and C` tricolon heuristic (`tables.RULE_OF_THREE_PATTERN`); soft_flag null |
 | vague_attribution | low | phrase table `tables.VAGUE_ATTRIBUTION`; `soft_flag:null` |
 | stock_lexical_clusters | low | named phrase table `tables.STOCK_CLUSTERS` + 2 bounded duality templates; `soft_flag:null` |
 

@@ -65,3 +65,18 @@ ABBREVIATIONS = {
 
 # leading negators that count as lexical tokens for repeated-opener normalization.
 NEGATORS = {"no", "not", "never", "neither", "nor"}
+
+# --- cadence tells (issue #14) ---
+# negative parallelism: "X, not Y" and "not X, but Y" — the dominant synthetic-cadence tic.
+NEGATIVE_PARALLELISM_PATTERNS = [
+    r"\b[a-z]{2,},\s+not\s+[a-z]{2,}",          # "quality, not expediency"
+    r"\bnot\s+[a-z][\w -]{0,50}?,\s+but\s+[a-z]",  # "not X, but Y"
+]
+# candidate soft-flag threshold (versioned; candidate_selection_only, no cross-doc percentiles).
+NEGATIVE_PARALLELISM_FLAG_AT = 5
+
+# rule-of-three tricolon heuristic: "A, B, and C" parallel triple (low confidence).
+RULE_OF_THREE_PATTERN = r"\b[\w-]+,\s+[\w-]+,\s+and\s+[\w-]+"
+
+# em-dash / semicolon appositive-density soft-flag thresholds (per 1k eligible words).
+PUNCT_FLAG_PER_1K = {"em_dash_per_1k": 12.0, "semicolon_per_1k": 8.0}
