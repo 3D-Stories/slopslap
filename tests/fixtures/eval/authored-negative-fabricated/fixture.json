@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "genre": "general",
+  "control": false,
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [
+    {
+      "start_byte": 12,
+      "end_byte": 94
+    }
+  ],
+  "protected_spans": [],
+  "invariant_regions": [],
+  "expected_invariants": [],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "simulation",
+      "region": "fabricated-number",
+      "note": "the negative 'after' (built in the test) inserts a specific number the source never contained -> Layer-1 no_new_claim_atoms must REJECT; this fixture can never be a golden"
+    }
+  ],
+  "control_reason": null,
+  "expected_preservation_failure": true
+}

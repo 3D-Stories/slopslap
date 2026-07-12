@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "genre": "technical",
+  "control": false,
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [
+    {
+      "start_byte": 127,
+      "end_byte": 234
+    }
+  ],
+  "protected_spans": [
+    {
+      "start_byte": 0,
+      "end_byte": 18,
+      "sha256": "aa7e58c563ca24f997feafe7917ac6fff471294ff53eded6d235642095bcfc63",
+      "kind": "heading"
+    },
+    {
+      "start_byte": 20,
+      "end_byte": 125,
+      "sha256": "88e1df6a7cfae09413ebb08529407369cd518eb7355ddcc367fc186fe03bba6b",
+      "kind": "incident-facts"
+    }
+  ],
+  "invariant_regions": [],
+  "expected_invariants": [
+    {
+      "kind": "protected_span",
+      "text": "the incident-report heading and the two factual sentences (same facts, terms, and heading)",
+      "preservation": "byte_exact",
+      "region": null
+    }
+  ],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "voice_discontinuity",
+      "region": "seam",
+      "note": "a restrained incident-report register gives way to promotional second-person hype at an internal seam; only the seam-adjacent promo prose is editable, the facts and heading are protected"
+    }
+  ],
+  "control_reason": null
+}

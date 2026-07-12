@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "genre": "technical",
+  "control": false,
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [
+    {
+      "start_byte": 21,
+      "end_byte": 91
+    }
+  ],
+  "protected_spans": [
+    {
+      "start_byte": 93,
+      "end_byte": 208,
+      "sha256": "c077669b47a7a14222b76449e10d89dc0a988b699f8cb83b96427339427efc5d",
+      "kind": "structural-list"
+    }
+  ],
+  "invariant_regions": [],
+  "expected_invariants": [
+    {
+      "kind": "protected_span",
+      "text": "structural semicolons separating list items that contain commas",
+      "preservation": "byte_exact",
+      "region": null
+    }
+  ],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "lexical_structural",
+      "region": "stylistic-semicolons",
+      "note": "the semicolon in paragraph 1 is stylistic and removable; the semicolons in paragraph 3 separate list items that themselves contain commas and are structural -> must stay"
+    }
+  ],
+  "control_reason": null
+}

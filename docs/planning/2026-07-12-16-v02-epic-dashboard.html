@@ -107,8 +107,8 @@ a{color:var(--lagoon)}
   </header>
 
   <!-- PROGRESS: update width% + caption on each merge -->
-  <div class="bar"><i style="width:3%"></i></div>
-  <p class="barcap">0 / 14 children merged · #26 PR open (gate 214→260, +46 tests) · version 0.1.1</p>
+  <div class="bar"><i style="width:7%"></i></div>
+  <p class="barcap">1 / 14 children merged · #26 ✅ merged (#32) · #30 PR open (gate 267→302, +35) · version 0.1.2</p>
 
   <div class="legend">
     <span class="chip merged"><span class="dot" style="background:var(--lagoon)"></span>merged + closed</span>
@@ -128,30 +128,31 @@ T4  #28 e2e golden (dep #27 #23 #17–#20 #30) · #25 calibration (dep #30)</div
   <h2>Tier 0 — prerequisites</h2>
   <p class="sec-sub">full WF2 both · do first</p>
   <div class="grid">
-    <div class="card active" id="c26">
+    <div class="card merged" id="c26">
       <div class="id">T0 · #26</div>
       <h3>Platform-feasibility spike</h3>
       <div class="dep">no deps · blocks #17, #27</div>
-      <span class="st">PR open</span>
+      <span class="st">merged + closed</span>
       <ul>
         <li>subprocess <code>claude -p</code> adapter <code>invoke_semantic</code> feeds verify(semantic_fn)</li>
         <li>fresh context machine-proven: init event zero tools + zero MCP; sentinel denial test</li>
         <li>fail-closed to <code>ambiguous</code> on every transport/parse/timeout failure</li>
         <li>live invocation (clean, 11.3s) + recorded fixture + SLOPSLAP_LIVE-gated test</li>
       </ul>
-      <div class="kv">PR pending · version 0.1.1 · gate 214→260 (+46, 0 reg)</div>
+      <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/32">#32</a> · merged c87f144 · v0.1.1 · gate 214→267 (+53, 0 reg)</div>
     </div>
-    <div class="card queued" id="c30">
+    <div class="card active" id="c30">
       <div class="id">T0 · #30</div>
       <h3>Corpus integration</h3>
       <div class="dep">no deps · blocks #25, #28</div>
-      <span class="st">queued</span>
+      <span class="st">PR open</span>
       <ul>
-        <li class="pending">Provenance manifest (corpus_manifest.jsonl, per-item lanes)</li>
-        <li class="pending">Disjoint calibration / held-out split</li>
-        <li class="pending">Fixture tranche + negative preservation anchors</li>
+        <li>Per-item provenance manifest (23 items, license from each item's origin)</li>
+        <li>Source-family disjoint split — leak guard keyed on family, not passage</li>
+        <li>5 authored fixtures + negative anchor (fabricated number → verify REJECT)</li>
+        <li>Two-sided licensing + hash-drift tests fail closed both directions</li>
       </ul>
-      <div class="kv">PR — · version — · gate —</div>
+      <div class="kv">PR pending · version 0.1.2 · gate 267→302 (+35, 0 reg)</div>
     </div>
   </div>
 

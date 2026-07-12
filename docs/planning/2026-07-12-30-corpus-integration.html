@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>slopslap #30 · corpus integration</title>
+<style>
+:root{--bg:#f6f7f8;--surface:#fff;--ink:#1a2126;--ink-2:#4b5a63;--ink-3:#7b8a92;
+--line:#dde3e6;--accent:#0f766e;--code:#eef1f3}
+@media(prefers-color-scheme:dark){:root{--bg:#12181c;--surface:#1a2228;--ink:#e7edf0;
+--ink-2:#a8b6bd;--ink-3:#71808a;--line:#2a353c;--accent:#2dd4bf;--code:#232d34}}
+:root[data-theme=dark]{--bg:#12181c;--surface:#1a2228;--ink:#e7edf0;--ink-2:#a8b6bd;
+--ink-3:#71808a;--line:#2a353c;--accent:#2dd4bf;--code:#232d34}
+:root[data-theme=light]{--bg:#f6f7f8;--surface:#fff;--ink:#1a2126;--ink-2:#4b5a63;
+--ink-3:#7b8a92;--line:#dde3e6;--accent:#0f766e;--code:#eef1f3}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+font:15px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px 72px}
+header{padding:40px 0 18px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.eyebrow{color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+h1{font-size:clamp(22px,4vw,30px);margin:.3em 0;font-weight:750;letter-spacing:-.02em}
+h2{font-size:19px;font-weight:700;margin:1.4em 0 .4em}
+h3{font-size:16px;font-weight:650;margin:1.2em 0 .3em}
+p,li{color:var(--ink-2)}
+code{background:var(--code);border-radius:4px;padding:1px 5px;font:12.5px/1.4 ui-monospace,Menlo,Consolas,monospace}
+pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto}
+pre code{background:none;padding:0}
+blockquote{border-left:3px solid var(--accent);margin:.6em 0;padding:.2em 0 .2em 14px;color:var(--ink-3)}
+table{border-collapse:collapse;width:100%;margin:.6em 0;font-size:13.5px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.telemetry th{white-space:nowrap;color:var(--ink-3);width:1%}
+.telemetry-section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 18px 14px;margin-top:24px}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div class="eyebrow">rawgentic design artifact · updated 2026-07-12 14:01 MDT</div>
+<h1>slopslap #30 · corpus integration</h1>
+
+</header>
+<main>
+<h1>#30 Corpus integration — provenance manifest + disjoint split + fixtures + negative anchors</h1>
+<p>Part of epic #16 (Tier 0). Prerequisite for #25 (calibration) and #28 (e2e golden). Design synthesizes the owner-approved GPT-Soul consult (<code>docs/reviews/peer-corpus-foldin-question-2026-07-12.md</code>) + the corpus licensing map (<code>research/ai-slop-corpus/SOURCES.md</code>). Corpus already committed under <code>research/ai-slop-corpus/</code>.</p>
+<h2>Problem</h2>
+<p>WF5 F5: putting the same gathered pairs into BOTH calibration data and eval/judge fixtures creates train/test overlap — thresholds tuned on the very examples later used to claim reliability. This issue lays the provenance-first, lane-separated, disjoint-split foundation so #25 and #28 build on clean partitions.</p>
+<h2>Approach (provenance-first, lane-separated — peer-approved)</h2>
+<p><strong>1. Shared provenance manifest</strong> <code>research/ai-slop-corpus/corpus_manifest.jsonl</code> — one JSON object per LINE, per ITEM (not per source). Fields (peer sketch): <code>source_id, item_id, source_family, citation, revision, license, allowed_uses[], redistribution, attribution, direction (ai_to_human|human_to_ai|before_only), tells[], genre, control, after_validity (faithful|fabricated|indeterminate|none), artifact_lanes[] (subset of fixture|judge_reference|calibration|inspiration), content_hashes{before,after}, lineage, notes</code>.</p>
+<p><strong>Two orthogonal axes, disambiguated (fixes the calibration-lane/calibration-split collision):</strong></p>
+<ul>
+<li><code>artifact_lanes[]</code> is a LIST (fixes the &quot;fixture and/or calibration&quot; one-value contradiction):</li>
+</ul>
+<p>  an item may legitimately serve as both <code>fixture</code> and <code>calibration</code>. The lane is the   PURPOSE (what the item may be used for).</p>
+<ul>
+<li><code>split</code> (a SEPARATE field, <code>calibration|held_out</code>, present ONLY on items whose lanes include</li>
+</ul>
+<p>  <code>calibration</code> or <code>judge_reference</code> — the empirically-tuned lanes) is the PARTITION. <code>fixture</code>   and <code>inspiration</code> items carry <code>split: null</code> (they are deterministic-gate or metadata-only,   never threshold-tuned, so the leak concern does not apply to them). This removes the naming   collision: &quot;calibration&quot; the lane ≠ the <code>calibration</code> split value.</p>
+<ul>
+<li><strong><code>source_family</code> MUST reflect TRUE common origin, not the fetch-file (Step-11 Critical).</strong></li>
+</ul>
+<p>  The humanizer skill is a Wikipedia-*Signs-of-AI-writing* DERIVATIVE — identical before-passages   appear in both fetch files — so a family drawn per fetch-file (<code>wikipedia</code> vs <code>humanizer</code>) let   the same content sit in both partitions while the family-string check passed. Both are now ONE   family <code>wikipedia-signs-guide</code> in a single partition; an independent MIT origin (<code>stop-slop</code>)   fills the other. A regression test anchors that no wiki-*/hum- item ever spans partitions.</p>
+<ul>
+<li>**Split by SOURCE FAMILY, not passage (fixes the real leak — self-review H1, peer consult</li>
+</ul>
+<p>  &quot;split by source family, not merely by passage&quot;).<strong> A content-hash key is NOT enough: the   humanizer file alone is 29 pairs from ONE Wikipedia guide, file 01 is many passages from one   article — near-duplicates that are not byte-identical (so different <code>before</code> hashes) would   still scatter across the calibration/held-out boundary and leak. The partition is therefore   keyed on <code>source_family</code>: EVERY item from one family lands in the SAME partition. The split   field is carried per tunable item in the manifest; <code>assert_split_disjoint</code> proves </strong>no   <code>source_family</code> spans both partitions** (the real leak-proofness guard). <code>content_hashes</code> are   still recorded (for the drift check below), but they are not the split key.</p>
+<p><strong>2. Routing (per-item, from license + direction + after_validity):</strong></p>
+<ul>
+<li>**License is assigned per manifest ITEM from the item&#x27;s real origin URL, NEVER inherited from</li>
+</ul>
+<p>  the source-file number (self-review H3).<strong> Two traps in SOURCES.md: file 04   (<code>deslop-github-and-cover-letter</code>) is </strong>split-license<strong> — the GitHub repo <code>examples.md</code> items   are MIT/committable, but the <code>blog.stephenturner.us</code> prose items are ⚠️ fair-use → <code>inspiration</code>   only; file 02 (humanizer) is MIT but a </strong>CC-BY-SA derivative**, so its share-alike +   attribution obligations are recorded in each item&#x27;s <code>attribution</code>/<code>lineage</code>.</p>
+<ul>
+<li>Wikipedia (CC BY-SA) / MIT repo items (files 01, 02, 03, 04-repo) verbatim + permitted → <code>fixture</code> and/or <code>calibration</code>.</li>
+<li>AI→human + faithful + permitted → <code>judge_reference</code> (golden ONLY after claim/number/modality/</li>
+</ul>
+<p>  negation/protected/structure checks + human review; never auto-golden).</p>
+<ul>
+<li>AI→human + fabricated → <code>judge_reference</code> tagged <code>after_validity: fabricated</code> = **negative</li>
+</ul>
+<p>  preservation anchor** (scores POORLY on meaning preservation; NEVER a golden, kept out of   aggregate quality rankings).</p>
+<ul>
+<li>human→AI → <code>calibration</code>/control only (never a de-slopping golden).</li>
+<li>⚠️ commercial blogs / research-only datasets (files 05–10) → <code>inspiration</code> only: metadata +</li>
+</ul>
+<p>  tell taxonomy + an ORIGINAL non-verbatim description; <strong>commit NO verbatim text</strong>.</p>
+<p><strong>3. A corpus &quot;after&quot; is NEVER auto-golden</strong> — slopslap authors its own faithful edit-script constrained to existing claims (the no-fabrication rule).</p>
+<p><strong>4. Authored thin-tell fixtures</strong> (no prior art / no license risk — fully original), matching the existing <code>tests/fixtures/eval/&lt;name&gt;/{fixture.json,original.md}</code> structure so the eval loader + <code>verify()</code> exercise them unchanged:</p>
+<ul>
+<li><code>authored-semicolon</code> — semicolons that are stylistic (removable) AND semicolons whose removal</li>
+</ul>
+<p>  would alter structure (must stay); tell <code>synthetic_cadence</code>.</p>
+<ul>
+<li><code>authored-false-range</code> — unsupported &quot;from X to Y&quot; rhetoric distinguished from a genuine</li>
+</ul>
+<p>  bounded range; tell <code>false_range</code>.</p>
+<ul>
+<li><code>authored-voice-seam</code> — two locally-coherent sections + an abrupt internal register seam</li>
+</ul>
+<p>  (restrained incident report → promotional 2nd-person hype), SAME facts/terms/headings.   Editable = seam-adjacent prose; facts/structure protected. Deterministic hard gates check   locality/facts/modality/terms/structure/idempotence ONLY; seam-reduction is a SOFT   blinded-judge dimension (NOT a brittle deterministic style gate — peer decision).</p>
+<ul>
+<li><code>authored-laundering-question</code> — an assertion that the authorized result converts to a</li>
+</ul>
+<p>  question (remedy-mismatch tested directly, not by deletion).</p>
+<ul>
+<li>One <strong>negative anchor</strong> <code>authored-negative-fabricated</code> — a fabricated &quot;after&quot; (invents a</li>
+</ul>
+<p>  specific number <strong>whose normalized token does NOT already appear anywhere in <code>original.md</code></strong> —   self-review H7, so the deterministic Layer-1 <code>no_new_claim_atoms</code> reject is guaranteed   independent of ledger coverage) tagged <code>expected_preservation_failure: true</code>; a test asserts   <code>verify()</code> REJECTS it, proving it can never be a golden.</p>
+<p><strong>Where each authored fixture&#x27;s candidate &quot;after&quot; lives (self-review H4).</strong> The eval harness feeds candidate edits from <code>scripts/eval/candidates.py</code>, and <code>fixture.json</code>/<code>original.md</code> carry NO after. To keep this PR purely additive (no change to <code>candidates.py</code>/<code>run_eval.py</code>), each authored fixture&#x27;s candidate edit-script is constructed <strong>inline in <code>tests/test_authored_fixtures.py</code></strong> (as <code>editscript.Edit</code> objects, the same way <code>test_invoke_verify_roundtrip.py</code> does), and the test drives <code>verify()</code> directly. The test passes <code>authorized_ranges = fixture.editable_ranges</code> (else <code>verify()</code> downgrades locality to ASK) and supplies a <strong>second pass</strong> so the idempotence gate actually fires (else NOT_EVALUATED). &quot;Terms preservation&quot; is enforced by encoding each protected term as a byte-pinned <code>protected_spans</code> entry (there is no standalone terms gate) — the voice-seam fixture&#x27;s facts, terminology, and headings are all protected spans; only seam-adjacent prose is editable.</p>
+<p><strong>5. Fixed disjoint split</strong> — the partition is CARRIED in the manifest (<code>split</code> field, present ONLY on items eligible for calibration — lanes including <code>calibration</code> or <code>judge_reference</code>; <code>fixture</code>/<code>inspiration</code> items carry <code>split: null</code>, self-review H6), not computed at read time, so it is stable and auditable in the committed file. The loader exposes <code>calibration_items()</code> / <code>held_out_items()</code>, and <code>assert_split_disjoint(manifest)</code> proves <strong>no <code>source_family</code> appears in both partitions</strong>. #25 fits thresholds on <code>calibration</code> and reports on <code>held_out</code>; a test enforces family-level non-intersection.</p>
+<h2>File changes</h2>
+<ul>
+<li>NEW <code>research/ai-slop-corpus/corpus_manifest.jsonl</code> (per-item provenance)</li>
+<li>NEW <code>scripts/slopslap_corpus/__init__.py</code>, <code>manifest.py</code> (schema + load/validate),</li>
+</ul>
+<p>  <code>split.py</code> (deterministic disjoint split)</p>
+<ul>
+<li>NEW authored fixtures `tests/fixtures/eval/authored-{semicolon,false-range,voice-seam,</li>
+</ul>
+<p>  laundering-question,negative-fabricated}/{fixture.json,original.md}`</p>
+<ul>
+<li>NEW <code>tests/test_corpus_manifest.py</code>, <code>tests/test_corpus_split.py</code>,</li>
+</ul>
+<p>  <code>tests/test_authored_fixtures.py</code></p>
+<ul>
+<li>README + Changelog; version bump ×2</li>
+</ul>
+<h2>Configuration changes</h2>
+<p>None.</p>
+<h2>Error handling and failure modes</h2>
+<ul>
+<li>Manifest load fails closed: a malformed line, an unknown <code>artifact_lane</code>/<code>after_validity</code></li>
+</ul>
+<p>  enum, a missing required field, or a bad <code>direction</code> → <code>ManifestError</code> (never a silent   accept of an unlabeled item into a lane).</p>
+<ul>
+<li>The split raises if any item lacks the fields needed to place it, rather than silently</li>
+</ul>
+<p>  dropping it from both partitions.</p>
+<ul>
+<li><strong>Content-hash drift check (self-review H5):</strong> for every item carrying a committed verbatim</li>
+</ul>
+<p>  file (fixture/calibration lane), a test recomputes <code>sha256_hex(bytes)</code> and compares against   the manifest&#x27;s <code>content_hashes</code>, reusing the exact pattern at <code>scripts/eval/loader.py:134-135</code>.   Fail-closed on mismatch OR a committed-text item lacking a hash — so provenance metadata   (license, revision, attribution) can never silently detach from the bytes it describes.</p>
+<h2>Representability (confirmed against real code — Step-4 H3)</h2>
+<ul>
+<li>Authored fixtures use the EXACT loader schema (<code>scripts/eval/loader.py:63-75</code>: 11 required</li>
+</ul>
+<p>  fields + <code>control_reason</code>), so <code>load_fixture</code> + <code>verify()</code> exercise them unchanged. The   assertion→question laundering case is already a supported <code>seeded_defects</code> class   (<code>specification_laundering</code>, present in the existing <code>normative-spec</code> fixture). Selective   semicolon protection and seam-local editing are expressed via <code>editable_ranges</code> +   <code>protected_spans</code> (the same mechanism the existing fixtures use).</p>
+<ul>
+<li>The negative-anchor hard-REJECT is REAL: a fabricated &quot;after&quot; that invents a number introduces</li>
+</ul>
+<p>  a new claim atom, which the <code>no_new_claim_atoms</code> deterministic gate (<code>gates.py:144</code>) fails →   <code>verify()</code> REJECT. The test asserts exactly this decision.</p>
+<h2>Security implications</h2>
+<ul>
+<li>Licensing is the real risk. The manifest&#x27;s <code>license</code>/<code>redistribution</code>/<code>allowed_uses</code> are</li>
+</ul>
+<p>  authoritative: only <code>fixture</code>/<code>calibration</code>-lane items carry verbatim text, and ONLY when   <code>redistribution</code> permits (MIT / CC BY-SA with attribution). ⚠️ sources are <code>inspiration</code>   lane — metadata + original description only, zero verbatim bytes committed.</p>
+<ul>
+<li><strong>Two-sided licensing test (Step-4 H5):</strong> (a) NEGATIVE — no <code>inspiration</code>-lane item has a</li>
+</ul>
+<p>  committed verbatim fixture file; AND (b) POSITIVE — every item whose lanes include <code>fixture</code>   or <code>calibration</code> (i.e. carries committed verbatim text) has <code>redistribution</code> in   <code>{permitted, share-alike}</code> and a non-empty <code>attribution</code>. An item that carries verbatim text   without a redistribution-permitting license fails the test — the invariant is enforced in   both directions, not just the inverse.</p>
+<ul>
+<li>Wikipedia CC BY-SA share-alike: attribution + license notice recorded in the manifest</li>
+</ul>
+<p>  <code>attribution</code> field; <code>THIRD_PARTY_LICENSES/PROVENANCE.md</code> updated.</p>
+<h2>Platform / external dependencies</h2>
+<p>platform_apis: none</p>
+<h2>Multi-PR assessment</h2>
+<p>Single PR. Additive: new module + manifest + authored fixtures + tests; no existing module changed.</p>
+<h2>Provenance</h2>
+<p>Design synthesizes the owner-approved GPT-Soul peer consult (<code>peer-corpus-foldin-question-2026-07-12.md</code>) and the WF5 epic-stack review finding F5. No new peer consult run (this design IS the consult&#x27;s output applied).</p>
+
+</main>
+<footer>Last updated: 2026-07-12 14:01 MDT · generated by hooks/render_artifact.py — self-contained, no external resources.</footer>
+</div>
+</body>
+</html>
