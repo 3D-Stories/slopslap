@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "genre": "general",
+  "control": false,
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [
+    {
+      "start_byte": 21,
+      "end_byte": 130
+    }
+  ],
+  "protected_spans": [
+    {
+      "start_byte": 133,
+      "end_byte": 234,
+      "sha256": "701ed0fd46ceae42ee871ccae106f90a3a0c037357e8a35836a07fae94811b95",
+      "kind": "bounded-range-sentence"
+    }
+  ],
+  "invariant_regions": [
+    {
+      "id": "genuine-range",
+      "start_byte": 187,
+      "end_byte": 233,
+      "checks": [
+        "numbers"
+      ],
+      "policy": "preserve_all"
+    }
+  ],
+  "expected_invariants": [
+    {
+      "kind": "number_or_quantity",
+      "text": "no less than 4 hours and no more than 24 hours",
+      "preservation": "lexically_exact",
+      "region": "genuine-range"
+    },
+    {
+      "kind": "unsupported_intent",
+      "text": "from onboarding to offboarding / from strategy to execution rhetorical range with no real bound",
+      "preservation": "surface_only",
+      "region": null
+    }
+  ],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "lexical_structural",
+      "region": "false-range",
+      "note": "the 'from X to Y' rhetoric carries no real bound and is removable; the genuine 4-to-24-hour window is a real bounded range and must stay"
+    }
+  ],
+  "control_reason": null
+}

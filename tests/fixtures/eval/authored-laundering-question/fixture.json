@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "genre": "spec",
+  "control": false,
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [
+    {
+      "start_byte": 17,
+      "end_byte": 82
+    }
+  ],
+  "protected_spans": [
+    {
+      "start_byte": 84,
+      "end_byte": 158,
+      "sha256": "b82b5e7391e45b980a7688e499e74bd3ffab2cd9897e4abf60fb37f43da9710b",
+      "kind": "genuine-requirement"
+    }
+  ],
+  "invariant_regions": [
+    {
+      "id": "genuine-req",
+      "start_byte": 84,
+      "end_byte": 158,
+      "checks": [
+        "modality"
+      ],
+      "policy": "preserve_all"
+    }
+  ],
+  "expected_invariants": [
+    {
+      "kind": "normative_statement",
+      "text": "the API must return results before the operator-configured timeout",
+      "preservation": "relationship_exact",
+      "region": "genuine-req"
+    },
+    {
+      "kind": "unsupported_intent",
+      "text": "'feel intuitive to every user' posing as a testable requirement",
+      "preservation": "surface_only",
+      "region": null
+    }
+  ],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "specification_laundering",
+      "region": "laundering",
+      "note": "the evaluative adjective 'intuitive' poses as a requirement -> convert it to a question, do NOT delete"
+    }
+  ],
+  "control_reason": null
+}
