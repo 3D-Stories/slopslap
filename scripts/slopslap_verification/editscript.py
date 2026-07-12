@@ -145,3 +145,30 @@ def map_region(edits: Sequence[Edit], start: int, end: int) -> tuple[int, int]:
 def edit_map_fn(edits: Sequence[Edit]) -> Callable[[int], int]:
     ordered = sorted(edits, key=lambda e: (e.start_byte, e.end_byte))
     return lambda off: map_offset(ordered, off)
+
+
+def map_region_status(edits: Sequence[Edit], start: int, end: int):
+    """Map an original [start, end) region AND report its status (ledger-verify design R6).
+
+    Returns ``(interval_or_None, status)`` where status is one of:
+      - ``unchanged``: no edit intersects the region.
+      - ``modified``: an edit intersects, but both boundaries map cleanly.
+      - ``deleted``: an edit fully covers the region -> a tombstone at the mapped insertion
+        point (a zero-width interval), NOT an empty successful mapping.
+      - ``ambiguous``: a boundary falls strictly inside an edit (cannot map cleanly).
+
+    Backward-compatible NEW function; ``map_region`` is unchanged. Under a non-overlapping
+    ordered splice a source interval maps to ONE contiguous revision interval.
+    """
+    ordered = sorted(edits, key=lambda e: (e.start_byte, e.end_byte))
+    for e in ordered:
+        if e.orig_len > 0 and e.start_byte <= start and e.end_byte >= end:
+            point = map_offset(ordered, e.start_byte)
+            return ((point, point), "deleted")
+    try:
+        rs = map_offset(ordered, start)
+        re = map_offset(ordered, end)
+    except MapError:
+        return (None, "ambiguous")
+    intersects = any(not (e.end_byte <= start or e.start_byte >= end) for e in ordered)
+    return ((rs, re), "modified" if intersects else "unchanged")
