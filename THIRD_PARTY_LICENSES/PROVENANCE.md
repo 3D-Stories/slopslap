@@ -114,3 +114,30 @@ python3 -m pip download --no-deps --no-binary :all: \
 
 </details>
 
+## Corpus provenance (before/after AI-slop corpus, #30)
+
+The per-item provenance, licensing, allowed-uses, redistribution terms, attribution, and
+content hashes for every catalogued corpus item live in
+`research/ai-slop-corpus/corpus_manifest.jsonl` (one JSON object per line). Licensing is
+assigned **per item from its real origin**, never inherited from a source-file number
+(design §2). Only `fixture`/`calibration`-lane items may carry redistributed verbatim bytes,
+and only under a redistribution-permitting license; `inspiration`-lane items commit metadata
+and an original non-verbatim description only (zero verbatim bytes). `tests/test_corpus_licensing.py`
+enforces both directions plus content-hash drift.
+
+### Wikipedia — "Signs of AI writing" (CC BY-SA 4.0, share-alike)
+- source: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing (WikiProject AI Cleanup)
+- license: **CC BY-SA 4.0** — redistribution is `share-alike`: any redistributed text (and
+  derivatives) must retain attribution and carry the same CC BY-SA 4.0 licence notice.
+- attribution: "Wikipedia contributors, 'Wikipedia:Signs of AI writing', CC BY-SA 4.0".
+- manifest family: `wikipedia` (split: `held_out`).
+
+### humanizer skill (MIT — derivative of the CC BY-SA Wikipedia guide)
+- source: humanizer skill `SKILL.md` v2.5.1 (upstream: the Wikipedia guide above).
+- license: **MIT** for the skill text, but it is a **derivative of the CC BY-SA guide**, so the
+  share-alike + attribution obligations of the upstream flow through to any redistributed
+  humanizer example prose. Recorded in each item's `attribution`/`lineage`.
+- attribution: "humanizer skill (MIT); derivative of Wikipedia 'Signs of AI writing'
+  (CC BY-SA 4.0)".
+- manifest family: `humanizer` (split: `calibration`).
+
