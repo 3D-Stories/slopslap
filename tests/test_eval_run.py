@@ -50,11 +50,21 @@ def test_slopslap_idempotent_second_pass_empty():
         assert _R["fixtures"][fx]["baselines"]["slopslap"]["second_pass_edits"] == 0, fx
 
 
-def test_kukakuka_zero_invariant_violations():
-    assert _R["kukakuka"]["invariant_violations"] == 0
-    assert _R["kukakuka"]["disposition"] == "abstain"  # clean doc -> keystone abstention
-    assert _R["kukakuka"]["changed_bytes"] == 0
-    assert _R["kukakuka"]["preservation"]["headings_preserved"] is True
+def test_kukakuka_real_repair_zero_invariant_violations():
+    k = _R["kukakuka"]
+    # a REAL model-driven audit repaired demonstrated harm (NOT a stub abstention) with 0
+    # invariant violations (issue #14 fix)
+    assert k["invariant_violations"] == 0
+    assert k["disposition"] == "repair" and k["edits"] >= 1
+    assert k["preservation"]["headings_preserved"] is True
+    assert k["negative_control_bad_edit_rejected"] is True
+
+
+def test_kukakuka_scanner_flags_the_cadence_tells():
+    # the scanner must actually SEE the synthetic-cadence class (was a 0-cluster coverage gap)
+    cad = _R["kukakuka"]["audit"]["cadence"]
+    assert cad["negative_parallelism"] >= 5 and cad["negative_parallelism_flagged"] is True
+    assert cad["punctuation_flagged"] is True
 
 
 def test_beats_or_ties_humanizer_emulation():

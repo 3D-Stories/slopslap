@@ -103,7 +103,14 @@ def _scan_prd(prd_path: str) -> dict:
     return {"units_scanned": d["units"], "slop_clusters": clusters,
             "breakdown": {"stock": m["stock_lexical_clusters"]["count"],
                           "vague": m["vague_attribution"]["count"],
-                          "transition": m["transition_clusters"]["count"]}}
+                          "transition": m["transition_clusters"]["count"]},
+            # cadence tells (issue #14) — the class this PRD actually exhibits
+            "cadence": {"negative_parallelism": m["negative_parallelism"]["count"],
+                        "negative_parallelism_flagged": m["negative_parallelism"]["soft_flag"],
+                        "rule_of_three": m["rule_of_three"]["count"],
+                        "em_dash_per_1k": m["punctuation_rates"]["rates"]["em_dash_per_1k"],
+                        "semicolon_per_1k": m["punctuation_rates"]["rates"]["semicolon_per_1k"],
+                        "punctuation_flagged": m["punctuation_rates"]["soft_flag"]}}
 
 
 def _kukakuka() -> dict:
@@ -111,7 +118,7 @@ def _kukakuka() -> dict:
         prd = fh.read()
     assert sha256_hex(prd) == EXPECTED_KUKAKUKA_DIGEST, "kukakuka-prd input digest drift"
     audit = _scan_prd(KUKAKUKA)  # REAL scanner output, not hard-coded
-    cand = C.build_slopslap("kukakuka-prd", prd)
+    cand = C.build_slopslap("kukakuka-prd", prd)  # real localized repairs (issue #14)
 
     # conservative ledger over REAL invariants; REQUIRED spans must resolve (WF5-diff H1).
     url = b"wehewehe.org"
@@ -141,10 +148,16 @@ def _kukakuka() -> dict:
     heads_before, heads_after = prd.count(b"\n## "), apply_edits(prd, cand.edits).count(b"\n## ")
     return {
         "audit": {**audit,
-                  "note": "shipped scanner (markdown) found 0 stock/vague/transition clusters — clean prose"},
+                  "note": (f"shipped scanner flagged synthetic-cadence tells: negative-parallelism "
+                           f"x{audit['cadence']['negative_parallelism']}, em-dash "
+                           f"{audit['cadence']['em_dash_per_1k']}/1k, semicolon "
+                           f"{audit['cadence']['semicolon_per_1k']}/1k — NOT clean prose")},
         "disposition": cand.disposition, "reason": cand.reason,
         "edits": len(cand.edits), "invariant_violations": len(violations),
         "changed_bytes": sum(len(e.replacement) + (e.end_byte - e.start_byte) for e in cand.edits),
+        "flag_only_diagnoses": ["negative-parallelism density (16x 'X, not Y') — flagged for human, "
+                                "not doc-wide flattened (genre=PRD tolerates some; slopslap preserves voice)",
+                                "'first-class' x3 + heavy em-dash/semicolon appositive cadence"],
         "ledger": {"entries": len(ledger.entries), "protected_spans": len(ledger.protected_spans)},
         "negative_control_bad_edit_rejected": neg_rejected,
         "preservation": {"changed_byte_ratio": round(sum(len(e.replacement) for e in cand.edits) / max(1, len(prd)), 6),

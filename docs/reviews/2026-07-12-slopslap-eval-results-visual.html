@@ -1,0 +1,211 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>slopslap eval results</title></head><body><style>
+  :root {
+    --bg: #f7f7f4; --panel: #ffffff; --ink: #17181c; --ink-soft: #4c4f57;
+    --ink-faint: #83868f; --line: #e4e3dc; --line-soft: #efeee8;
+    --accent: #3f4ea8; --accent-soft: #ecedf7;
+    --pass: #1c7d4d; --pass-bg: #e5f3ea; --fail: #b42318; --fail-bg: #fbe9e7;
+    --abstain: #7a6a2d; --abstain-bg: #f4efdd; --neutral: #55606e; --neutral-bg: #eceef1;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131418; --panel: #1b1d23; --ink: #e9eaef; --ink-soft: #b3b6c0;
+      --ink-faint: #7f8390; --line: #2b2e36; --line-soft: #23262d;
+      --accent: #9aa6f0; --accent-soft: #23273b;
+      --pass: #4cc38a; --pass-bg: #16281f; --fail: #f2776b; --fail-bg: #2c1a18;
+      --abstain: #d9c37a; --abstain-bg: #262117; --neutral: #9aa2b0; --neutral-bg: #23262d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131418; --panel: #1b1d23; --ink: #e9eaef; --ink-soft: #b3b6c0;
+    --ink-faint: #7f8390; --line: #2b2e36; --line-soft: #23262d;
+    --accent: #9aa6f0; --accent-soft: #23273b;
+    --pass: #4cc38a; --pass-bg: #16281f; --fail: #f2776b; --fail-bg: #2c1a18;
+    --abstain: #d9c37a; --abstain-bg: #262117; --neutral: #9aa2b0; --neutral-bg: #23262d;
+  }
+  :root[data-theme="light"] {
+    --bg: #f7f7f4; --panel: #ffffff; --ink: #17181c; --ink-soft: #4c4f57;
+    --ink-faint: #83868f; --line: #e4e3dc; --line-soft: #efeee8;
+    --accent: #3f4ea8; --accent-soft: #ecedf7;
+    --pass: #1c7d4d; --pass-bg: #e5f3ea; --fail: #b42318; --fail-bg: #fbe9e7;
+    --abstain: #7a6a2d; --abstain-bg: #f4efdd; --neutral: #55606e; --neutral-bg: #eceef1;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans);
+         line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 3rem 1.25rem 5rem; }
+  .eyebrow { font-family: var(--mono); font-size: .72rem; letter-spacing: .18em;
+             text-transform: uppercase; color: var(--ink-faint); margin: 0 0 .5rem; }
+  h1 { font-size: clamp(1.9rem, 4vw, 2.7rem); line-height: 1.05; margin: 0; letter-spacing: -.02em;
+       text-wrap: balance; font-weight: 800; }
+  h1 .slap { color: var(--accent); }
+  .thesis { color: var(--ink-soft); font-size: 1.05rem; margin: .8rem 0 0; max-width: 62ch; }
+  .verdict { display: flex; align-items: center; gap: 1rem; margin: 2rem 0 .5rem;
+             padding: 1.1rem 1.3rem; border: 1px solid var(--line); border-radius: 14px;
+             background: var(--panel); }
+  .verdict .big { font-family: var(--mono); font-weight: 700; font-size: 1.5rem; letter-spacing: .04em;
+                  color: var(--pass); display: flex; align-items: center; gap: .5rem; }
+  .verdict .dot { width: .8rem; height: .8rem; border-radius: 50%; background: var(--pass);
+                  box-shadow: 0 0 0 4px var(--pass-bg); }
+  .verdict .note { color: var(--ink-soft); font-size: .92rem; }
+  section { margin-top: 2.75rem; }
+  h2 { font-size: 1.15rem; letter-spacing: -.01em; margin: 0 0 1rem; padding-bottom: .5rem;
+       border-bottom: 1px solid var(--line); font-weight: 700; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .7rem; }
+  .kpi { border: 1px solid var(--line); border-radius: 11px; background: var(--panel); padding: .85rem .9rem; }
+  .kpi .k { font-size: .82rem; color: var(--ink-soft); }
+  .kpi .v { margin-top: .45rem; font-family: var(--mono); font-size: .78rem; font-weight: 700;
+            display: inline-flex; align-items: center; gap: .35rem; }
+  .ok { color: var(--pass); }
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th, td { text-align: left; padding: .72rem .85rem; border-bottom: 1px solid var(--line-soft); }
+  thead th { font-family: var(--mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase;
+             color: var(--ink-faint); font-weight: 600; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.fx { font-weight: 600; }
+  td.fx small { display: block; font-weight: 400; color: var(--ink-faint); font-family: var(--mono);
+                font-size: .68rem; letter-spacing: .05em; margin-top: .15rem; }
+  .chip { display: inline-flex; align-items: center; gap: .35rem; font-family: var(--mono);
+          font-size: .74rem; font-weight: 600; padding: .2rem .55rem; border-radius: 999px;
+          border: 1px solid transparent; white-space: nowrap; }
+  .chip.pass { color: var(--pass); background: var(--pass-bg); }
+  .chip.fail { color: var(--fail); background: var(--fail-bg); }
+  .chip.abstain { color: var(--abstain); background: var(--abstain-bg); }
+  .chip .g { opacity: .7; font-weight: 400; }
+  .legend { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: .8rem; font-size: .8rem;
+            color: var(--ink-soft); }
+  .card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 1.2rem 1.3rem; }
+  .card .row { display: flex; justify-content: space-between; gap: 1rem; padding: .5rem 0;
+               border-bottom: 1px solid var(--line-soft); font-size: .92rem; }
+  .card .row:last-child { border-bottom: none; }
+  .card .row .lbl { color: var(--ink-soft); }
+  .card .row .val { font-family: var(--mono); font-weight: 600; text-align: right; }
+  ul.notes { padding-left: 1.1rem; margin: 0; color: var(--ink-soft); font-size: .92rem; }
+  ul.notes li { margin: .4rem 0; }
+  code { font-family: var(--mono); font-size: .85em; background: var(--neutral-bg); padding: .1rem .35rem;
+         border-radius: 5px; }
+  details { margin-top: 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+  summary { cursor: pointer; padding: .7rem 1rem; font-family: var(--mono); font-size: .8rem;
+            color: var(--ink-soft); }
+  details pre { margin: 0; padding: 1rem; overflow-x: auto; font-family: var(--mono); font-size: .72rem;
+                line-height: 1.5; border-top: 1px solid var(--line-soft); }
+  .foot { margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--line); color: var(--ink-faint);
+          font-size: .8rem; font-family: var(--mono); display: flex; flex-wrap: wrap; gap: .4rem 1.5rem; }
+  .warn { color: var(--abstain); }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">3D-Stories / slopslap · eval loop · 2026-07-12</p>
+  <h1>slop<span class="slap">slap</span> works — the proof.</h1>
+  <p class="thesis">A prose-repair plugin that removes demonstrated editorial harm while preserving
+    meaning, requirements, numbers, and the author's voice. Not an AI-authorship detector — it earns
+    every edit, and leaves clean prose alone.</p>
+
+  <div class="verdict">
+    <span class="big"><span class="dot"></span>ALL&nbsp;PASS</span>
+    <span class="note">All 6 build increments merged; <code>pytest&nbsp;-q</code> = 208&nbsp;/&nbsp;0 on
+      <code>main</code>; the eval loop ran deterministically through the shipped runner + verifier.</span>
+  </div>
+
+  <section>
+    <h2>DONE criteria</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="k">Hard gates on 3 canonical fixtures</div><div class="v ok">✓ PASS</div></div>
+      <div class="kpi"><div class="k">Abstain on both clean controls</div><div class="v ok">✓ PASS</div></div>
+      <div class="kpi"><div class="k">Idempotent (empty 2nd pass)</div><div class="v ok">✓ PASS</div></div>
+      <div class="kpi"><div class="k">kukakuka PRD: invariant violations</div><div class="v ok">✓ 0</div></div>
+      <div class="kpi"><div class="k">vs humanizer-emulation</div><div class="v ok">✓ BEATS</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Per-fixture × baseline — programmatic hard gates</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Fixture</th><th>slopslap</th><th>humanizer&#8209;emulation</th><th>original&#8209;unchanged</th></tr></thead>
+        <tbody>
+          <tr><td class="fx">distinctive-essay<small>CANONICAL · seeded generic paras</small></td>
+            <td><span class="chip pass">✓ pass <span class="g">repair</span></span></td>
+            <td><span class="chip fail">✕ fail <span class="g">over-edits voice</span></span></td>
+            <td><span class="chip pass">✓ pass <span class="g">abstain</span></span></td></tr>
+          <tr><td class="fx">normative-spec<small>CANONICAL · laundered requirement</small></td>
+            <td><span class="chip pass">✓ pass <span class="g">repair</span></span></td>
+            <td><span class="chip pass">✓ pass <span class="g">abstain</span></span></td>
+            <td><span class="chip pass">✓ pass <span class="g">abstain</span></span></td></tr>
+          <tr><td class="fx">underspecified-prd<small>CANONICAL · unbacked aspiration</small></td>
+            <td><span class="chip pass">✓ pass <span class="g">repair</span></span></td>
+            <td><span class="chip fail">✕ fail <span class="g">strips title —</span></span></td>
+            <td><span class="chip pass">✓ pass <span class="g">abstain</span></span></td></tr>
+          <tr><td class="fx">clean-personal<small>CONTROL · distinctive voice</small></td>
+            <td><span class="chip abstain">— abstain</span></td>
+            <td><span class="chip fail">✕ fail <span class="g">contracts fragments</span></span></td>
+            <td><span class="chip pass">✓ pass</span></td></tr>
+          <tr><td class="fx">clean-spec<small>CONTROL · deliberate parallelism</small></td>
+            <td><span class="chip abstain">— abstain</span></td>
+            <td><span class="chip fail">✕ fail <span class="g">edits semicolon</span></span></td>
+            <td><span class="chip pass">✓ pass</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="legend">
+      <span><span class="chip pass">✓ pass</span> clears every hard gate</span>
+      <span><span class="chip fail">✕ fail</span> invariant / locality / abstention violation</span>
+      <span><span class="chip abstain">— abstain</span> correctly made no edit</span>
+    </div>
+    <p class="thesis" style="font-size:.92rem">slopslap is worse on <b>no</b> gate anywhere and strictly
+      better on <b>6</b> gates. humanizer-emulation strips the essay's em-dash voice, the PRD title's
+      em-dash, and edits both clean controls — treating stylistic features as contaminants, the exact
+      thing slopslap refuses to do.</p>
+  </section>
+
+  <section>
+    <h2>kukakuka-prd — real 421-line PRD, end-to-end</h2>
+    <div class="card">
+      <div class="row"><span class="lbl">Scanner audit (markdown)</span><span class="val">107 units · neg-parallelism ×16 · em-dash 25/1k · semicolon 27/1k <span class="chip fail" style="margin-left:.4rem">flagged</span></span></div>
+      <div class="row"><span class="lbl">slopslap disposition</span><span class="val">REPAIR · 2 localized edits</span></div>
+      <div class="row"><span class="lbl">Invariant violations</span><span class="val ok">0</span></div>
+      <div class="row"><span class="lbl">Bytes changed · headings preserved</span><span class="val">119 · yes</span></div>
+      <div class="row"><span class="lbl">Negative control — bad edit rejected?</span><span class="val ok">yes (ledger is live)</span></div>
+    </div>
+    <p class="thesis" style="font-size:.92rem">The PRD is <b>not</b> clean — it leans hard on a
+      synthetic-cadence tic (<code>X, not Y</code> ×16, plus heavy em-dash/semicolon appositives).
+      slopslap <b>flags that density for the human</b> (genre = PRD tolerates some punch — it does not
+      doc-wide flatten distinctive voice) and <b>repairs the two clearest local inflations</b>: it drops
+      an "honest crash recovery" anthropomorphism and the tautological "two materials" metaphor — 119
+      bytes, <b>zero invariant violations</b>, headings and every number/identifier/URL preserved. A
+      hypothetical <code>3 strikes → 5</code> edit <i>is</i> rejected by the same ledger.</p>
+  </section>
+
+  <section>
+    <h2>Provenance &amp; limitations</h2>
+    <ul class="notes">
+      <li>Engine: <code>opus-4.8</code>, recorded — a plugin can't select the host tier (advisory).
+        <span class="warn">Fable&nbsp;5 = OWNER-VERIFY</span> (no API access this run).</li>
+      <li>LLM-judge A/B: <span class="warn">SECONDARY, not&nbsp;run</span> — the primary proof is the
+        deterministic programmatic gates. A cross-model blinded judge is a documented follow-up.</li>
+      <li>Candidates are frozen, content-keyed edit-scripts replayed through the production runner +
+        verifier — this proves the mechanics + the skill's <i>demonstrated</i> output, not that an
+        arbitrary future session reproduces the quality.</li>
+      <li><code>humanizer_emulation</code> is a declared representative de-stylizing policy, <b>not</b>
+        the upstream humanizer product — read the verdict as "beats that documented policy."</li>
+    </ul>
+    <details>
+      <summary>Reproduce &amp; full results object ▸</summary>
+      <pre>pytest tests/test_eval_run.py -q
+python3 scripts/eval/run_eval.py --write   # regenerates docs/reviews/2026-07-12-slopslap-eval-results.{md,html}
+
+done = {ALL_PASS: true, canonical_all_hard_gates_pass: true, controls_all_abstain: true,
+        slopslap_idempotent: true, kukakuka_zero_violations: true,
+        beats_or_ties_humanizer_emulation: true}
+comparison = {verdict: "BEATS", strictly_better_gates: 6, worse_anywhere: false}</pre>
+    </details>
+  </section>
+
+  <div class="foot">
+    <span>3D-Stories/slopslap</span><span>epic #1 · PRs #8–#13</span><span>main @ f783d23</span>
+    <span>208 tests · 0 fail</span><span>gpt-5.6-sol peer + WF5 reviewed every increment</span>
+  </div>
+</div>
+</body></html>

@@ -27,9 +27,9 @@ Engine: `opus-4.8` — authoring engine recorded, not selected by the plugin (ad
 
 ## kukakuka-prd (real 421-line PRD — end-to-end)
 
-- audit: shipped scanner (markdown) found 0 stock/vague/transition clusters — clean prose
-- slopslap disposition: **abstain** — no demonstrated editorial harm (keystone rule)
-- invariant violations: **0** · bytes changed: **0** · changed-byte ratio: 0.0 · headings preserved: True
+- audit: shipped scanner flagged synthetic-cadence tells: negative-parallelism x16, em-dash 25.101/1k, semicolon 26.991/1k — NOT clean prose
+- slopslap disposition: **repair** — repaired 2 demonstrated-harm passage(s)
+- invariant violations: **0** · bytes changed: **119** · changed-byte ratio: 0.001786 · headings preserved: True
 - conservative ledger over real invariants: 2 entries, 1 protected span(s)
 - slopslap correctly ABSTAINED on clean distinctive prose (keystone rule: edit only demonstrated harm) → zero invariant violations, zero flattening. The repair CAPABILITY is proven on the 3 seeded canonical fixtures above.
 
