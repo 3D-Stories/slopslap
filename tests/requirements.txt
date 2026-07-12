@@ -1,0 +1,7 @@
+# Test/runtime deps for the eval harness and scanner.
+# markdown-it-py provides the CommonMark parser used by the markdown_structure gate and,
+# in #scanner, the vendored parser for the packaged plugin. Pinned + version-gated so
+# tokenization cannot silently drift (design R6).
+markdown-it-py==3.0.0
+mdurl==0.1.2
+pytest>=7.0

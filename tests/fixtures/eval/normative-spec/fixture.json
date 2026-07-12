@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "genre": "spec",
+  "control": false,
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [
+    {
+      "start_byte": 252,
+      "end_byte": 331
+    }
+  ],
+  "protected_spans": [
+    {
+      "start_byte": 492,
+      "end_byte": 562,
+      "sha256": "c2324ab8978f8ef84d1ce14b507ad14795c05487a652fa41c50c6e3b78eba6f1",
+      "kind": "code"
+    },
+    {
+      "start_byte": 215,
+      "end_byte": 228,
+      "sha256": "53c541f3d450b1427872c8918805cbf04c1002a01dcc034cb7cf725d83d4e061",
+      "kind": "identifier"
+    }
+  ],
+  "invariant_regions": [
+    {
+      "id": "retry-limits",
+      "start_byte": 17,
+      "end_byte": 250,
+      "checks": [
+        "numbers",
+        "units",
+        "modality",
+        "negation"
+      ],
+      "policy": "preserve_all"
+    }
+  ],
+  "expected_invariants": [
+    {
+      "kind": "number_or_quantity",
+      "text": "at most 5 times",
+      "preservation": "lexically_exact",
+      "region": "retry-limits"
+    },
+    {
+      "kind": "number_or_quantity",
+      "text": "no less than 200 ms and no more than 2000 ms",
+      "preservation": "lexically_exact",
+      "region": "retry-limits"
+    },
+    {
+      "kind": "normative_statement",
+      "text": "MUST / MUST NOT modal inventory",
+      "preservation": "relationship_exact",
+      "region": "retry-limits"
+    },
+    {
+      "kind": "unsupported_intent",
+      "text": "robust/intuitive/user-friendly as a requirement",
+      "preservation": "surface_only",
+      "region": null
+    }
+  ],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "specification_laundering",
+      "region": "vague-requirement",
+      "note": "evaluative adjectives posing as a testable requirement -> convert to a question, do NOT delete"
+    }
+  ],
+  "control_reason": null
+}

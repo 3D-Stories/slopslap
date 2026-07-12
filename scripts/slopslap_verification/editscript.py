@@ -1,0 +1,147 @@
+"""Edit-script primitives: apply, reconstruct, derive, and map original->revision offsets.
+
+The candidate envelope carries an ordered, non-overlapping edit script in ORIGINAL byte
+coordinates. Reconstructing the revision from (original + edits) and checking its sha256
+makes edit-authorization, protected-span mapping, and provenance deterministic — no
+ambiguous substring matching (peer-consult 2026-07-12).
+"""
+
+from __future__ import annotations
+
+import base64
+import difflib
+import hashlib
+from dataclasses import dataclass
+from typing import Callable, List, Sequence
+
+
+class EditError(ValueError):
+    """Malformed edit script: out of bounds, inverted, or overlapping."""
+
+
+class MapError(ValueError):
+    """An original offset falls inside a replaced span and cannot be mapped."""
+
+
+@dataclass(frozen=True)
+class Edit:
+    """A replacement of original[start_byte:end_byte) with ``replacement`` bytes.
+
+    Half-open interval in ORIGINAL coordinates. start_byte == end_byte is a pure
+    insertion at that offset.
+    """
+
+    start_byte: int
+    end_byte: int
+    replacement: bytes
+
+    @property
+    def is_insertion(self) -> bool:
+        return self.start_byte == self.end_byte
+
+    @property
+    def orig_len(self) -> int:
+        return self.end_byte - self.start_byte
+
+
+def sha256_hex(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def parse_edits(raw_edits: Sequence[dict]) -> List[Edit]:
+    """Parse envelope ``edits`` (replacement carried base64 as ``replacement_b64``)."""
+    out: List[Edit] = []
+    for e in raw_edits:
+        if "replacement_b64" in e:
+            repl = base64.b64decode(e["replacement_b64"])
+        elif "replacement" in e:
+            r = e["replacement"]
+            repl = r if isinstance(r, bytes) else str(r).encode("utf-8")
+        else:
+            repl = b""
+        out.append(Edit(int(e["start_byte"]), int(e["end_byte"]), repl))
+    return out
+
+
+def _validated_sorted(original_len: int, edits: Sequence[Edit]) -> List[Edit]:
+    for e in edits:
+        if not (0 <= e.start_byte <= e.end_byte <= original_len):
+            raise EditError(
+                f"edit out of bounds or inverted: [{e.start_byte},{e.end_byte}) "
+                f"against original length {original_len}"
+            )
+    ordered = sorted(edits, key=lambda e: (e.start_byte, e.end_byte))
+    for a, b in zip(ordered, ordered[1:]):
+        if a.end_byte > b.start_byte:
+            raise EditError(
+                f"overlapping edits: [{a.start_byte},{a.end_byte}) and "
+                f"[{b.start_byte},{b.end_byte})"
+            )
+        if (
+            a.end_byte == b.start_byte
+            and a.is_insertion
+            and b.is_insertion
+            and a.start_byte == b.start_byte
+        ):
+            raise EditError(
+                f"two insertions at the same offset {a.start_byte} (ambiguous order)"
+            )
+    return ordered
+
+
+def apply_edits(original: bytes, edits: Sequence[Edit]) -> bytes:
+    """Reconstruct the revision by splicing edits into ``original``."""
+    ordered = _validated_sorted(len(original), edits)
+    out = bytearray()
+    cursor = 0
+    for e in ordered:
+        out += original[cursor : e.start_byte]
+        out += e.replacement
+        cursor = e.end_byte
+    out += original[cursor:]
+    return bytes(out)
+
+
+def derive_edits(original: bytes, revision: bytes) -> List[Edit]:
+    """Derive a minimal edit script from byte-only output (provenance: inferred).
+
+    Used to adapt external baselines (humanizer, original-unchanged) that emit revised
+    bytes without an explicit script. difflib operates on the byte sequences directly.
+    """
+    matcher = difflib.SequenceMatcher(a=original, b=revision, autojunk=False)
+    edits: List[Edit] = []
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag == "equal":
+            continue
+        edits.append(Edit(i1, i2, revision[j1:j2]))
+    return edits
+
+
+def map_offset(edits: Sequence[Edit], off: int) -> int:
+    """Map an ORIGINAL byte offset to the corresponding REVISION offset.
+
+    Raises MapError if ``off`` lies strictly inside a replaced span (ambiguous).
+    Offsets at an edit boundary (== start_byte or == end_byte) map cleanly.
+    """
+    ordered = sorted(edits, key=lambda e: (e.start_byte, e.end_byte))
+    delta = 0
+    for e in ordered:
+        if e.end_byte <= off:
+            delta += len(e.replacement) - e.orig_len
+        elif e.start_byte >= off:
+            break
+        else:  # e.start_byte < off < e.end_byte
+            raise MapError(
+                f"offset {off} is inside replaced span [{e.start_byte},{e.end_byte})"
+            )
+    return off + delta
+
+
+def map_region(edits: Sequence[Edit], start: int, end: int) -> tuple[int, int]:
+    """Map an original [start, end) region to revision coordinates (fail-closed)."""
+    return map_offset(edits, start), map_offset(edits, end)
+
+
+def edit_map_fn(edits: Sequence[Edit]) -> Callable[[int], int]:
+    ordered = sorted(edits, key=lambda e: (e.start_byte, e.end_byte))
+    return lambda off: map_offset(ordered, off)

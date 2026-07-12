@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "genre": "personal",
+  "control": false,
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [
+    {
+      "start_byte": 392,
+      "end_byte": 684
+    },
+    {
+      "start_byte": 686,
+      "end_byte": 920
+    }
+  ],
+  "protected_spans": [
+    {
+      "start_byte": 315,
+      "end_byte": 390,
+      "sha256": "5b78673c72bb9d480486b4bbd6b0f2c1dcc1ff52e5207ff8c76767bee83c0c0e",
+      "kind": "blockquote"
+    }
+  ],
+  "invariant_regions": [],
+  "expected_invariants": [
+    {
+      "kind": "intentional_repetition",
+      "text": "distinctive first-person voice (fragments, em-dashes)",
+      "preservation": "surface_only",
+      "region": null
+    },
+    {
+      "kind": "attribution",
+      "text": "the uncle's saying, quoted",
+      "preservation": "byte_exact",
+      "region": null
+    }
+  ],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "semantic_emptiness",
+      "region": "generic-paragraph-1",
+      "note": "In today's fast-paced world ... opportunities and possibilities"
+    },
+    {
+      "class": "semantic_emptiness",
+      "region": "generic-paragraph-2",
+      "note": "Furthermore, it is worth mentioning ... over time"
+    }
+  ],
+  "control_reason": null
+}
