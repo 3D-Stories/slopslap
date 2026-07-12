@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "genre": "prd",
+  "control": false,
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [
+    {
+      "start_byte": 207,
+      "end_byte": 303
+    }
+  ],
+  "protected_spans": [],
+  "invariant_regions": [
+    {
+      "id": "scale-constraints",
+      "start_byte": 42,
+      "end_byte": 193,
+      "checks": [
+        "numbers",
+        "modality"
+      ],
+      "policy": "preserve_all"
+    },
+    {
+      "id": "open-questions",
+      "start_byte": 323,
+      "end_byte": 441,
+      "checks": [
+        "modality"
+      ],
+      "policy": "preserve_all"
+    }
+  ],
+  "expected_invariants": [
+    {
+      "kind": "number_or_quantity",
+      "text": "10,000 concurrent users",
+      "preservation": "lexically_exact",
+      "region": "scale-constraints"
+    },
+    {
+      "kind": "number_or_quantity",
+      "text": "p95 latency below 300 ms",
+      "preservation": "lexically_exact",
+      "region": "scale-constraints"
+    },
+    {
+      "kind": "number_or_quantity",
+      "text": "2,000,000 notifications per day",
+      "preservation": "lexically_exact",
+      "region": "scale-constraints"
+    },
+    {
+      "kind": "unsupported_intent",
+      "text": "delight users / best-in-class / magical",
+      "preservation": "surface_only",
+      "region": null
+    },
+    {
+      "kind": "missing_support",
+      "text": "auth + retention decisions unresolved",
+      "preservation": "surface_only",
+      "region": "open-questions"
+    }
+  ],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "content_simulation",
+      "region": "delivery",
+      "note": "aspiration adjectives simulate a delivery spec -> flag, do NOT invent a decision"
+    },
+    {
+      "class": "unresolved_intent",
+      "region": "open-questions",
+      "note": "must stay visibly unresolved; a rewrite that asserts a decision is a failure"
+    }
+  ],
+  "control_reason": null
+}

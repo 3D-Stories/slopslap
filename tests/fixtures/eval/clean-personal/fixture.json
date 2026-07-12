@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "genre": "personal",
+  "control": true,
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [],
+  "protected_spans": [],
+  "invariant_regions": [],
+  "expected_invariants": [
+    {
+      "kind": "intentional_repetition",
+      "text": "dry fragments are the voice, not a defect",
+      "preservation": "byte_exact",
+      "region": null
+    }
+  ],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [],
+  "control_reason": "Fragments and flat repetition ('I do not control the weather') are the joke; smoothing them is over-editing. Must abstain."
+}
