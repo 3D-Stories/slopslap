@@ -18,7 +18,16 @@ PINNED_SLOPSLAP_OUTPUT = {
     "clean-spec": "5c3b460fecc139d43824a930354f9d8515614059b0d36f6d43f2c73113fb4ceb",
 }
 
-_R = run_eval()  # run once for the module
+# The committed DONE gate must stay hermetic. The eval's Layer-3 pass (#17) fires a REAL claude -p
+# call under SLOPSLAP_LIVE=1 — so an ambient SLOPSLAP_LIVE=1 (set to run the live invoke test)
+# would make THIS module's import do a network call, and a non-clean live verdict would flip
+# ALL_PASS. Force the offline clean stub here; the live path is exercised only by test_invoke_live.
+_saved_live = os.environ.pop("SLOPSLAP_LIVE", None)
+try:
+    _R = run_eval()  # run once for the module (offline, deterministic)
+finally:
+    if _saved_live is not None:
+        os.environ["SLOPSLAP_LIVE"] = _saved_live
 
 
 def test_all_done_criteria_pass():
@@ -119,8 +128,10 @@ def test_kukakuka_l3_wiring_preserves_invariants():
     assert _R["done"]["ALL_PASS"] is True
 
 
-def test_eval_semantic_fn_offline_is_recorded_clean():
-    # OFFLINE (default env): a deterministic recorded 'clean' replay — no model call.
+def test_eval_semantic_fn_offline_is_hardcoded_clean(monkeypatch):
+    # OFFLINE: a hardcoded 'clean' stub, no model call. Force SLOPSLAP_LIVE unset so this asserts
+    # the offline path even when the ambient env has SLOPSLAP_LIVE=1 (kept hermetic).
+    monkeypatch.delenv("SLOPSLAP_LIVE", raising=False)
     from eval.semantic import eval_semantic_fn
     fn = eval_semantic_fn()
     assert fn(b"x", "x", {}) == {"verdict": "clean", "concerns": []}

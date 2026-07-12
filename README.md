@@ -66,9 +66,10 @@ clears the decision-rule hard gates on 3 canonical fixtures, **abstains** on cle
 idempotent, repairs the real 421-line kukakuka PRD (flagging its `X, not Y` ×16 cadence, tightening
 2 local inflations, **zero invariant violations**), and beats a documented humanizer-emulation
 policy. The kukakuka path now runs **Layer 3 end-to-end** — the fold reaches a shippable `ACCEPT`
-(`semantic_status: clean`) via a real fresh-context `claude -p` pass under `SLOPSLAP_LIVE=1`, or a
-deterministic recorded-clean replay offline (`scripts/eval/semantic.py`). Run it: `pytest -q` (the
-gate) or `python3 scripts/eval/run_eval.py --write`.
+(`semantic_status: clean`) via a real fresh-context `claude -p` pass under `SLOPSLAP_LIVE=1`.
+Offline (default) it uses a hardcoded `clean` stub (the frozen faithful candidate is asserted
+clean; `scripts/eval/semantic.py`), so offline the run exercises the full L3 fold plumbing — not a
+real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval/run_eval.py --write`.
 
 ## Status
 
@@ -86,9 +87,11 @@ gate) or `python3 scripts/eval/run_eval.py --write`.
   `semantic_fn`, so the fold reaches a **shippable `ACCEPT`** (`semantic_status: clean`,
   `proposal_status: ACCEPT`) with **zero invariant violations** preserved. New helper
   `scripts/eval/semantic.py::eval_semantic_fn` binds `functools.partial(invoke_semantic, …)` LIVE
-  (env `SLOPSLAP_LIVE=1` — a fresh-context `claude -p` pass) and replays a deterministic recorded
-  `clean` verdict OFFLINE (default; the live transport is never imported), so the proof stays
-  reproducible without a model call. A new DONE criterion (`kukakuka_l3_shippable`) and the
+  (env `SLOPSLAP_LIVE=1` — a real fresh-context `claude -p` pass) and OFFLINE (default) returns a
+  hardcoded `clean` stub — no recording artifact, the frozen faithful candidate is asserted clean —
+  so the proof stays reproducible without a model call (offline it exercises the fold plumbing, and
+  the candidate-span locality + clean verdict pass by construction; the real semantic judgement is
+  the `SLOPSLAP_LIVE=1` path). A new DONE criterion (`kukakuka_l3_shippable`) and the
   `semantic_status`/`proposal_status`/`decision` fields are surfaced in the results object and both
   rendered reports.
 - **0.1.2** — corpus integration (#30): a provenance-first, lane-separated foundation for the

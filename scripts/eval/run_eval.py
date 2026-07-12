@@ -137,9 +137,10 @@ def _kukakuka() -> dict:
     }
     ledger = build_ledger(prd, manifest)
     # Layer 3 wired into the e2e path (#17): the seeded candidate's demonstrated repair spans ARE
-    # the authorized editable ranges (the eval's frozen provenance), so edit_locality PASSES and
-    # the L3 fold can reach a shippable ACCEPT. semantic_fn = the recorded-clean replay offline,
-    # a real fresh-context claude -p pass under SLOPSLAP_LIVE=1.
+    # the authorized editable ranges (the eval's frozen provenance), so edit_locality passes
+    # BY CONSTRUCTION here (each edit is within its own span) and the L3 fold can reach a shippable
+    # ACCEPT. semantic_fn = a hardcoded clean stub offline (the frozen faithful candidate is
+    # asserted clean; see semantic.py), a real fresh-context claude -p pass under SLOPSLAP_LIVE=1.
     authorized = [{"start_byte": e.start_byte, "end_byte": e.end_byte} for e in cand.edits]
     result = verify(prd, cand.edits, ledger, authorized_ranges=authorized,
                     semantic_fn=eval_semantic_fn())
@@ -285,7 +286,8 @@ def render_md(r: dict) -> str:
               f"{k['preservation']['headings_preserved']}",
               f"- Layer-3 fold (end-to-end): semantic_status **{k['semantic_status']}** · "
               f"proposal_status **{k['proposal_status']}** · decision **{k['decision']}** "
-              "(offline recorded-clean replay; real `claude -p` pass under `SLOPSLAP_LIVE=1`)",
+              "(offline these are by-construction: a hardcoded `clean` stub + candidate-span "
+              "locality; a real `claude -p` semantic judgement runs under `SLOPSLAP_LIVE=1`)",
               f"- conservative ledger over real invariants: {k['ledger']['entries']} entries, "
               f"{k['ledger']['protected_spans']} protected span(s); negative control (bad edit rejected): "
               f"{k['negative_control_bad_edit_rejected']}",
@@ -334,8 +336,8 @@ def render_html(r: dict, md: str) -> str:
         f"invariant violations, {r['kukakuka']['changed_bytes']} bytes changed.</p>"
         f"<p><b>Layer-3 fold (end-to-end):</b> semantic_status {r['kukakuka']['semantic_status']}, "
         f"proposal_status {r['kukakuka']['proposal_status']}, decision {r['kukakuka']['decision']} "
-        "(offline recorded-clean replay; real <code>claude -p</code> pass under "
-        "<code>SLOPSLAP_LIVE=1</code>).</p>"
+        "(offline these are by-construction: a hardcoded <code>clean</code> stub + candidate-span "
+        "locality; a real <code>claude -p</code> judgement runs under <code>SLOPSLAP_LIVE=1</code>).</p>"
         f"<p><b>LLM-judge (secondary):</b> {r['judge']['status'].upper()} — {r['judge']['note']}</p>"
         "<h2>Full results object</h2>"
         f"<pre style='background:#f6f8fa;padding:12px;overflow:auto'>{data}</pre>")
