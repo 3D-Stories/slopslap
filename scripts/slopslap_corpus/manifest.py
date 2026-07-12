@@ -38,6 +38,7 @@ VALID_LANES = {"fixture", "judge_reference", "calibration", "inspiration"}
 VALID_AFTER_VALIDITY = {"faithful", "fabricated", "indeterminate", "none"}
 VALID_DIRECTION = {"ai_to_human", "human_to_ai", "before_only"}
 VALID_SPLIT = {"calibration", "held_out"}
+VALID_REDISTRIBUTION = {"permitted", "share-alike", "prohibited"}
 # split is meaningful only on the empirically-tuned lanes (design §1).
 SPLIT_ELIGIBLE_LANES = {"calibration", "judge_reference"}
 
@@ -84,6 +85,11 @@ def _validate_item(item: dict, lineno: int) -> None:
         )
     if item["direction"] not in VALID_DIRECTION:
         raise ManifestError(f"line {lineno}: unknown direction '{item['direction']}'")
+    if item["redistribution"] not in VALID_REDISTRIBUTION:
+        raise ManifestError(
+            f"line {lineno}: unknown redistribution '{item['redistribution']}' "
+            f"not in {sorted(VALID_REDISTRIBUTION)}"
+        )
 
     ch = item["content_hashes"]
     if not isinstance(ch, dict) or "before" not in ch or "after" not in ch:
@@ -92,16 +98,25 @@ def _validate_item(item: dict, lineno: int) -> None:
         )
 
     split = item.get("split")
+    lane_is_tunable = bool(set(lanes) & SPLIT_ELIGIBLE_LANES)
     if split is not None:
         if split not in VALID_SPLIT:
             raise ManifestError(
                 f"line {lineno}: split '{split}' not in {sorted(VALID_SPLIT)}"
             )
-        if not set(lanes) & SPLIT_ELIGIBLE_LANES:
+        if not lane_is_tunable:
             raise ManifestError(
                 f"line {lineno}: split present but lanes {lanes} include neither "
                 "'calibration' nor 'judge_reference'"
             )
+    elif lane_is_tunable:
+        # A calibration/judge_reference-lane item MUST carry a split, else it loads fine but is
+        # silently excluded from BOTH partitions (Step-11 diff-review H1) — a partition hole in
+        # the exact lanes the split exists to govern.
+        raise ManifestError(
+            f"line {lineno}: lanes {lanes} include a split-eligible lane but 'split' is null "
+            "(a tunable item must be assigned to calibration or held_out)"
+        )
 
 
 def _validate_family_splits(items: List[dict]) -> None:

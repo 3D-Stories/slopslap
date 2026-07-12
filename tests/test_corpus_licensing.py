@@ -39,16 +39,36 @@ def test_no_inspiration_item_ships_verbatim(manifest):
             assert it["content_hashes"]["after"] is None
 
 
-# (b) POSITIVE: every redistributed-lane item is licensed AND attributed.
-def test_redistributable_lanes_are_licensed_and_attributed(manifest):
+# (b) POSITIVE: any item that ACTUALLY commits verbatim bytes is licensed AND attributed.
+# Gate on committed bytes (a real verbatim_path), NOT on lane label (Step-11 diff-review H2):
+# a judge_reference-only item could name a verbatim_path under a prohibited license and slip a
+# lane-keyed check. The invariant is "committed bytes ⇒ redistributable license + attribution",
+# independent of which lane the item claims.
+def test_committed_verbatim_items_are_licensed_and_attributed(manifest):
+    checked = 0
     for it in manifest:
         lanes = set(it["artifact_lanes"])
-        if lanes & {"fixture", "calibration"}:
+        commits_bytes = it.get("verbatim_path") is not None or lanes & {"fixture", "calibration"}
+        if commits_bytes:
             assert it["redistribution"] in REDISTRIBUTABLE, (
-                f"{it['item_id']}: fixture/calibration lane but redistribution "
+                f"{it['item_id']}: commits verbatim bytes but redistribution "
                 f"{it['redistribution']!r} not in {sorted(REDISTRIBUTABLE)}"
             )
             assert (it["attribution"] or "").strip(), f"{it['item_id']}: empty attribution"
+            checked += 1
+    assert checked >= 5, f"expected redistributed items to be checked, got {checked}"
+
+
+# (b2) CONSISTENCY: a CC-BY-SA license carries share-alike obligations, so it must be recorded
+# as redistribution 'share-alike', never merely 'permitted' (Step-11 diff-review H3 — enforce
+# the license↔redistribution binding so a future mislabel can't erase the share-alike duty).
+def test_cc_by_sa_items_are_marked_share_alike(manifest):
+    for it in manifest:
+        if "BY-SA" in it["license"].upper():
+            assert it["redistribution"] == "share-alike", (
+                f"{it['item_id']}: {it['license']} implies share-alike, "
+                f"got redistribution {it['redistribution']!r}"
+            )
 
 
 # (c) HASH DRIFT: a committed verbatim file must match its recorded before-hash; a committed

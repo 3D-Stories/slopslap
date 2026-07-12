@@ -67,11 +67,16 @@ def test_positive_fixture_not_hard_rejected(name):
 
 
 @pytest.mark.parametrize("name", sorted(POSITIVE_EDITS))
-def test_positive_fixture_idempotence_gate_fires(name):
+def test_positive_fixture_idempotence_gate_is_evaluated(name):
+    # NOTE (Step-11 review): the second pass is a NO-OP (empty edits), so this asserts only
+    # that the idempotence gate is EVALUATED (status `pass` vs NOT_EVALUATED) — it does NOT
+    # prove the deslop edit is idempotent under a real re-application. Genuine idempotence
+    # needs a live deslop pass (out of scope for this additive corpus PR; exercised by the
+    # eval-run loop). Named accordingly so no maintainer over-credits it as real coverage.
     fixture_dir = os.path.join(FIX, name)
     original, _ = load_fixture(fixture_dir)
     envelope, first_pass = helpers.make_envelope(original, POSITIVE_EDITS[name])
-    second = helpers.make_second_pass(first_pass, [])  # no-op second pass == idempotent
+    second = helpers.make_second_pass(first_pass, [])  # no-op second pass: gate FIRES, not real idempotence
     result = runner.run(fixture_dir, envelope, second_pass=second)
     idem = next(g for g in result.gates if g["name"] == "idempotence")
     assert idem["status"] == "pass", (name, result.gates)

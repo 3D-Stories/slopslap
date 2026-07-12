@@ -55,3 +55,25 @@ def test_assert_disjoint_raises_when_family_spans_both():
     ]
     with pytest.raises(ManifestError):
         assert_split_disjoint(man)
+
+
+# --- regression: the SHIPPED manifest's common-origin families never span partitions ---
+def test_shipped_manifest_common_origin_does_not_leak():
+    """Step-11 Critical regression: the humanizer skill is a Wikipedia-Signs-of-AI-writing
+    DERIVATIVE (identical before-passages in both fetch files), so drawing the split boundary
+    at the fetch-file level (wikipedia vs humanizer) leaked identical content across the
+    calibration/held-out line while the family-string check passed. They are now ONE family
+    (`wikipedia-signs-guide`) in a single partition. Anchor that so the leak can't silently
+    return: no wiki-*/hum-* item may land in a different partition from its siblings, and the
+    real shipped manifest stays family-disjoint."""
+    import json, os
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    man = [json.loads(l) for l in open(os.path.join(repo, "research/ai-slop-corpus/corpus_manifest.jsonl")) if l.strip()]
+    assert_split_disjoint(man)  # no source_family spans both partitions
+    # every Wikipedia-guide-derived item (wiki-* and hum-*) shares ONE family + ONE split
+    origin_items = [it for it in man if it["item_id"].startswith(("wiki-", "hum-"))]
+    assert origin_items, "expected wiki-/hum- items in the shipped manifest"
+    fams = {it["source_family"] for it in origin_items}
+    splits = {it.get("split") for it in origin_items}
+    assert fams == {"wikipedia-signs-guide"}, f"common-origin items scattered across families: {fams}"
+    assert splits == {"calibration"}, f"common-origin items scattered across splits: {splits}"
