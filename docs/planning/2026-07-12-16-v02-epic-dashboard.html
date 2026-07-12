@@ -101,14 +101,14 @@ a{color:var(--lagoon)}
       <h1 class="mark">v0.2 <em>epic</em> dashboard</h1>
     </div>
     <div>
-      <div class="updated">updated 2026-07-12 17:50 UTC · run start · baseline 214/0 @ 0bdbfa9</div>
+      <div class="updated">updated 2026-07-12 20:30 UTC · #17 merged · baseline 214/0 @ 0bdbfa9</div>
       <button class="theme-btn" onclick="var r=document.documentElement,c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');r.setAttribute('data-theme',c==='dark'?'light':'dark');">◐ theme</button>
     </div>
   </header>
 
   <!-- PROGRESS: update width% + caption on each merge -->
-  <div class="bar"><i style="width:7%"></i></div>
-  <p class="barcap">1 / 14 children merged · #26 ✅ merged (#32) · #30 PR open (gate 267→302, +35) · version 0.1.2</p>
+  <div class="bar"><i style="width:21%"></i></div>
+  <p class="barcap">3 / 14 children merged · #26 (#32) · #30 (#33) · #17 (#34) ✅ · Tier 1 in progress · version 0.1.3</p>
 
   <div class="legend">
     <span class="chip merged"><span class="dot" style="background:var(--lagoon)"></span>merged + closed</span>
@@ -141,31 +141,34 @@ T4  #28 e2e golden (dep #27 #23 #17–#20 #30) · #25 calibration (dep #30)</div
       </ul>
       <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/32">#32</a> · merged c87f144 · v0.1.1 · gate 214→267 (+53, 0 reg)</div>
     </div>
-    <div class="card active" id="c30">
+    <div class="card merged" id="c30">
       <div class="id">T0 · #30</div>
       <h3>Corpus integration</h3>
       <div class="dep">no deps · blocks #25, #28</div>
-      <span class="st">PR open</span>
+      <span class="st">merged + closed</span>
       <ul>
         <li>Per-item provenance manifest (23 items, license from each item's origin)</li>
         <li>Source-family disjoint split — leak guard keyed on family, not passage</li>
         <li>5 authored fixtures + negative anchor (fabricated number → verify REJECT)</li>
         <li>Two-sided licensing + hash-drift tests fail closed both directions</li>
       </ul>
-      <div class="kv">PR pending · version 0.1.2 · gate 267→302 (+35, 0 reg)</div>
+      <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/33">#33</a> · merged · v0.1.2 · gate 267→304 (+37, 0 reg)</div>
     </div>
   </div>
 
   <h2>Tier 1 — components</h2>
   <p class="sec-sub">lite depth · #17 depends on #26; the rest are independent</p>
   <div class="grid">
-    <div class="card queued" id="c17">
+    <div class="card merged" id="c17">
       <div class="id">T1 · #17</div>
       <h3>Semantic verify</h3>
-      <div class="dep">depends on #26</div>
-      <span class="st">queued</span>
-      <ul><li class="pending">Real fresh-context Layer-3 semantic_fn wired into verify</li></ul>
-      <div class="kv">PR — · version — · gate —</div>
+      <div class="dep">depends on #26 ✓</div>
+      <span class="st">merged + closed</span>
+      <ul>
+        <li>Real Layer-3 semantic_fn wired into the eval e2e path — kukakuka reaches a shippable ACCEPT, 0 invariant violations</li>
+        <li>LIVE <code>claude -p</code> under <code>SLOPSLAP_LIVE=1</code>; offline a hardcoded clean stub (by-construction), fold plumbing exercised</li>
+      </ul>
+      <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/34">#34</a> · v0.1.3 · gate 304→308 (+4, 0 reg)</div>
     </div>
     <div class="card queued" id="c18">
       <div class="id">T1 · #18</div>
@@ -286,7 +289,7 @@ T4  #28 e2e golden (dep #27 #23 #17–#20 #30) · #25 calibration (dep #30)</div
   </ul>
 
   <div class="foot">
-    <b>Run:</b> autonomous · session 001b8b2c · <b>0/14 merged</b> · baseline 214 passed / 0 failed @ 0bdbfa9.<br>
+    <b>Run:</b> autonomous · session 001b8b2c (resumed 93ac1943) · <b>3/14 merged</b> · baseline 214 passed / 0 failed @ 0bdbfa9.<br>
     <b>Repo:</b> 3D-Stories/slopslap · <b>Source of truth:</b> this committed HTML (hosted Artifact is a copy).
   </div>
 </div>
