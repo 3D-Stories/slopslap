@@ -1,0 +1,25 @@
+# 10 — Academic paired corpora (AI text ↔ human/edited versions)
+
+These are datasets, not readable before/after prose pairs I can quote in bulk here. They are the right place to source LARGE paired sets for eval/training. **Direction matters for slopslap:**
+- slopslap's job is **AI-draft → human-quality edit** (AI→human). Datasets whose edit direction is **human→AI revision** are the *opposite* transformation; their AI-revised side is the kind of text slopslap would repair, and the human seed is a plausible target. Both directions are usable, but read the arrow before using a pair as a target.
+- **Right direction (machine-generated → human/expert-edited):** Beemo, PAN'25 (the "machine-written, then human-edited" class), MixSet "humanize" operation.
+
+> Licenses vary per dataset host (HuggingFace/arXiv/Zenodo/ACL). CONFIRM each dataset's own license card before reuse — flagged in SOURCES.md. Facts below are from each source's abstract/dataset card (fetched 2026-07-12), not independently verified against the data files.
+
+| Dataset | URL | Pairing / direction | Size & domains | Note |
+|---|---|---|---|---|
+| **HPPT** (Human-ChatGPT Polished Paired abstracT) | https://arxiv.org/html/2307.11380 · github.com/Clement1290/ChatGPT-Detection-PR-HPPT | human abstract ↔ ChatGPT-**polished** version (human→AI polish) | 6,050 pairs, ACL-anthology abstracts (2018–22) | Cleanest 1:1 pairs; polish prompt = "please polish the following sentences". Direction is human→AI (AI side = the slop). Good "what over-polishing looks like" set. |
+| **SciHRA-Detect** | https://huggingface.co/datasets/mithu-ngl/SciHRA-Detect | triplet: HGT (human) / ART (AI-revised human) / AGT (AI-generated) | ~60k labeled sentences; ArXiv/PubMed/JSTOR/NLPeer abstracts | Parallel triplets per paper; ART = GPT-4o "revised for academic style/clarity." Direction human→AI. |
+| **Beemo** (Benchmark of Expert-edited Machine-generated Outputs) | https://aclanthology.org/2025.naacl-long.357.pdf | machine-generated → **expert-edited** AND machine-generated → LLM-edited | 6.5k expert-edited + 13.1k LLM-edited; creative writing→summarization | **RIGHT DIRECTION.** Expert editors corrected factual errors, removed hallucinations, improved style (20–40% edit ratio). Finding: expert edits evade AI detectors. Best analog to slopslap's task. |
+| **PAN'25 Gen-AI Detection Task 2** | https://zenodo.org/records/14966121 | 6 co-authorship classes incl. "Machine-written, then human-edited" & "Human-written, then machine-polished" | 288k train / 72k dev | Class labels only (not aligned pair text per row necessarily); "machine→human-edited" class = 1,368 train — the scarce, on-target one. |
+| **MixSet** (LLM-as-a-Coauthor) | https://arxiv.org/html/2401.05952 · github.com/Dongping-Chen/MixSet | AI-revised HWT (polish/complete/rewrite) + **human-revised MGT (adapt/humanize)** | 3.6k mixtext; email/news/reviews/abstracts/TED/blog | "humanize" + "adapt" ops = machine→human direction (8 experts). Explicitly filters chatbot artifacts ("Sure! Here's..."). |
+| **OpAI-Bench** | https://huggingface.co/datasets/OpAI-Bench/OpAI-Bench · arxiv 2606.06481 · github.com/VILA-Lab/OpAI-Bench | v0 human → v1..v8 progressively AI-edited trajectories | 4 domains (essays/news/reports/abstracts); 4 generators incl. gpt-5.4 | 5 edit ops: polish, paraphrase, style-rewrite, compress, expand. Sentence/token/span provenance. Direction human→AI, but per-sentence granularity is useful for isolating single-tell edits. |
+| **EditLens** | https://arxiv.org/html/2510.03154 | quantifies *degree* of AI editing given original human text; Grammarly case study | (model + dataset promised) | Regression on edit magnitude; ternary human/AI/mixed F1=90.4%. Method reference for "how much did the edit change." |
+| **APT-Eval** | https://www.innovatiana.com/en/datasets/apt-eval | human text ↔ AI-polished (degree- & percentage-based), parallel originals included | ~15k; blog/news/speech + 5 LLMs (GPT-4o/Llama/DeepSeek) | Parallel originals available for direct comparison. Direction human→AI (light polish). |
+| **PASTED** | https://github.com/Linzwcs/PASTED · huggingface.co/datasets/linzw/PASTED | original ↔ AI-paraphrased span (1–10 sentence spans) | 83k in-distribution + 9.4k OOD | Fine-grained paraphrased-span detection; span-level labels. |
+
+**Takeaways for slopslap:**
+- For an **on-mission** paired set (AI draft → human-quality), **Beemo** is the strongest fit; MixSet "humanize" and PAN'25 "machine→human-edited" secondary.
+- The polish datasets (HPPT, SciHRA, APT-Eval) give abundant examples of *what AI polishing adds* — i.e., the slop slopslap should be able to strip; the human seed is the abstention/target reference.
+- OpAI-Bench's per-operation, per-sentence structure is the closest to slopslap's "one demonstrated harm per record" granularity and could seed idempotency/abstention eval cases.
+- Recurring cross-source finding (Beemo, APT-Eval, MixSet, Wikipedia guide): human/expert edits and light polish EVADE AI detectors — reinforcing slopslap's non-detector, harm-only stance.

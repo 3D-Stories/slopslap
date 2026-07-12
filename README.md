@@ -69,7 +69,7 @@ policy. Run it: `pytest -q` (the gate) or `python3 scripts/eval/run_eval.py --wr
 
 ## Status
 
-- **Version:** 0.1.0 (MVP).
+- **Version:** 0.1.1 (v0.2 epic #16 in progress — live model-in-the-loop).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; wiring the
@@ -77,6 +77,14 @@ policy. Run it: `pytest -q` (the gate) or `python3 scripts/eval/run_eval.py --wr
 
 ## Changelog
 
+- **0.1.1** — platform-feasibility spike (epic #16 / #26): `scripts/slopslap_invoke/` proves ONE
+  fresh-context model invocation under the real plugin config — a subprocess `claude -p` adapter
+  (`invoke_semantic`) that feeds the Layer-3 `verify(semantic_fn=…)` seam. Fresh context is
+  machine-proven (the CLI `init` event reports zero tools + zero MCP servers under
+  `--tools "" --strict-mcp-config --mcp-config '{"mcpServers":{}}'`; a sentinel-file positive
+  denial test confirms no file access). Every transport/parse/timeout failure fails closed to
+  verdict `ambiguous` (never a silent `clean`); one live invocation + a recorded fixture are
+  checked in (`tests/fixtures/invoke/`), with a `SLOPSLAP_LIVE=1`-gated integration test.
 - **0.1.0** — MVP: eval fixtures + two-stage runner; plugin scaffold (SKILL + commands +
   references); measure-only scanner with a vendored CommonMark parser; invariant ledger + 3-layer
   verify + decision rule; backup-gated apply + per-hunk selective rollback; the eval loop RUN

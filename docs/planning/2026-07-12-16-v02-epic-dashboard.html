@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>slopslap · v0.2 Epic Dashboard (#16)</title>
+<style>
+/* Kukakuka doc language v1 — tokens per docs/planning/vdl-reference-kukakuka-dashboard.html
+   Roles: --ember = in-progress / needs-attention · --lagoon = merged / settled / healthy
+          --coral = blocked / owner-verify-risk */
+:root{
+  --bg:#0a121a; --bg2:#0d1722; --surface:#101b26; --surface2:#15222f;
+  --line:#1e2f3d; --line2:#2a4052;
+  --ink:#ede8df; --ink2:#b9c3c9; --mut:#8ca0ad;
+  --ember:#f2a05b; --ember-dim:rgba(242,160,91,.14);
+  --lagoon:#3ec4b4; --lagoon-dim:rgba(62,196,180,.13);
+  --coral:#e5655e; --coral-dim:rgba(229,101,94,.13);
+  --disp:"Seravek","Gill Sans Nova","Gill Sans","Trebuchet MS",Verdana,sans-serif;
+  --body:"Charter","Bitstream Charter","Sitka Text",Cambria,Georgia,serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#f7f4ec; --bg2:#f1ede2; --surface:#fffdf7; --surface2:#f4efe4;
+    --line:#e0d9c8; --line2:#cbc2ad; --ink:#1d2b33; --ink2:#3d5260; --mut:#6b7f8b;
+    --ember:#c96f1e; --ember-dim:rgba(201,111,30,.12);
+    --lagoon:#0e8d7f; --lagoon-dim:rgba(14,141,127,.12);
+    --coral:#c04740; --coral-dim:rgba(192,71,64,.10);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a121a; --bg2:#0d1722; --surface:#101b26; --surface2:#15222f;
+  --line:#1e2f3d; --line2:#2a4052; --ink:#ede8df; --ink2:#b9c3c9; --mut:#8ca0ad;
+  --ember:#f2a05b; --ember-dim:rgba(242,160,91,.14);
+  --lagoon:#3ec4b4; --lagoon-dim:rgba(62,196,180,.13);
+  --coral:#e5655e; --coral-dim:rgba(229,101,94,.13);
+}
+:root[data-theme="light"]{
+  --bg:#f7f4ec; --bg2:#f1ede2; --surface:#fffdf7; --surface2:#f4efe4;
+  --line:#e0d9c8; --line2:#cbc2ad; --ink:#1d2b33; --ink2:#3d5260; --mut:#6b7f8b;
+  --ember:#c96f1e; --ember-dim:rgba(201,111,30,.12);
+  --lagoon:#0e8d7f; --lagoon-dim:rgba(14,141,127,.12);
+  --coral:#c04740; --coral-dim:rgba(192,71,64,.10);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:40px 24px 72px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding-bottom:22px}
+.mark{font:800 30px/1 var(--disp);letter-spacing:-.01em;margin:0}
+.mark em{font-style:normal;color:var(--ember)}
+.eyebrow{font:600 11px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin:0 0 8px}
+.eyebrow b{color:var(--lagoon);font-weight:600}
+.updated{font:12px var(--mono);color:var(--mut);text-align:right}
+.theme-btn{margin-top:8px;font:600 11px var(--mono);background:var(--surface2);color:var(--ink2);border:1px solid var(--line2);border-radius:999px;padding:5px 12px;cursor:pointer}
+.bar{height:12px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);overflow:hidden;margin:24px 0 6px}
+.bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--lagoon),var(--ember));width:0%}
+.barcap{font:12px var(--mono);color:var(--mut);margin:0 0 30px}
+h2{font:700 clamp(20px,2.4vw,25px)/1.2 var(--disp);letter-spacing:-.01em;margin:34px 0 4px}
+.sec-sub{font:13px var(--mono);color:var(--mut);margin:0 0 16px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px}
+.chip{font:600 12px var(--mono);padding:5px 11px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);display:inline-flex;align-items:center;gap:7px}
+.chip .dot{width:8px;height:8px;border-radius:50%}
+.chip.merged{background:var(--lagoon-dim);color:var(--lagoon);border-color:transparent}
+.chip.active{background:var(--ember-dim);color:var(--ember);border-color:transparent}
+.chip.blocked{background:var(--coral-dim);color:var(--coral);border-color:transparent}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--line2)}
+.card.merged::before{background:var(--lagoon)}
+.card.active::before{background:var(--ember)}
+.card.blocked::before{background:var(--coral)}
+.card h3{font:700 17px/1.25 var(--disp);margin:0 0 3px}
+.card .id{font:600 12px var(--mono);color:var(--mut)}
+.card .dep{font:12px var(--mono);color:var(--mut);margin:2px 0 12px}
+.card .st{font:600 12px var(--mono);text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;display:inline-block}
+.card.merged .st{color:var(--lagoon)} .card.active .st{color:var(--ember)}
+.card.blocked .st{color:var(--coral)} .card.queued .st{color:var(--mut)}
+.card ul{margin:6px 0 0;padding-left:0;list-style:none}
+.card li{font:13.5px/1.5 var(--body);color:var(--ink2);padding-left:18px;position:relative;margin:3px 0}
+.card li::before{content:"";position:absolute;left:2px;top:9px;width:6px;height:6px;border-radius:50%;background:var(--lagoon)}
+.card li.ov::before{background:var(--coral)}
+.card li.pending::before{background:var(--mut)}
+.card li .tag{color:var(--coral);font:11px var(--mono)}
+.kv{font:12px var(--mono);color:var(--mut);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+.kv a{color:var(--lagoon)}
+.flow{font:13px/1.9 var(--mono);color:var(--ink2);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow-x:auto;white-space:pre;margin:0 0 8px}
+.exit{padding-left:0}
+.exit li{font:14px/1.5 var(--body);color:var(--ink2);padding-left:22px;position:relative;margin:6px 0;list-style:none}
+.exit li::before{content:"○";position:absolute;left:0;color:var(--mut)}
+.exit li.done::before{content:"●";color:var(--lagoon)}
+.foot{font:12px var(--mono);color:var(--mut);border-top:1px solid var(--line);margin-top:40px;padding-top:16px}
+.foot b{color:var(--ink2)}
+a{color:var(--lagoon)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">slopslap · <b>live model-in-the-loop</b> · epic #16</p>
+      <h1 class="mark">v0.2 <em>epic</em> dashboard</h1>
+    </div>
+    <div>
+      <div class="updated">updated 2026-07-12 17:50 UTC · run start · baseline 214/0 @ 0bdbfa9</div>
+      <button class="theme-btn" onclick="var r=document.documentElement,c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');r.setAttribute('data-theme',c==='dark'?'light':'dark');">◐ theme</button>
+    </div>
+  </header>
+
+  <!-- PROGRESS: update width% + caption on each merge -->
+  <div class="bar"><i style="width:3%"></i></div>
+  <p class="barcap">0 / 14 children merged · #26 PR open (gate 214→260, +46 tests) · version 0.1.1</p>
+
+  <div class="legend">
+    <span class="chip merged"><span class="dot" style="background:var(--lagoon)"></span>merged + closed</span>
+    <span class="chip active"><span class="dot" style="background:var(--ember)"></span>in progress</span>
+    <span class="chip" style="color:var(--mut)"><span class="dot" style="background:var(--mut)"></span>queued</span>
+    <span class="chip blocked"><span class="dot" style="background:var(--coral)"></span>blocked</span>
+  </div>
+
+  <h2>Dependency spine</h2>
+  <p class="sec-sub">Tier 0 prerequisites unblock the model-dependent and corpus-dependent work; #27 assembles; Tier 4 validates.</p>
+  <div class="flow">T0  #26 feasibility ──► #17 semantic ──┐
+    #30 corpus ─────► #25, #28         │
+T1  #18 #19 #20 #22 (independent) ─────┼──► #27 assembler ──► #29 (also dep #21)
+T3  #23 wiring · #21 hardening · #24   │
+T4  #28 e2e golden (dep #27 #23 #17–#20 #30) · #25 calibration (dep #30)</div>
+
+  <h2>Tier 0 — prerequisites</h2>
+  <p class="sec-sub">full WF2 both · do first</p>
+  <div class="grid">
+    <div class="card active" id="c26">
+      <div class="id">T0 · #26</div>
+      <h3>Platform-feasibility spike</h3>
+      <div class="dep">no deps · blocks #17, #27</div>
+      <span class="st">PR open</span>
+      <ul>
+        <li>subprocess <code>claude -p</code> adapter <code>invoke_semantic</code> feeds verify(semantic_fn)</li>
+        <li>fresh context machine-proven: init event zero tools + zero MCP; sentinel denial test</li>
+        <li>fail-closed to <code>ambiguous</code> on every transport/parse/timeout failure</li>
+        <li>live invocation (clean, 11.3s) + recorded fixture + SLOPSLAP_LIVE-gated test</li>
+      </ul>
+      <div class="kv">PR pending · version 0.1.1 · gate 214→260 (+46, 0 reg)</div>
+    </div>
+    <div class="card queued" id="c30">
+      <div class="id">T0 · #30</div>
+      <h3>Corpus integration</h3>
+      <div class="dep">no deps · blocks #25, #28</div>
+      <span class="st">queued</span>
+      <ul>
+        <li class="pending">Provenance manifest (corpus_manifest.jsonl, per-item lanes)</li>
+        <li class="pending">Disjoint calibration / held-out split</li>
+        <li class="pending">Fixture tranche + negative preservation anchors</li>
+      </ul>
+      <div class="kv">PR — · version — · gate —</div>
+    </div>
+  </div>
+
+  <h2>Tier 1 — components</h2>
+  <p class="sec-sub">lite depth · #17 depends on #26; the rest are independent</p>
+  <div class="grid">
+    <div class="card queued" id="c17">
+      <div class="id">T1 · #17</div>
+      <h3>Semantic verify</h3>
+      <div class="dep">depends on #26</div>
+      <span class="st">queued</span>
+      <ul><li class="pending">Real fresh-context Layer-3 semantic_fn wired into verify</li></ul>
+      <div class="kv">PR — · version — · gate —</div>
+    </div>
+    <div class="card queued" id="c18">
+      <div class="id">T1 · #18</div>
+      <h3>Protected-span auto-extractor</h3>
+      <div class="dep">no deps</div>
+      <span class="st">queued</span>
+      <ul><li class="pending">Arbitrary-input protected-span extraction</li></ul>
+      <div class="kv">PR — · version — · gate —</div>
+    </div>
+    <div class="card queued" id="c19">
+      <div class="id">T1 · #19</div>
+      <h3>Invariant-ledger auto-build</h3>
+      <div class="dep">no deps</div>
+      <span class="st">queued</span>
+      <ul><li class="pending">Ledger construction from arbitrary prose</li></ul>
+      <div class="kv">PR — · version — · gate —</div>
+    </div>
+    <div class="card queued" id="c20">
+      <div class="id">T1 · #20</div>
+      <h3>Live passage-local locality</h3>
+      <div class="dep">no deps</div>
+      <span class="st">queued</span>
+      <ul><li class="pending">Authorized ranges derived from diagnoses</li></ul>
+      <div class="kv">PR — · version — · gate —</div>
+    </div>
+    <div class="card queued" id="c22">
+      <div class="id">T1 · #22</div>
+      <h3>Genre classifier</h3>
+      <div class="dep">no deps</div>
+      <span class="st">queued</span>
+      <ul><li class="pending">Genre constrains diagnosis/verify</li></ul>
+      <div class="kv">PR — · version — · gate —</div>
+    </div>
+  </div>
+
+  <h2>Tier 2 — the assembler</h2>
+  <p class="sec-sub">full WF2 · WF5-F1: the seam that was missing</p>
+  <div class="grid">
+    <div class="card queued" id="c27">
+      <div class="id">T2 · #27</div>
+      <h3>Live-orchestration seam</h3>
+      <div class="dep">depends on #26, #17–#20 · blocks #28, #29</div>
+      <span class="st">queued</span>
+      <ul>
+        <li class="pending">Assemble audit → verify → suggest → apply end-to-end</li>
+        <li class="pending">Stage ordering, data handoffs, error propagation, dry-run acceptance</li>
+      </ul>
+      <div class="kv">PR — · version — · gate —</div>
+    </div>
+  </div>
+
+  <h2>Tier 3 — wiring / apply / voice</h2>
+  <p class="sec-sub">WF2: #23, #21 · lite: #29, #24</p>
+  <div class="grid">
+    <div class="card queued" id="c23">
+      <div class="id">T3 · #23</div>
+      <h3>Suggest → verifier wiring</h3>
+      <div class="dep">no deps · full WF2</div>
+      <span class="st">queued</span>
+      <ul><li class="pending">Deterministic verifier integration: input, verdict handling, rejection</li></ul>
+      <div class="kv">PR — · version — · gate —</div>
+    </div>
+    <div class="card queued" id="c21">
+      <div class="id">T3 · #21</div>
+      <h3>Apply write-strategy hardening</h3>
+      <div class="dep">no deps · full WF2 · foundational</div>
+      <span class="st">queued</span>
+      <ul><li class="pending">Metadata policy, hardlink fail-closed, symlink no-follow, EXDEV abort, fsync-in-prod, spec prose</li></ul>
+      <div class="kv">PR — · version — · gate —</div>
+    </div>
+    <div class="card queued" id="c29">
+      <div class="id">T3 · #29</div>
+      <h3>Apply-command enablement</h3>
+      <div class="dep">depends on #21, #27</div>
+      <span class="st">queued</span>
+      <ul><li class="pending">Enable the user-facing apply command after hardening + orchestration</li></ul>
+      <div class="kv">PR — · version — · gate —</div>
+    </div>
+    <div class="card queued" id="c24">
+      <div class="id">T3 · #24</div>
+      <h3>Manual voice sample</h3>
+      <div class="dep">no deps</div>
+      <span class="st">queued</span>
+      <ul><li class="pending">One-shot manual voice sample, no learning</li></ul>
+      <div class="kv">PR — · version — · gate —</div>
+    </div>
+  </div>
+
+  <h2>Tier 4 — live validation + calibration</h2>
+  <p class="sec-sub">lite both · the final child sets 0.2.0</p>
+  <div class="grid">
+    <div class="card queued" id="c28">
+      <div class="id">T4 · #28</div>
+      <h3>Live e2e validation golden</h3>
+      <div class="dep">depends on #27, #23, #17–#20, #30</div>
+      <span class="st">queued</span>
+      <ul><li class="pending">Asserts SAFETY verdicts + blocked unsafe edits (not just shape)</li></ul>
+      <div class="kv">PR — · version — · gate —</div>
+    </div>
+    <div class="card queued" id="c25">
+      <div class="id">T4 · #25</div>
+      <h3>Scanner threshold calibration</h3>
+      <div class="dep">depends on #30 · held-out split, never tune on it</div>
+      <span class="st">queued</span>
+      <ul><li class="pending">Fit on calibration split; report on held-out; thresholds measure-only until validated</li></ul>
+      <div class="kv">PR — · version — · gate —</div>
+    </div>
+  </div>
+
+  <h2>Exit gate</h2>
+  <p class="sec-sub">DONE definition from the run contract</p>
+  <ul class="exit">
+    <li>All 14 children (#17–#30) merged + closed (or blocker-commented, epic left open)</li>
+    <li>Epic #16 checkboxes ticked, closed with children → PRs → versions summary</li>
+    <li>Version 0.2.0 on both surfaces (plugin.json + tests/test_scaffold.py pinned assert)</li>
+    <li>Suite green, counts stated vs 214/0 baseline</li>
+    <li>Dashboard current as of the last merged child</li>
+  </ul>
+
+  <div class="foot">
+    <b>Run:</b> autonomous · session 001b8b2c · <b>0/14 merged</b> · baseline 214 passed / 0 failed @ 0bdbfa9.<br>
+    <b>Repo:</b> 3D-Stories/slopslap · <b>Source of truth:</b> this committed HTML (hosted Artifact is a copy).
+  </div>
+</div>
+</body>
+</html>
