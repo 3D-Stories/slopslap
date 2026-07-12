@@ -154,13 +154,15 @@ def _kukakuka() -> dict:
                            f"{audit['cadence']['semicolon_per_1k']}/1k — NOT clean prose")},
         "disposition": cand.disposition, "reason": cand.reason,
         "edits": len(cand.edits), "invariant_violations": len(violations),
+        # one byte-change measure (edit volume = removed + added), used for BOTH fields below.
         "changed_bytes": sum(len(e.replacement) + (e.end_byte - e.start_byte) for e in cand.edits),
         "flag_only_diagnoses": ["negative-parallelism density (16x 'X, not Y') — flagged for human, "
                                 "not doc-wide flattened (genre=PRD tolerates some; slopslap preserves voice)",
                                 "'first-class' x3 + heavy em-dash/semicolon appositive cadence"],
         "ledger": {"entries": len(ledger.entries), "protected_spans": len(ledger.protected_spans)},
         "negative_control_bad_edit_rejected": neg_rejected,
-        "preservation": {"changed_byte_ratio": round(sum(len(e.replacement) for e in cand.edits) / max(1, len(prd)), 6),
+        "preservation": {"changed_byte_ratio": round(sum(len(e.replacement) + (e.end_byte - e.start_byte)
+                                                        for e in cand.edits) / max(1, len(prd)), 6),
                          "headings_preserved": heads_before == heads_after, "bytes_total": len(prd)},
     }
 
@@ -268,10 +270,14 @@ def render_md(r: dict) -> str:
               f"· changed-byte ratio: {k['preservation']['changed_byte_ratio']} · headings preserved: "
               f"{k['preservation']['headings_preserved']}",
               f"- conservative ledger over real invariants: {k['ledger']['entries']} entries, "
-              f"{k['ledger']['protected_spans']} protected span(s)",
-              "- slopslap correctly ABSTAINED on clean distinctive prose (keystone rule: edit only "
-              "demonstrated harm) → zero invariant violations, zero flattening. The repair CAPABILITY is "
-              "proven on the 3 seeded canonical fixtures above.", "",
+              f"{k['ledger']['protected_spans']} protected span(s); negative control (bad edit rejected): "
+              f"{k['negative_control_bad_edit_rejected']}",
+              "- slopslap made **2 localized repairs** (drop an 'honest crash recovery' anthropomorphism "
+              "+ the tautological 'two materials' metaphor) with ZERO invariant violations; the pervasive "
+              "negative-parallelism cadence is FLAGGED for the human, not doc-wide flattened (genre=PRD "
+              "tolerates some punch — slopslap preserves voice). These are seeded, author-demonstrated "
+              "frozen edit-scripts (the SKILL's demonstrated output), verified through the real gates — "
+              "not live per-session generation (same provenance as the canonical fixtures).", "",
               f"## LLM-judge (secondary, non-gating): **{r['judge']['status'].upper()}**", "",
               f"> {r['judge']['note']}", "",
               "## Provenance & limitations", "",

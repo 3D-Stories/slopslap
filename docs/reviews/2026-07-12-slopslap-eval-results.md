@@ -29,9 +29,9 @@ Engine: `opus-4.8` — authoring engine recorded, not selected by the plugin (ad
 
 - audit: shipped scanner flagged synthetic-cadence tells: negative-parallelism x16, em-dash 25.101/1k, semicolon 26.991/1k — NOT clean prose
 - slopslap disposition: **repair** — repaired 2 demonstrated-harm passage(s)
-- invariant violations: **0** · bytes changed: **119** · changed-byte ratio: 0.001786 · headings preserved: True
-- conservative ledger over real invariants: 2 entries, 1 protected span(s)
-- slopslap correctly ABSTAINED on clean distinctive prose (keystone rule: edit only demonstrated harm) → zero invariant violations, zero flattening. The repair CAPABILITY is proven on the 3 seeded canonical fixtures above.
+- invariant violations: **0** · bytes changed: **119** · changed-byte ratio: 0.00425 · headings preserved: True
+- conservative ledger over real invariants: 2 entries, 1 protected span(s); negative control (bad edit rejected): True
+- slopslap made **2 localized repairs** (drop an 'honest crash recovery' anthropomorphism + the tautological 'two materials' metaphor) with ZERO invariant violations; the pervasive negative-parallelism cadence is FLAGGED for the human, not doc-wide flattened (genre=PRD tolerates some punch — slopslap preserves voice). These are seeded, author-demonstrated frozen edit-scripts (the SKILL's demonstrated output), verified through the real gates — not live per-session generation (same provenance as the canonical fixtures).
 
 ## LLM-judge (secondary, non-gating): **NOT_RUN**
 

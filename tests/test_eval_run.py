@@ -50,12 +50,12 @@ def test_slopslap_idempotent_second_pass_empty():
         assert _R["fixtures"][fx]["baselines"]["slopslap"]["second_pass_edits"] == 0, fx
 
 
-def test_kukakuka_real_repair_zero_invariant_violations():
+def test_kukakuka_seeded_repair_zero_invariant_violations():
     k = _R["kukakuka"]
-    # a REAL model-driven audit repaired demonstrated harm (NOT a stub abstention) with 0
-    # invariant violations (issue #14 fix)
+    # a seeded, author-demonstrated frozen repair (NOT the old stub abstention, NOT live-generated)
+    # tightens 2 demonstrated-harm passages with 0 invariant violations (issue #14 fix)
     assert k["invariant_violations"] == 0
-    assert k["disposition"] == "repair" and k["edits"] >= 1
+    assert k["disposition"] == "repair" and k["edits"] == 2
     assert k["preservation"]["headings_preserved"] is True
     assert k["negative_control_bad_edit_rejected"] is True
 
