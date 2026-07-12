@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>slopslap #26 · platform-feasibility spike</title>
+<style>
+:root{--bg:#f6f7f8;--surface:#fff;--ink:#1a2126;--ink-2:#4b5a63;--ink-3:#7b8a92;
+--line:#dde3e6;--accent:#0f766e;--code:#eef1f3}
+@media(prefers-color-scheme:dark){:root{--bg:#12181c;--surface:#1a2228;--ink:#e7edf0;
+--ink-2:#a8b6bd;--ink-3:#71808a;--line:#2a353c;--accent:#2dd4bf;--code:#232d34}}
+:root[data-theme=dark]{--bg:#12181c;--surface:#1a2228;--ink:#e7edf0;--ink-2:#a8b6bd;
+--ink-3:#71808a;--line:#2a353c;--accent:#2dd4bf;--code:#232d34}
+:root[data-theme=light]{--bg:#f6f7f8;--surface:#fff;--ink:#1a2126;--ink-2:#4b5a63;
+--ink-3:#7b8a92;--line:#dde3e6;--accent:#0f766e;--code:#eef1f3}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+font:15px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px 72px}
+header{padding:40px 0 18px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.eyebrow{color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+h1{font-size:clamp(22px,4vw,30px);margin:.3em 0;font-weight:750;letter-spacing:-.02em}
+h2{font-size:19px;font-weight:700;margin:1.4em 0 .4em}
+h3{font-size:16px;font-weight:650;margin:1.2em 0 .3em}
+p,li{color:var(--ink-2)}
+code{background:var(--code);border-radius:4px;padding:1px 5px;font:12.5px/1.4 ui-monospace,Menlo,Consolas,monospace}
+pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto}
+pre code{background:none;padding:0}
+blockquote{border-left:3px solid var(--accent);margin:.6em 0;padding:.2em 0 .2em 14px;color:var(--ink-3)}
+table{border-collapse:collapse;width:100%;margin:.6em 0;font-size:13.5px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.telemetry th{white-space:nowrap;color:var(--ink-3);width:1%}
+.telemetry-section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 18px 14px;margin-top:24px}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div class="eyebrow">rawgentic design artifact · updated 2026-07-12 12:49 MDT</div>
+<h1>slopslap #26 · platform-feasibility spike</h1>
+
+</header>
+<main>
+<h1>#26 Platform-feasibility spike — fresh-context model invocation (design + spike report)</h1>
+<p>Status: design drafted 2026-07-12 (evidence section filled during implementation). Part of epic #16. Blocks #17 (semantic verify) and #27 (live orchestration).</p>
+<h2>Problem</h2>
+<p>The live path (audit → verify → suggest → apply) assumes plugin code can invoke a model, but nothing proves it. The spec&#x27;s isolation contract (<code>docs/planning/2026-07-12-slopslap-reconciled-spec.md:101-106</code>) requires the Layer-3 adversarial semantic pass to run in a FRESH context that never saw the rewriter&#x27;s chain-of-thought, receiving only original + revision + invariant ledger. The consumer seam is <code>verify(..., semantic_fn)</code> at <code>scripts/slopslap_verification/ledger.py:253</code> — a synchronous Python callable. This spike proves ONE fresh-context invocation under the real plugin config and pins the contract #17 builds on.</p>
+<h2>Approaches considered</h2>
+<p><strong>A — subprocess <code>claude -p</code> (headless CLI) from a Python helper.</strong> RECOMMENDED.</p>
+<ul>
+<li>Pros: callable from synchronous Python (the semantic_fn seam); fresh context by construction</li>
+</ul>
+<p>  (new OS process, new session — no <code>--resume</code>/<code>--continue</code>); model selectable (<code>--model</code>);   machine-readable envelope (<code>--output-format json</code>); timeout via <code>subprocess.run(timeout=)</code>;   auth = the user&#x27;s logged-in Claude Code credentials, which IS &quot;the actual plugin config&quot;;   zero new Python deps.</p>
+<ul>
+<li>Cons: CLI version drift (envelope shape pinned by recorded fixture); per-call session</li>
+</ul>
+<p>  spin-up cost; CI has no Claude auth (live test must be env-gated).</p>
+<ul>
+<li>Effort: ~1 day. Risk: low-medium (envelope drift, cost).</li>
+</ul>
+<p><strong>B — Anthropic HTTP API with an API key.</strong> Rejected: a different auth path than the plugin config actually has (no API key in this setup) — proving B would NOT prove the plugin can do it, which is the whole point of the spike. Also adds an HTTP dep or hand-rolled client.</p>
+<p><strong>C — in-session subagent dispatch (skill prose instructs the main model).</strong> Rejected as THE mechanism: not callable from deterministic Python, so pytest can never exercise it, and fresh-context enforcement would be prompt discipline only — unverifiable. (It remains a valid *additional* pattern for skills at orchestration level, but the provable seam is A.)</p>
+<h2>Design (approach A — synthesized with the GPT Soul peer consult, 2026-07-12)</h2>
+<p>New module <code>scripts/slopslap_invoke/</code>:</p>
+<ul>
+<li><strong>Public API is CLOSED (peer decision adopted):</strong> `invoke_semantic(original, revision,</li>
+</ul>
+<p>  ledger_canonical, *, model, timeout_s=60.0, executable=None) -&gt; dict<code> — the semantic seam   never accepts arbitrary prompts, session ids, extra messages, or extra CLI args. The   low-level subprocess runner (</code>_run_claude`) is module-private.</p>
+<ul>
+<li><strong>Return type pinned (pass-2 A4):</strong> the returned dict is EXACTLY the</li>
+</ul>
+<p>    <code>normalize_semantic</code>-input object <code>{verdict, concerns}</code> — nothing else. The internal     <code>InvocationResult</code> never crosses the public boundary; its diagnostics surface via module     logging (<code>logging.getLogger(&quot;slopslap.invoke&quot;)</code>). Every failure status converts     deterministically to <code>{&quot;verdict&quot;: &quot;ambiguous&quot;, &quot;concerns&quot;: []}</code> at this boundary.</p>
+<ul>
+<li><strong>semantic_fn adapter (pass-2 S5):</strong> the verify seam calls</li>
+</ul>
+<p>    <code>semantic_fn(original, revision, ledger_canonical)</code> with three positional args     (ledger.py:328) — #17 binds the keywords:     <code>semantic_fn = functools.partial(invoke_semantic, model=..., timeout_s=...)</code>.</p>
+<ul>
+<li><code>invoke.py</code> — the runner:</li>
+<li>argv list (never <code>shell=True</code>): `[executable, &quot;-p&quot;, &quot;--model&quot;, model, &quot;--output-format&quot;,</li>
+</ul>
+<p>    &quot;json&quot;, &quot;--no-session-persistence&quot;, &lt;no-tools lockdown flag — ONE exact argv pinned by     the live probe&gt;]<code>; the request delivered on <strong>stdin</strong> (no argv length limits, no     process-list exposure). No </code>--resume<code>, </code>--continue<code>, </code>--fallback-model<code> — prohibited by     construction; empty model rejected. The live probe verifies EVERY load-bearing flag     (</code>-p<code>, </code>--output-format json<code>, </code>--no-session-persistence`, the lockdown flag) on the     probed CLI version, and the exact working argv is recorded in the fixture (pass-2 S4).</p>
+<ul>
+<li><strong>Bounded execution (pass-2 A6 — <code>subprocess.run</code> is NOT sufficient):</strong> <code>subprocess.Popen</code></li>
+</ul>
+<p>    with <code>start_new_session=True</code> (own process group); stdout/stderr drained by streaming     read with a hard byte cap (cap exceeded → kill group, <code>status=parse_error</code>); on timeout     <code>killpg(SIGTERM)</code> → grace period → <code>killpg(SIGKILL)</code>. Tests cover a fake CLI that     exceeds the cap mid-run and one that spawns a surviving descendant. Linux/macOS     semantics (the plugin&#x27;s supported platforms).</p>
+<ul>
+<li>Child runs in a <strong>newly created empty temp cwd</strong> (peer: prevents project-file/CLAUDE.md</li>
+</ul>
+<p>    discovery).</p>
+<ul>
+<li><code>InvocationResult</code> (internal): `status ∈ {ok, timeout, cli_missing, nonzero_exit,</li>
+</ul>
+<p>    parse_error, model_mismatch}<code> + </code>result_text<code>, </code>envelope<code>, </code>duration_s<code>, </code>stderr_tail`     (bounded). Requested vs envelope-reported model compared; mismatch → not-ok (peer     decision). The runner NEVER raises on environmental failure — every failure is an     explicit status (fail-loud by contract).</p>
+<ul>
+<li><code>contract.py</code> — versioned request/response contract (<strong>contract-v1</strong>):</li>
+<li>request builder: deterministic serialization of EXACTLY (original, revision,</li>
+</ul>
+<p>    ledger_canonical) beneath a fixed semantic-verifier instruction, in clearly delimited     data fields. <code>original</code> arrives as bytes at the verify seam (<code>verify(original: bytes, …)</code>)     — the builder decodes STRICT utf-8; invalid bytes REJECT the request (return     <code>{&quot;verdict&quot;: &quot;ambiguous&quot;, &quot;concerns&quot;: []}</code> + diagnostic log) rather than silently     corrupting the offset base with replacement chars (pass-2 A1).</p>
+<ul>
+<li><strong>Offset integrity (pass-2 A1 — the model never computes byte offsets):</strong> the payload</li>
+</ul>
+<p>    presents each ledger entry WITH its <code>original_ranges</code> verbatim (the ledger canonical     object already carries original-byte ranges per entry). The model attributes a concern     by COPYING the flagged entry&#x27;s id + ranges from the payload — it is explicitly     instructed never to derive offsets from text positions. The response validator accepts     only ranges that appear in the supplied ledger (byte-for-byte match); any invented range     → schema violation → <code>ambiguous</code>. A multibyte-content fixture asserts exact hunk     attribution end-to-end through <code>verify()</code>.</p>
+<ul>
+<li>response: extract the assistant payload from the CLI JSON envelope, parse as ONE strict</li>
+</ul>
+<p>    JSON object, and validate LOCALLY — allowed keys, enum values, types, bounded field     sizes (prompt wording is never schema enforcement — peer decision).</p>
+<ul>
+<li><strong>Verdict vocabulary = the seam&#x27;s OWN enum (Step-4 loop-back fix, Critical F1):</strong></li>
+</ul>
+<p>    <code>{verdict: &quot;real&quot;|&quot;ambiguous&quot;|&quot;clean&quot;, concerns: [...]}</code> — exactly what     <code>normalize_semantic</code> (ledger.py:211-245) accepts. <strong>Explicit concern schema (pass-3     P3-5):</strong> per concern, <code>code: str</code> and <code>message: str</code> are REQUIRED; <code>entry_ids: [str]</code>     and <code>original_ranges: [{start_byte, end_byte}]</code> are OPTIONAL — an omitted field is     semantically identical to an empty array (matching <code>normalize_semantic</code>&#x27;s     <code>.get(..., [])</code> defaults, ledger.py:229-230). The validator accepts all three     attribution shapes (fully attributed / entry_ids-only / unattributed); each has an     exact valid example object in the test suite. <code>&quot;real&quot;</code> = confirmed violation → REJECT path     (ledger.py:333); <code>&quot;ambiguous&quot;</code> = inconclusive → SURFACE (ledger.py:344); <code>&quot;clean&quot;</code> =     ACCEPT-eligible. NO translation layer — the model is instructed in the seam&#x27;s native     vocabulary. A deterministic test round-trips each verdict through     <code>normalize_semantic</code> + <code>verify()</code> and asserts the resulting decision (REJECT / SURFACE /     ACCEPT-eligible).</p>
+<ul>
+<li><strong>Concern attribution (Step-4 loop-back fix, High F2; refined pass-2 S2):</strong> concerns</li>
+</ul>
+<p>    carry <code>entry_ids</code> + <code>original_ranges</code> copied from the payload&#x27;s ledger entries.     <strong><code>original_ranges</code> is the SOLE authoritative field for per-hunk mapping</strong>     (ledger.py:339-340 computes implicated hunks only from ranges); <code>entry_ids</code> are     traceability-only. A &quot;real&quot; concern with ranges rejects only its implicated hunks     (<code>disposition=&quot;reject&quot;</code>); one with <code>entry_ids</code> but NO ranges counts as attributed yet     maps to zero hunks and degrades to global non-revertable via ledger.py:374 (safe     direction — over-rejection); one with neither is <code>reject_global</code> outright     (ledger.py:334-343, 374-379). The fixture and tests cover ALL THREE shapes: fully     attributed, entry_ids-only (partial), and unattributed.</p>
+<ul>
+<li><strong>Failure mapping (amended per Medium F3 — the seam collapses failure detail):</strong> every</li>
+</ul>
+<p>    transport/timeout/parse/schema failure maps to verdict <code>&quot;ambiguous&quot;</code> — never <code>&quot;clean&quot;</code>     from missing output, and semantic output can never override Layer-1 hard failures.     <code>verify()</code> re-emits ambiguity as its own generic <code>semantic_ambiguous</code> SURFACE finding     (ledger.py:344-346) and drops concern detail for non-&quot;real&quot; verdicts, so the stable     failure codes (<code>semantic_transport_error</code>, <code>semantic_timeout</code>,     <code>semantic_invalid_response</code>) are DIAGNOSTIC ONLY. <strong>Authoritative carrier (pass-3     P3-6):</strong> a <code>diagnostic_code</code> field on the internal <code>InvocationResult</code>, emitted     exclusively through structured logging (<code>slopslap.invoke</code> logger) — the public     <code>{verdict, concerns}</code> dict NEVER carries them (closed-boundary rule upheld). A     deterministic log-capture test asserts each failure mapping emits its code. Stated     explicitly so nobody builds on a granularity the seam does not transport.</p>
+<ul>
+<li><strong>Fresh-context enforcement (the bundle — mechanisms, not assertions).</strong> Scope of the</li>
+</ul>
+<p>  claim (pass-3 P3-1, narrowed per reviewer option): the guarantee is   <strong>new-conversation-session isolation</strong> — the invoked session structurally cannot see the   rewriter&#x27;s conversation, chain-of-thought, or session artifacts, which is exactly what the   spec isolation contract (spec:101-106) requires. Ambient USER-level configuration   (~/.claude instructions, hooks, MCP servers) is NOT rewriter state and is out of the   contract&#x27;s scope; the spike still minimizes it where the live probe proves controls safe   (non-auth env vars scrubbed from the child env; hook/MCP-disabling flags adopted if the   probed CLI offers them without breaking auth) and RECORDS what remains inherited in   Evidence:   1. New OS process + new session per call — no resume/continue/session reuse possible      through the closed API.   2. Payload-only input: prompt contains ONLY the three request fields + instructions.   3. Tool lockdown: no-tools invocation mode (exact flag semantics verified live in the      spike; pinned in argv; asserted by tests) — the fresh session cannot read repo files,      transcripts, or rewriter artifacts.   4. Empty temp cwd — no ambient project context to discover; child env scrubbed to an      allowlist (auth + PATH + HOME essentials), inherited remainder documented.   5. <strong>Positive denial test (pass-2 A3, hardened pass-3 P3-2 — machine-observable evidence      only, never assistant prose):</strong> the live spike creates a SENTINEL file with a known      random token at a known path outside the payload, then instructs the invoked session      to attempt to read that exact path. PASS requires ALL of, read from the CLI      envelope/execution trace (not the model&#x27;s own claims): (a) an attempted tool call is      visible in the trace with a platform-generated denial, OR the trace shows zero tool      invocations were possible under the lockdown argv; (b) zero successful tool results in      the trace; (c) the sentinel token appears NOWHERE in the response. A model saying      &quot;access refused&quot; counts for nothing. The sanitized argv, lockdown configuration, CLI      version, and the machine-observable trace excerpts are recorded in Evidence. An      invocation that CAN retrieve the sentinel fails the spike.</p>
+<ul>
+<li>**Checked-in evidence (all fixture content SYNTHETIC — peer risk item; no real user text,</li>
+</ul>
+<p>  no credentials, redacted diagnostics):**</p>
+<ul>
+<li><code>tests/fixtures/invoke/recorded_invocation.json</code> — the real sanitized envelope from one</li>
+</ul>
+<p>    live run (request, raw stdout envelope, expected extracted object, metadata: CLI version,     requested+reported model, duration, timestamp).</p>
+<ul>
+<li>Deterministic tests (CI-green, no auth): argv construction incl. lockdown + prohibited</li>
+</ul>
+<p>    flags; envelope extraction + strict schema validation over the recorded fixture; fake-CLI     suite covering success, invalid JSON, schema violation, nonzero exit, model mismatch,     oversized output (cap exceeded MID-RUN), timeout (fake bin sleeps; process-group     terminate→kill exercised; a descendant-spawning fake proves no orphans); verdict     round-trip through <code>normalize_semantic</code> + <code>verify()</code> asserting REJECT / SURFACE /     ACCEPT-eligible per verdict; concern-attribution matrix (fully attributed /     entry_ids-only / unattributed); multibyte-content attribution round-trip; invalid-UTF-8     request rejection.</p>
+<ul>
+<li>Live integration test <code>tests/test_invoke_live.py</code> gated on <code>SLOPSLAP_LIVE=1</code> (matches the</li>
+</ul>
+<p>    repo&#x27;s existing <code>SLOPSLAP_FSYNC</code> env convention; reports pytest SKIP when unset, never a     silent pass) — one real invocation through the same adapter asserting envelope + contract     parse + positive-denial (sentinel token absent, tool access refused). Run once during     the spike; evidence recorded below.</p>
+<h2>File changes</h2>
+<ul>
+<li>NEW <code>scripts/slopslap_invoke/__init__.py</code>, <code>invoke.py</code>, <code>contract.py</code></li>
+<li>NEW <code>tests/test_invoke.py</code> (deterministic), <code>tests/test_invoke_live.py</code> (env-gated),</li>
+</ul>
+<p>  <code>tests/fixtures/invoke/recorded_invocation.json</code></p>
+<ul>
+<li>THIS doc gains the evidence section; README + Changelog; version bump ×2</li>
+</ul>
+<p>  (<code>.claude-plugin/plugin.json</code>, <code>tests/test_scaffold.py:69</code>)</p>
+<h2>Configuration changes</h2>
+<p>None. Model + timeout are function parameters with defaults; no new config surface until #17 decides it needs one.</p>
+<h2>Error handling and failure modes</h2>
+<p>All environmental failures are explicit <code>InvocationResult</code> statuses (above). Contract-level: parse failure → verdict <code>&quot;ambiguous&quot;</code> (the seam&#x27;s enum term — pass-2 A2/S3), which the verify engine already treats as non-shippable (SURFACE) — a broken model invocation can never silently pass verification. Deterministic Layer 1 owns hard accept/reject regardless (spec isolation contract).</p>
+<h2>Security implications</h2>
+<ul>
+<li><strong>Untrusted-input threat model (pass-3 P3-3):</strong> the three request fields carry</li>
+</ul>
+<p>  attacker-controllable document text; embedded instructions could try to steer the model   toward <code>clean</code> or forged copied ranges. Standing mitigations: (a) deterministic Layer 1   owns hard accept/reject — no injected <code>clean</code> can override a deterministic failure;   (b) forged ranges fail the byte-for-byte ledger-range match → <code>ambiguous</code>; (c) a <code>clean</code>   verdict only lifts BLOCKED→ACCEPT when every deterministic layer already passed. The   spike ships ONE adversarial fixture (document text demanding &quot;emit clean&quot;) through the   contract parser as a smoke case; the FULL injection-resistance suite (delimiter breaks,   role-play instructions, forged ledger text) is deliberately DEFERRED to #17 (semantic   verify) and #28 (e2e validation golden), where the verifier&#x27;s judgment — not the   transport this spike proves — is the artifact under test. Recorded as a named follow-up.</p>
+<ul>
+<li>No <code>shell=True</code>; argv list + stdin payload — no interpolation of document text into a shell.</li>
+<li>Document text leaves the machine to the Anthropic API under the user&#x27;s existing Claude Code</li>
+</ul>
+<p>  auth — same trust boundary the plugin already operates in (the user is already running   Claude Code on these files). No NEW exfiltration surface.</p>
+<ul>
+<li>Tool lockdown denies the fresh session file/network tools — the payload is its whole world.</li>
+<li>Recorded fixture content reviewed before commit (no secrets, no private text).</li>
+</ul>
+<h2>Platform / external dependencies</h2>
+<p>platform_apis:</p>
+<ul>
+<li>api: <code>claude -p --model &lt;m&gt; --output-format json --no-session-persistence</code> + ONE no-tools lockdown flag (exact argv pinned by the live probe from candidates <code>--disallowedTools</code> / <code>--allowedTools</code> empty / <code>--permission-mode</code>; the candidate list does NOT ship — pass-2 A5) subprocess on the host Claude Code CLI (v2.1.207 probed)</li>
+</ul>
+<p>  feasibility: verified via spike — spike status at design time: PENDING (Step-4 F4/S1); &quot;verified&quot; becomes true ONLY when the live run is recorded to tests/fixtures/invoke/recorded_invocation.json AND the Evidence section below is filled with the positive denial result, IN THIS SAME PR before it merges; Step 9&#x27;s runtime-surface check gates on that recorded evidence existing   failure: fail-loud   note: every environmental failure maps to an explicit InvocationResult status; contract failures map to verdict=&quot;ambiguous&quot; which verify treats as non-shippable (SURFACE). The single exact lockdown argv is pinned by the live probe&#x27;s positive denial test and asserted in tests — if NO candidate denies sentinel access, the spike FAILS (it does not ship asserted-only)</p>
+<h2>Multi-PR assessment</h2>
+<p>Single PR. Additive module + tests + docs; no existing-module changes.</p>
+<h2>Provenance</h2>
+<p>Own draft authored blind (main loop, Fable 5), then synthesized with the GPT Soul peer proposal (<code>docs/reviews/peer-rawgentic-peer-problem-26-2026-07-12.md</code>). Peer contributions adopted: closed <code>invoke_semantic</code> API; empty-temp-cwd isolation; process-group timeout kill; requested-vs-reported model check; versioned contract-v1 with local strict schema validation; stable diagnostic concern codes (ambiguous-verdict failures); synthetic-only fixture policy; fake-CLI failure-mode test matrix; skip-visible live gate. Peer risks carried into implementation: <code>--no-session-persistence</code> alone is not the freshness guarantee (the bundle is); empty-allowlist flag syntax must be verified live; envelope shape is a transport contract that can drift (fixture-pinned, fail-closed); recorded success proves a snapshot, not permanent availability (versions recorded).</p>
+<h2>Evidence (live probe, 2026-07-12 — recorded)</h2>
+<p>Full machine-observable record: <code>tests/fixtures/invoke/probe_evidence.json</code> (synthetic sentinel token — random, not a secret; env values redacted).</p>
+<ul>
+<li><strong>CLI:</strong> <code>claude</code> v2.1.207 at <code>~/.local/bin/claude</code>. <strong>Auth:</strong> the host&#x27;s logged-in Claude</li>
+</ul>
+<p>  Code credentials (the plugin&#x27;s real config); no API key, no credential file read.</p>
+<ul>
+<li><strong>Every load-bearing flag confirmed on the probed CLI</strong> via <code>claude --help</code>: <code>-p</code>,</li>
+</ul>
+<p>  <code>--model</code>, <code>--output-format json|stream-json</code>, <code>--no-session-persistence</code>, <code>--tools</code>,   <code>--strict-mcp-config</code>, <code>--mcp-config</code>.</p>
+<ul>
+<li><strong>Pinned lockdown argv:</strong></li>
+</ul>
+<p>  <code>-p --model &lt;m&gt; --output-format json --no-session-persistence --tools &quot;&quot; --strict-mcp-config --mcp-config &#x27;{&quot;mcpServers&quot;:{}}&#x27;</code></p>
+<ul>
+<li><strong>Positive-denial result (three-way differential — machine-observable, NOT model prose):</strong></li>
+</ul>
+<p>  1. <strong>Control (no lockdown):</strong> <code>init</code> reported 162 tools / 11 MCP servers; the model      invoked <code>Read</code> and disclosed the sentinel token — leak count <strong>3</strong>. Proves the      sentinel is genuinely reachable when tools exist.   2. <strong><code>--tools &quot;&quot; </code> only (INSUFFICIENT):</strong> built-in <code>Read</code> gone (130 tools, all MCP), but      the MCP surface stayed live — the model invoked <code>mempalace_*</code>. Leak 0 here only for      lack of a filesystem read path; the live MCP surface is the P3-1 isolation hole.   3. <strong>Full lockdown (SUFFICIENT):</strong> <code>init</code> reported <strong><code>tools: []</code> and <code>mcp_servers: []</code></strong> —      zero tool surface by construction; <strong>zero</strong> <code>tool_use</code>; sentinel leak <strong>0</strong>. The      model&#x27;s prose falsely claimed &quot;Read tool work fine&quot; — correctly ignored, since the      machine-observable <code>init</code> event is authoritative (exactly the pass-3 P3-2 requirement).</p>
+<ul>
+<li><strong>Fresh-context / auth:</strong> the invocation ran under real host auth in a new process; the</li>
+</ul>
+<p>  <code>init</code> event is the machine-observable proof of the empty tool surface. Load-bearing   timeout, envelope-parse, and model-mismatch behaviors are exercised by the deterministic   fake-CLI suite (Task 3).</p>
+<ul>
+<li><strong>Live invocation THROUGH the shipped <code>invoke_semantic</code> adapter (Task 4):</strong> a real call</li>
+</ul>
+<p>  with a synthetic original + faithful synonym revision returned <code>{&quot;verdict&quot;:&quot;clean&quot;,   &quot;concerns&quot;:[]}</code>, runner <code>status=ok</code>, duration <strong>11.3s</strong>, no diagnostic — recorded to   <code>tests/fixtures/invoke/recorded_invocation.json</code>. The gated live test   (<code>tests/test_invoke_live.py::test_live_invocation_through_adapter</code>, <code>SLOPSLAP_LIVE=1</code>)   passed against real <code>claude</code> in <strong>39.8s</strong>; unset, it SKIPS (CI has no auth). This closes   AC1–AC4: mechanism proven end-to-end through shipped code, auth/model/timeout/response   contract exercised, fresh context machine-proven, recorded fixture + gated test checked in.</p>
+
+</main>
+<footer>Last updated: 2026-07-12 12:49 MDT · generated by hooks/render_artifact.py — self-contained, no external resources.</footer>
+</div>
+</body>
+</html>
