@@ -23,14 +23,14 @@ Engine: `opus-4.8` — authoring engine recorded, not selected by the plugin (ad
 | clean-personal *(control)* | ✅ (abstain) | ❌ (repair) | ✅ |
 | clean-spec *(control)* | ✅ (abstain) | ❌ (repair) | ✅ |
 
-**Comparison vs humanizer-emulation:** BEATS (strictly better on 4 fixture(s), worse nowhere: True).
+**Comparison vs humanizer-emulation:** BEATS (strictly better on 6 gate(s), worse nowhere: True).
 
 ## kukakuka-prd (real 421-line PRD — end-to-end)
 
-- audit: scanner (markdown) found 0 stock/vague/transition clusters — clean, distinctive prose
+- audit: shipped scanner (markdown) found 0 stock/vague/transition clusters — clean prose
 - slopslap disposition: **abstain** — no demonstrated editorial harm (keystone rule)
 - invariant violations: **0** · bytes changed: **0** · changed-byte ratio: 0.0 · headings preserved: True
-- conservative ledger over real invariants: 1 entries, 1 protected span(s)
+- conservative ledger over real invariants: 2 entries, 1 protected span(s)
 - slopslap correctly ABSTAINED on clean distinctive prose (keystone rule: edit only demonstrated harm) → zero invariant violations, zero flattening. The repair CAPABILITY is proven on the 3 seeded canonical fixtures above.
 
 ## LLM-judge (secondary, non-gating): **NOT_RUN**

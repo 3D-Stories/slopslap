@@ -3,7 +3,11 @@
 Iterates the explicit decision-rule inventory; does not trust committed result files.
 """
 
-from eval.run_eval import CANONICAL, CONTROLS, HARD_GATES, run_eval
+import os
+
+from eval.run_eval import (
+    CANONICAL, CANONICAL_GATES, CONTROL_GATES, CONTROLS, MD_PATH, render_md, run_eval,
+)
 
 # pinned first-pass slopslap output digests — freezes the SKILL's demonstrated output (design R3).
 PINNED_SLOPSLAP_OUTPUT = {
@@ -58,17 +62,29 @@ def test_beats_or_ties_humanizer_emulation():
     assert _R["comparison"]["worse_anywhere"] is False
 
 
-def test_decision_rule_inventory_is_complete():
-    # every canonical cell must report every hard gate that applies (no gate silently absent)
+def test_decision_rule_inventory_complete_and_all_required_gates_pass():
+    # every required gate for the fixture TYPE must be present AND "pass" (WF5-diff H5)
     for fx in CANONICAL:
-        gates = set(_R["fixtures"][fx]["baselines"]["slopslap"]["gates"])
-        # canonical fixtures run the non-control hard gates
-        for g in ("edit_locality", "protected_spans_intact", "preservation_region_scoped",
-                  "no_new_claim_atoms", "markdown_structure", "idempotence"):
-            assert g in gates, (fx, g, gates)
+        gates = _R["fixtures"][fx]["baselines"]["slopslap"]["gates"]
+        for g in CANONICAL_GATES:
+            assert gates.get(g) == "pass", (fx, g, gates)
     for fx in CONTROLS:
-        gates = set(_R["fixtures"][fx]["baselines"]["slopslap"]["gates"])
-        assert "control_abstention" in gates, (fx, gates)
+        gates = _R["fixtures"][fx]["baselines"]["slopslap"]["gates"]
+        for g in CONTROL_GATES:
+            assert gates.get(g) == "pass", (fx, g, gates)
+
+
+def test_kukakuka_negative_control_rejects_bad_edit():
+    # proves the ledger is LIVE (a hypothetical invariant-violating edit is rejected)
+    assert _R["kukakuka"]["negative_control_bad_edit_rejected"] is True
+
+
+def test_committed_artifact_matches_live_render():
+    # a stale committed report (obsolete PASS) fails CI (WF5-diff H6)
+    assert os.path.exists(MD_PATH), "results artifact not committed"
+    with open(MD_PATH, encoding="utf-8") as fh:
+        committed = fh.read()
+    assert committed == render_md(_R), "committed eval-results.md is stale (re-run run_eval.py --write)"
 
 
 def test_judge_status_is_surfaced():

@@ -33,9 +33,21 @@ KUKAKUKA = os.path.join(REPO, "tests", "fixtures", "kukakuka-prd.md")
 CANONICAL = ["distinctive-essay", "normative-spec", "underspecified-prd"]
 CONTROLS = ["clean-personal", "clean-spec"]
 BASELINES = ["slopslap", "humanizer_emulation", "original_unchanged"]
-HARD_GATES = ["edit_locality", "protected_spans_intact", "preservation_region_scoped",
-              "no_new_claim_atoms", "markdown_structure", "control_abstention", "idempotence"]
+# the required hard gates each fixture TYPE must report (WF5-diff H5)
+CANONICAL_GATES = ["edit_locality", "protected_spans_intact", "preservation_region_scoped",
+                   "no_new_claim_atoms", "markdown_structure", "idempotence"]
+CONTROL_GATES = ["control_abstention", "edit_locality", "markdown_structure"]
 SCHEMA_VERSION = 1
+
+# committed expected input digests — detect fixture drift BEFORE building (WF5-diff H7).
+EXPECTED_INPUT_DIGESTS = {
+    "distinctive-essay": "acb0bae5e8c936939cc8ae42ecd22af1137029c039a02409840e4d73db3cff43",
+    "normative-spec": "3d90415898148d49844ce7fb76e5708790b4b812becf22bcf3cbebe2013d4452",
+    "underspecified-prd": "d98ca56cf4501421f8b0c62c57814146529c47b390bbbdc4932583870deddd9a",
+    "clean-personal": "4b43b822e24b4989c6e5de888912549e72c38f92975c602b2c8f72cdda1d1d64",
+    "clean-spec": "5c3b460fecc139d43824a930354f9d8515614059b0d36f6d43f2c73113fb4ceb",
+}
+EXPECTED_KUKAKUKA_DIGEST = "2b30918efff5be77f0c54c5262192c79b3ae60a5319645028dea0ce425dfc7ca"
 
 
 def _second_pass(baseline: str, fixture: str, first_output: bytes) -> dict:
@@ -47,19 +59,25 @@ def _second_pass(baseline: str, fixture: str, first_output: bytes) -> dict:
 
 def _cell(fixture: str, baseline: str) -> dict:
     original, _ = load_fixture(os.path.join(FIXTURES, fixture))
+    # bind to the COMMITTED expected input digest (detects fixture drift; WF5-diff H7)
+    assert sha256_hex(original) == EXPECTED_INPUT_DIGESTS[fixture], f"{fixture} input digest drift"
     cand = C.BUILDERS[baseline](fixture, original)
-    assert cand.input_sha256 == sha256_hex(original), "candidate input digest mismatch"
     env = cand.to_envelope(original)
     first_output = apply_edits(original, cand.edits)
     second_env, second_edits = _second_pass(baseline, fixture, first_output)
     result = run(os.path.join(FIXTURES, fixture), env, second_pass=second_env)
     gates = {g["name"]: g["status"] for g in result.gates}
+    required = CONTROL_GATES if fixture in CONTROLS else CANONICAL_GATES
+    # hard gates pass ONLY on a deterministic PASS with every required gate present + "pass"
+    # (INCOMPLETE / missing / unknown status => NOT a pass; WF5-diff H2/H5)
+    hard_pass = (result.deterministic_state == State.PASS
+                 and all(gates.get(g) == "pass" for g in required))
     return {
         "baseline": baseline, "disposition": cand.disposition, "reason": cand.reason,
         "deterministic_state": result.deterministic_state,
-        "hard_gates_pass": result.deterministic_state in (State.PASS, State.INCOMPLETE)
-                           and not any(v == "fail" for v in gates.values()),
+        "hard_gates_pass": hard_pass,
         "gates": gates,
+        "required_gates": required,
         "output_sha256": sha256_hex(first_output),
         "unchanged": first_output == original,
         "changed_bytes": sum(len(e.replacement) + (e.end_byte - e.start_byte) for e in cand.edits),
@@ -68,58 +86,101 @@ def _cell(fixture: str, baseline: str) -> dict:
     }
 
 
+def _scan_prd(prd_path: str) -> dict:
+    """Actually invoke the shipped scanner (subprocess = the isolation boundary; WF5-diff H4)."""
+    import subprocess
+    scan = os.path.join(REPO, "scripts", "scan_prose.py")
+    r = subprocess.run([sys.executable, scan, "--format", "markdown", prd_path],
+                       capture_output=True, text=True, timeout=120)
+    if r.returncode != 0:
+        raise RuntimeError(f"scanner failed (rc={r.returncode}): {r.stderr[:200]}")
+    d = json.loads(r.stdout)
+    if d.get("status") != "ok":
+        raise RuntimeError(f"scanner status {d.get('status')}")
+    m = d["metrics"]
+    clusters = (m["stock_lexical_clusters"]["count"] + m["vague_attribution"]["count"]
+                + m["transition_clusters"]["count"])
+    return {"units_scanned": d["units"], "slop_clusters": clusters,
+            "breakdown": {"stock": m["stock_lexical_clusters"]["count"],
+                          "vague": m["vague_attribution"]["count"],
+                          "transition": m["transition_clusters"]["count"]}}
+
+
 def _kukakuka() -> dict:
     with open(KUKAKUKA, "rb") as fh:
         prd = fh.read()
+    assert sha256_hex(prd) == EXPECTED_KUKAKUKA_DIGEST, "kukakuka-prd input digest drift"
+    audit = _scan_prd(KUKAKUKA)  # REAL scanner output, not hard-coded
     cand = C.build_slopslap("kukakuka-prd", prd)
-    # conservative ledger over REAL invariants the shipped verifier recognizes.
-    manifest = {"invariant_regions": [], "protected_spans": []}
+
+    # conservative ledger over REAL invariants; REQUIRED spans must resolve (WF5-diff H1).
     url = b"wehewehe.org"
-    ui = prd.find(url)
-    if ui >= 0:
-        manifest["protected_spans"].append(
-            {"start_byte": ui, "end_byte": ui + len(url), "sha256": sha256_hex(prd[ui:ui + len(url)])})
     strike = b"permanent ban after 3 strikes"
-    si = prd.find(strike)
-    if si >= 0:
-        manifest["invariant_regions"].append(
-            {"start_byte": si, "end_byte": si + len(strike), "checks": ["numbers"]})
+    codes = b"error 1302/1303"
+    ui, si, ci = prd.find(url), prd.find(strike), prd.find(codes)
+    assert ui >= 0 and si >= 0 and ci >= 0, "required kukakuka invariants not found (ledger would be vacuous)"
+    manifest = {
+        "protected_spans": [{"start_byte": ui, "end_byte": ui + len(url),
+                             "sha256": sha256_hex(prd[ui:ui + len(url)])}],
+        "invariant_regions": [
+            {"start_byte": si, "end_byte": si + len(strike), "checks": ["numbers"]},
+            {"start_byte": ci, "end_byte": ci + len(codes), "checks": ["numbers"]},
+        ],
+    }
     ledger = build_ledger(prd, manifest)
-    edits = cand.edits
-    result = verify(prd, edits, ledger, allow_two_layer=True)
+    result = verify(prd, cand.edits, ledger, allow_two_layer=True)
     violations = [f for f in result["findings"] if f.get("disposition") in ("reject", "reject_global")]
-    revised = apply_edits(prd, edits)
-    # preservation proxies (deterministic)
-    heads_before = prd.count(b"\n## ")
-    heads_after = revised.count(b"\n## ")
+
+    # NEGATIVE CONTROL: a hypothetical invariant-violating edit (3 strikes -> 5 strikes) MUST be
+    # REJECTED by the same ledger — proving it is live, not vacuous (WF5-diff H1).
+    from slopslap_verification.editscript import Edit
+    three = prd.find(b"3 strikes")
+    bad = verify(prd, [Edit(three, three + 1, b"5")], ledger, allow_two_layer=True)
+    neg_rejected = any(f.get("disposition") in ("reject", "reject_global") for f in bad["findings"])
+
+    heads_before, heads_after = prd.count(b"\n## "), apply_edits(prd, cand.edits).count(b"\n## ")
     return {
-        "audit": {"units_scanned": 107, "slop_clusters": 0,
-                  "note": "scanner (markdown) found 0 stock/vague/transition clusters — clean, distinctive prose"},
+        "audit": {**audit,
+                  "note": "shipped scanner (markdown) found 0 stock/vague/transition clusters — clean prose"},
         "disposition": cand.disposition, "reason": cand.reason,
-        "edits": len(edits), "invariant_violations": len(violations),
-        "changed_bytes": sum(len(e.replacement) + (e.end_byte - e.start_byte) for e in edits),
+        "edits": len(cand.edits), "invariant_violations": len(violations),
+        "changed_bytes": sum(len(e.replacement) + (e.end_byte - e.start_byte) for e in cand.edits),
         "ledger": {"entries": len(ledger.entries), "protected_spans": len(ledger.protected_spans)},
-        "preservation": {"changed_byte_ratio": round(sum(len(e.replacement) for e in edits) / max(1, len(prd)), 6),
-                         "headings_preserved": heads_before == heads_after,
-                         "bytes_total": len(prd)},
+        "negative_control_bad_edit_rejected": neg_rejected,
+        "preservation": {"changed_byte_ratio": round(sum(len(e.replacement) for e in cand.edits) / max(1, len(prd)), 6),
+                         "headings_preserved": heads_before == heads_after, "bytes_total": len(prd)},
     }
 
 
+def _rank(status: str) -> int:
+    # for gate-by-gate comparison: pass(2) > not_evaluated/capability(1) > fail/fixture_error(0)
+    return {"pass": 2, "not_evaluated": 1, "capability_unavailable": 1}.get(status, 0)
+
+
 def _beats(slopslap_cells: dict, humanizer_cells: dict) -> dict:
+    """GATE-BY-GATE comparison over the common gate inventory (WF5-diff H3)."""
     per = {}
-    strictly_better = 0
+    strictly_better_gates = 0
     worse_anywhere = False
     for fx in CANONICAL + CONTROLS:
-        s = slopslap_cells[fx]["hard_gates_pass"]
-        h = humanizer_cells[fx]["hard_gates_pass"]
-        per[fx] = {"slopslap": s, "humanizer_emulation": h}
-        if s and not h:
-            strictly_better += 1
-        if h and not s:
-            worse_anywhere = True
-    verdict = "BEATS" if (not worse_anywhere and strictly_better >= 1) else (
+        sg = slopslap_cells[fx]["gates"]
+        hg = humanizer_cells[fx]["gates"]
+        common = set(sg) & set(hg)
+        fx_better = fx_worse = 0
+        for g in common:
+            sr, hr = _rank(sg[g]), _rank(hg[g])
+            if sr > hr:
+                fx_better += 1
+            elif sr < hr:
+                fx_worse += 1
+                worse_anywhere = True
+        strictly_better_gates += fx_better
+        per[fx] = {"slopslap_pass": slopslap_cells[fx]["hard_gates_pass"],
+                   "humanizer_pass": humanizer_cells[fx]["hard_gates_pass"],
+                   "gates_better": fx_better, "gates_worse": fx_worse}
+    verdict = "BEATS" if (not worse_anywhere and strictly_better_gates >= 1) else (
         "TIES" if not worse_anywhere else "LOSES")
-    return {"verdict": verdict, "strictly_better_fixtures": strictly_better,
+    return {"verdict": verdict, "strictly_better_gates": strictly_better_gates,
             "worse_anywhere": worse_anywhere, "per_fixture": per}
 
 
@@ -185,7 +246,7 @@ def render_md(r: dict) -> str:
     cmp = r["comparison"]
     k = r["kukakuka"]
     lines += ["", f"**Comparison vs humanizer-emulation:** {cmp['verdict']} "
-              f"(strictly better on {cmp['strictly_better_fixtures']} fixture(s), worse nowhere: "
+              f"(strictly better on {cmp['strictly_better_gates']} gate(s), worse nowhere: "
               f"{not cmp['worse_anywhere']}).", "",
               "## kukakuka-prd (real 421-line PRD — end-to-end)", "",
               f"- audit: {k['audit']['note']}",
@@ -240,6 +301,27 @@ def render_html(r: dict, md: str) -> str:
         f"<pre style='background:#f6f8fa;padding:12px;overflow:auto'>{data}</pre>")
 
 
+MD_PATH = os.path.join(REPO, "docs", "reviews", "2026-07-12-slopslap-eval-results.md")
+HTML_PATH = os.path.join(REPO, "docs", "reviews", "2026-07-12-slopslap-eval-results.html")
+
+
+def write_artifacts(r: dict) -> None:
+    md = render_md(r)
+    with open(MD_PATH, "w", encoding="utf-8") as fh:
+        fh.write(md)
+    body = render_html(r, md)
+    full = ("<!doctype html><html><head><meta charset=utf-8><title>slopslap eval results</title>"
+            "<style>body{font-family:system-ui,sans-serif;max-width:900px;margin:2em auto;"
+            "padding:0 1em;line-height:1.5}table{margin:1em 0}code,pre{font-family:ui-monospace,monospace}"
+            "</style></head><body>" + body + "</body></html>")
+    with open(HTML_PATH, "w", encoding="utf-8") as fh:
+        fh.write(full)
+
+
 if __name__ == "__main__":
     res = run_eval()
-    print(json.dumps(res, indent=2, sort_keys=True))
+    if "--write" in sys.argv or "--artifacts" in sys.argv:
+        write_artifacts(res)
+        print(f"wrote {MD_PATH} and {HTML_PATH}; ALL_PASS={res['done']['ALL_PASS']}")
+    else:
+        print(json.dumps(res, indent=2, sort_keys=True))

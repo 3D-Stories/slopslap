@@ -112,6 +112,24 @@ applying `skills/slopslap/SKILL.md`'s judgment. **Fable 5 = bonus-if-API; no Fab
   failure without recording it as a protocol revision in this design; no new exception converts a failure
   into a pass.
 
+## Post-diff-review resolutions — WF5 on the built diff (`docs/reviews/increment-6-diff-2026-07-12.md`, 0 Crit / 4 High / 3 Med, all confirmed + fixed)
+
+- **H1** — the kukakuka ledger was thin/fail-open. Now the required invariant spans (URL, "3 strikes",
+  error codes) MUST resolve (assert, else fail), AND a **negative control** verifies that a hypothetical
+  invariant-violating edit (`3 strikes`→`5`) is REJECTED — proving the ledger is live, not vacuous.
+- **H2** — `hard_gates_pass` no longer treats INCOMPLETE as a pass: it requires
+  `deterministic_state == PASS` AND every required gate present + `"pass"`.
+- **H3** — `_beats` compares **gate-by-gate** over the common inventory (ranked pass>skip>fail);
+  `worse_anywhere` fires on any single gate slopslap ranks below humanizer; strict wins counted per gate.
+- **H4** — the kukakuka audit now comes from a **real `scan_prose.py` subprocess call** (units +
+  cluster counts from its JSON), not hard-coded constants; a scanner error fails the eval.
+- **H5** — the test asserts the FULL required-gate set per fixture type is present AND `"pass"` (not just
+  one control gate).
+- **H6** — `run_eval.py --write` writes both artifacts from the results object; a test asserts the
+  committed `.md` equals the live render (a stale/obsolete-PASS report fails CI).
+- **H7** — each fixture's loaded bytes are bound to a **committed expected input digest** (detects fixture
+  drift) — the check is no longer tautological.
+
 ## Out of scope
 New mechanics (all shipped). Persistent voiceprint (v2). Wiring the apply command to the engine (a
 follow-up). This increment PROVES the existing mechanics + a demonstrated application on real fixtures.

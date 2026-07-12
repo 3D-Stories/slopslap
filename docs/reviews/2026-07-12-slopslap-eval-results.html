@@ -2,27 +2,37 @@
   "comparison": {
     "per_fixture": {
       "clean-personal": {
-        "humanizer_emulation": false,
-        "slopslap": true
+        "gates_better": 2,
+        "gates_worse": 0,
+        "humanizer_pass": false,
+        "slopslap_pass": true
       },
       "clean-spec": {
-        "humanizer_emulation": false,
-        "slopslap": true
+        "gates_better": 2,
+        "gates_worse": 0,
+        "humanizer_pass": false,
+        "slopslap_pass": true
       },
       "distinctive-essay": {
-        "humanizer_emulation": false,
-        "slopslap": true
+        "gates_better": 1,
+        "gates_worse": 0,
+        "humanizer_pass": false,
+        "slopslap_pass": true
       },
       "normative-spec": {
-        "humanizer_emulation": true,
-        "slopslap": true
+        "gates_better": 0,
+        "gates_worse": 0,
+        "humanizer_pass": true,
+        "slopslap_pass": true
       },
       "underspecified-prd": {
-        "humanizer_emulation": false,
-        "slopslap": true
+        "gates_better": 1,
+        "gates_worse": 0,
+        "humanizer_pass": false,
+        "slopslap_pass": true
       }
     },
-    "strictly_better_fixtures": 4,
+    "strictly_better_gates": 6,
     "verdict": "BEATS",
     "worse_anywhere": false
   },
@@ -56,6 +66,11 @@
             "policy": "humanizer-emulation-v1"
           },
           "reason": "applied humanizer-emulation-v1 doc-wide",
+          "required_gates": [
+            "control_abstention",
+            "edit_locality",
+            "markdown_structure"
+          ],
           "second_pass_edits": 0,
           "unchanged": false
         },
@@ -75,6 +90,11 @@
             "policy": "identity"
           },
           "reason": "no edits",
+          "required_gates": [
+            "control_abstention",
+            "edit_locality",
+            "markdown_structure"
+          ],
           "second_pass_edits": 0,
           "unchanged": true
         },
@@ -96,6 +116,11 @@
             "policy": "slopslap-judgment-v1"
           },
           "reason": "no demonstrated editorial harm (keystone rule)",
+          "required_gates": [
+            "control_abstention",
+            "edit_locality",
+            "markdown_structure"
+          ],
           "second_pass_edits": 0,
           "unchanged": true
         }
@@ -121,6 +146,11 @@
             "policy": "humanizer-emulation-v1"
           },
           "reason": "applied humanizer-emulation-v1 doc-wide",
+          "required_gates": [
+            "control_abstention",
+            "edit_locality",
+            "markdown_structure"
+          ],
           "second_pass_edits": 0,
           "unchanged": false
         },
@@ -140,6 +170,11 @@
             "policy": "identity"
           },
           "reason": "no edits",
+          "required_gates": [
+            "control_abstention",
+            "edit_locality",
+            "markdown_structure"
+          ],
           "second_pass_edits": 0,
           "unchanged": true
         },
@@ -161,6 +196,11 @@
             "policy": "slopslap-judgment-v1"
           },
           "reason": "no demonstrated editorial harm (keystone rule)",
+          "required_gates": [
+            "control_abstention",
+            "edit_locality",
+            "markdown_structure"
+          ],
           "second_pass_edits": 0,
           "unchanged": true
         }
@@ -189,6 +229,14 @@
             "policy": "humanizer-emulation-v1"
           },
           "reason": "applied humanizer-emulation-v1 doc-wide",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
           "second_pass_edits": 0,
           "unchanged": false
         },
@@ -211,6 +259,14 @@
             "policy": "identity"
           },
           "reason": "no edits",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
           "second_pass_edits": 0,
           "unchanged": true
         },
@@ -235,6 +291,14 @@
             "policy": "slopslap-judgment-v1"
           },
           "reason": "repaired 2 demonstrated-harm passage(s)",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
           "second_pass_edits": 0,
           "unchanged": false
         }
@@ -263,6 +327,14 @@
             "policy": "humanizer-emulation-v1"
           },
           "reason": "applied humanizer-emulation-v1 doc-wide",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
           "second_pass_edits": 0,
           "unchanged": true
         },
@@ -285,6 +357,14 @@
             "policy": "identity"
           },
           "reason": "no edits",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
           "second_pass_edits": 0,
           "unchanged": true
         },
@@ -309,6 +389,14 @@
             "policy": "slopslap-judgment-v1"
           },
           "reason": "repaired 1 demonstrated-harm passage(s)",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
           "second_pass_edits": 0,
           "unchanged": false
         }
@@ -337,6 +425,14 @@
             "policy": "humanizer-emulation-v1"
           },
           "reason": "applied humanizer-emulation-v1 doc-wide",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
           "second_pass_edits": 0,
           "unchanged": false
         },
@@ -359,6 +455,14 @@
             "policy": "identity"
           },
           "reason": "no edits",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
           "second_pass_edits": 0,
           "unchanged": true
         },
@@ -383,6 +487,14 @@
             "policy": "slopslap-judgment-v1"
           },
           "reason": "repaired 1 demonstrated-harm passage(s)",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
           "second_pass_edits": 0,
           "unchanged": false
         }
@@ -396,7 +508,12 @@
   },
   "kukakuka": {
     "audit": {
-      "note": "scanner (markdown) found 0 stock/vague/transition clusters \u2014 clean, distinctive prose",
+      "breakdown": {
+        "stock": 0,
+        "transition": 0,
+        "vague": 0
+      },
+      "note": "shipped scanner (markdown) found 0 stock/vague/transition clusters \u2014 clean prose",
       "slop_clusters": 0,
       "units_scanned": 107
     },
@@ -405,9 +522,10 @@
     "edits": 0,
     "invariant_violations": 0,
     "ledger": {
-      "entries": 1,
+      "entries": 2,
       "protected_spans": 1
     },
+    "negative_control_bad_edit_rejected": true,
     "preservation": {
       "bytes_total": 28003,
       "changed_byte_ratio": 0.0,
