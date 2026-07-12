@@ -117,6 +117,25 @@ increment-1 edit-map + the increment-4 verify; don't re-implement.
   sidecar's source path stay owner-private). An existing backup dir that is group/world-writable is
   **rejected**; if equivalent protection can't be verified, a `warning` is surfaced.
 
+## Post-diff-review resolutions — WF5 on the built diff (`docs/reviews/increment-5-diff-2026-07-12.md`, 0 Crit / 5 High / 1 Med, all confirmed + fixed)
+
+- **H1** — the bounded monotonic re-verify LOOP is now implemented (was a single re-verify): each attempt
+  rebuilds the candidate from the untouched original, and on a non-ACCEPT translates the subset-relative
+  hunk ids back to original ids to remove the newly-blocked dependency groups; ≤ (#groups + 1) attempts;
+  blocks on unattributed failure / unknown hunk / no progress.
+- **H2** — the temp write is a **complete-write loop** (`_write_all`, zero-progress → error) + a
+  **read-back** of the temp file against the candidate BEFORE `os.replace` — no short-write can corrupt
+  the source.
+- **H3** — a blocking finding referencing an **unknown hunk id** now blocks partial apply (validated
+  against the initial hunk-id set), instead of being silently discarded.
+- **H4** — the initial `verify_fn` result is validated (a dict with a recognized `decision` + well-formed
+  findings) and the call is exception-guarded; a malformed/missing decision or a raised verifier ⇒ block,
+  no mutation.
+- **H5** — the pre-replace guard checks **resolved-path + dev/inode identity AND content** (was content
+  only); a symlink/path redirect or an identity change since the read aborts without clobbering.
+- **M6** — the restore command/argv are **platform-specific**: POSIX `cp --`, Windows PowerShell
+  `Copy-Item -LiteralPath … -Force`.
+
 ## Out of scope
 The rewriter (model), the live eval (eval-run consumes this), wiring the apply command prompt to the
 engine (a follow-up doc step). The backup is mandatory and fail-closed; no mutation without it.

@@ -74,6 +74,41 @@ def _has_unattributed_block(findings: List[dict]) -> bool:
     return False
 
 
+_DECISIONS = {"ACCEPT", "REJECT", "ASK", "SURFACE", "FIXTURE_ERROR"}
+
+
+def _valid_result(res) -> bool:
+    return (isinstance(res, dict) and res.get("decision") in _DECISIONS
+            and isinstance(res.get("findings", []), list))
+
+
+def _hnum(h: str):
+    if isinstance(h, str) and h.startswith("h"):
+        try:
+            return int(h[1:])
+        except ValueError:
+            return None
+    return None
+
+
+def _bad_attribution(findings: List[dict], hunk_ids: List[str]) -> bool:
+    """A blocking finding referencing an UNKNOWN hunk id (or only unknown ids) can't be
+    attributed -> block partial apply (WF5-diff H3)."""
+    known = set(hunk_ids)
+    for f in findings:
+        if f.get("disposition") in _BLOCKING:
+            ids = f.get("implicated_hunk_ids", [])
+            if any(h not in known for h in ids):
+                return True
+    return False
+
+
+def _block(report: dict, msg: str) -> dict:
+    report.update(status="blocked", mutated=False)
+    report.setdefault("errors", []).append(msg)
+    return report
+
+
 def apply_selective(
     source_path: str,
     edits_input,
@@ -91,6 +126,7 @@ def apply_selective(
     try:
         with open(source, "rb") as fh:
             original = fh.read()
+        orig_stat = os.stat(source)  # capture identity (dev/ino) for the pre-replace guard (H5)
     except OSError as err:
         report.update(status="error", errors=[f"cannot read source: {err}"])
         return report
@@ -110,77 +146,105 @@ def apply_selective(
                         "containment": backup.containment}
     report["warnings"] += backup.warnings
 
-    # --- initial verify ---
-    initial = verify_fn(original, all_edits)
+    # --- initial verify (validated + exception-guarded; H4) ---
+    try:
+        initial = verify_fn(original, all_edits)
+    except Exception as err:  # noqa: BLE001
+        return _block(report, f"initial verifier raised: {err!r}")
+    if not _valid_result(initial):
+        return _block(report, "initial verify result malformed / missing decision")
     findings = initial.get("findings", [])
-    if _has_unattributed_block(findings):
-        report.update(status="blocked", mutated=False,
-                      errors=["a non-revertable/unattributed finding blocks partial apply"])
-        report["final_verification"] = initial.get("decision")
-        return report
-
-    # apply's hunk ids h0..hN align with the initial verify's (same sorted edits), so its
-    # per-hunk attribution is authoritative for SELECTION. The re-verify below is used only for
-    # its final ACCEPT decision (design R3), so its own hunk re-indexing over the subset is moot.
     hunk_ids = [_hunk_id(i) for i in range(len(all_edits))]
-    groups = _components(hunk_ids, findings)
-    blocked = _blocking_hunks(findings)
-    active = set()
-    for comp in groups:  # exclude any dependency group touching a blocked hunk
-        if not any(h in blocked for h in comp):
-            active.update(comp)
+    if _has_unattributed_block(findings) or _bad_attribution(findings, hunk_ids):
+        return _block(report, "non-revertable/unknown attribution blocks partial apply")
 
-    subset = [e for i, e in enumerate(all_edits) if _hunk_id(i) in active]
+    groups = _components(hunk_ids, findings)
+    blocked = _blocking_hunks(findings)  # original hunk ids from the initial verify
+
+    # --- bounded monotonic elimination loop (design R7 / WF5-diff H1) ---
+    final = None
+    active: set = set()
+    for attempt in range(len(groups) + 1):
+        active = set()
+        for comp in groups:  # a component is excluded if ANY member is blocked
+            if not any(h in blocked for h in comp):
+                active.update(comp)
+        subset_indices = sorted(i for i in range(len(all_edits)) if _hunk_id(i) in active)
+        subset = [all_edits[i] for i in subset_indices]
+        try:
+            res = verify_fn(original, subset)  # rebuild candidate from the UNTOUCHED original
+        except Exception as err:  # noqa: BLE001
+            return _block(report, f"re-verify raised: {err!r}")
+        if not _valid_result(res):
+            return _block(report, "re-verify result malformed")
+        final = res
+        report["verification_attempts"] = attempt + 2  # initial + this
+        if res["decision"] == "ACCEPT":
+            break
+        if _has_unattributed_block(res.get("findings", [])):
+            return _block(report, "unattributed failure during re-verify")
+        # translate subset-relative hunk ids (h0..hk over the sorted subset) back to original ids
+        newly = set()
+        for f in res.get("findings", []):
+            if f.get("disposition") not in _BLOCKING:
+                continue
+            for h in f.get("implicated_hunk_ids", []):
+                j = _hnum(h)
+                if j is None or not (0 <= j < len(subset_indices)):
+                    return _block(report, "unknown hunk id in re-verify")
+                newly.add(_hunk_id(subset_indices[j]))
+        if newly <= blocked:  # no progress possible
+            return _block(report, "could not converge on an ACCEPT subset")
+        blocked |= newly
+    else:
+        return _block(report, "exceeded re-verify attempt bound")
+
     report["applied_hunks"] = sorted(active)
     report["withheld_hunks"] = sorted(set(hunk_ids) - active)
+    report["final_verification"] = final["decision"] if final else None
 
-    reverify = verify_fn(original, subset)  # candidate built from the UNTOUCHED original
-    report["verification_attempts"] = 2  # initial + re-verify
-    report["final_verification"] = reverify.get("decision")
-
+    subset = [all_edits[i] for i in sorted(i for i in range(len(all_edits)) if _hunk_id(i) in active)]
     if not subset:
-        # nothing safe to apply: a no-op only if the ORIGINAL itself verifies acceptably
-        report.update(status="no_op" if reverify.get("decision") == "ACCEPT" else "blocked",
-                      mutated=False, final_digest=_sha256(original))
-        return report
-    if reverify.get("decision") != "ACCEPT":
-        report.update(status="blocked", mutated=False,
-                      errors=["selected subset does not re-verify ACCEPT (dependent hunk removed)"])
+        report.update(status="no_op", mutated=False, final_digest=_sha256(original))
         return report
 
     candidate = apply_edits(original, subset)
     if candidate == original:
         report.update(status="no_op", mutated=False, final_digest=_sha256(original))
         return report
-
     if not write:
         report.update(status="applied", mutated=False, final_digest=_sha256(candidate),
                       note="write=False (dry run)")
         return report
 
-    # --- pre-replace concurrency guard (R2) ---
+    # --- pre-replace guard: content AND resolved-path identity (R2 + H5) ---
+    live_path = os.path.realpath(source)
+    if live_path != source:
+        return _block(report, "source symlink/path changed since read; not clobbering")
     try:
-        with open(source, "rb") as fh:
+        live_stat = os.stat(live_path)
+        with open(live_path, "rb") as fh:
             live = fh.read()
     except OSError as err:
-        report.update(status="blocked", errors=[f"re-read failed: {err}"])
-        return report
+        return _block(report, f"re-read failed: {err}")
+    if (live_stat.st_dev, live_stat.st_ino) != (orig_stat.st_dev, orig_stat.st_ino):
+        return _block(report, "source identity (dev/inode) changed since read; not clobbering")
     if _sha256(live) != report["original_digest"]:
-        report.update(status="blocked", mutated=False,
-                      errors=["source changed since read (concurrent edit); not clobbering"])
-        return report
+        return _block(report, "source changed since read (concurrent edit); not clobbering")
 
-    # --- atomic replace ---
+    # --- atomic replace with a complete-write + read-back guard (H2) ---
     tmp = source + f".slopslap.tmp.{os.getpid()}"
     try:
-        st = os.stat(source)
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, stat_mode(st))
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, stat_mode(orig_stat))
         try:
-            os.write(fd, candidate)
+            _write_all(fd, candidate)  # loop until every byte lands (no short-write corruption)
             if os.environ.get("SLOPSLAP_FSYNC") == "1":
-                os.fsync(fd)  # opt-in crash durability; some sandboxes block on fsync
+                os.fsync(fd)
         finally:
             os.close(fd)
+        with open(tmp, "rb") as fh:  # read-back before committing
+            if fh.read() != candidate:
+                raise OSError("temp file content mismatch after write")
         os.replace(tmp, source)
         _fsync_parent(source, report["warnings"])
     except OSError as err:
@@ -195,6 +259,16 @@ def apply_selective(
 
     report.update(status="applied", mutated=True, final_digest=_sha256(candidate))
     return report
+
+
+def _write_all(fd: int, data: bytes) -> None:
+    view = memoryview(data)
+    total = 0
+    while total < len(data):
+        n = os.write(fd, view[total:])
+        if n <= 0:
+            raise OSError("short write (zero progress)")
+        total += n
 
 
 def stat_mode(st) -> int:

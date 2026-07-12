@@ -198,7 +198,14 @@ def create_verified_backup(source: str, original_bytes: bytes, config: Optional[
     _fsync_dir(backup_dir, warnings)  # R1: durable directory entry before mutation (opt-in)
     _prune(backup_dir, source_key, config.keep, warnings)  # best-effort, after verify
 
-    restore_argv = ["cp", "--", path, source]
-    restore_command = "cp -- " + shlex.quote(path) + " " + shlex.quote(source)
+    # platform-specific restore (WF5-diff M6): PowerShell on Windows, cp on POSIX.
+    if platform.system() == "Windows":
+        restore_argv = ["powershell", "-NoProfile", "-Command",
+                        f"Copy-Item -LiteralPath '{path}' -Destination '{source}' -Force"]
+        restore_command = ("powershell -NoProfile -Command \"Copy-Item -LiteralPath "
+                           f"'{path}' -Destination '{source}' -Force\"")
+    else:
+        restore_argv = ["cp", "--", path, source]
+        restore_command = "cp -- " + shlex.quote(path) + " " + shlex.quote(source)
     return BackupRecord(path, meta_path, _sha256(original_bytes), len(original_bytes),
                         containment, restore_command, restore_argv, warnings)

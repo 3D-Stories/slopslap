@@ -82,6 +82,56 @@ def test_apply_dry_run_does_not_write(tmp_path):
     assert src.read_bytes() == b"one two\n"
 
 
+def test_apply_loop_converges_over_multiple_iterations(tmp_path):
+    src = tmp_path / "d.md"
+    src.write_bytes(b"aaa bbb ccc ddd\n")  # edits at 0, 8, 12
+
+    def vf(o, ed):
+        starts = [e.start_byte for e in ed]
+        if 12 in starts:  # reject the hunk at 12
+            return {"decision": "REJECT",
+                    "findings": [{"disposition": "reject", "implicated_hunk_ids": [f"h{starts.index(12)}"]}],
+                    "hunks": []}
+        if 8 in starts:  # then reject the hunk at 8
+            return {"decision": "REJECT",
+                    "findings": [{"disposition": "reject", "implicated_hunk_ids": [f"h{starts.index(8)}"]}],
+                    "hunks": []}
+        return {"decision": "ACCEPT", "findings": [], "hunks": []}
+
+    r = apply_selective(str(src), [_e(0, 3, b"AAA"), _e(8, 11, b"CCC"), _e(12, 15, b"DDD")], vf,
+                        BackupConfig(root=str(tmp_path / "bk")))
+    assert r["applied_hunks"] == ["h0"] and r["withheld_hunks"] == ["h1", "h2"]
+    assert r["verification_attempts"] >= 3  # initial + at least 2 loop attempts
+    assert src.read_bytes() == b"AAA bbb ccc ddd\n"
+
+
+def test_apply_unknown_hunk_attribution_blocks(tmp_path):
+    src = tmp_path / "d.md"
+    src.write_bytes(b"one two\n")
+    vf = lambda o, ed: {"decision": "REJECT",
+                        "findings": [{"disposition": "reject", "implicated_hunk_ids": ["h99"]}], "hunks": []}
+    r = apply_selective(str(src), [_e(0, 3, b"ONE")], vf, BackupConfig(root=str(tmp_path / "bk")))
+    assert r["status"] == "blocked" and src.read_bytes() == b"one two\n"
+
+
+def test_apply_malformed_initial_verify_blocks(tmp_path):
+    src = tmp_path / "d.md"
+    src.write_bytes(b"one two\n")
+    r = apply_selective(str(src), [_e(0, 3, b"ONE")], lambda o, ed: {}, BackupConfig(root=str(tmp_path / "bk")))
+    assert r["status"] == "blocked" and src.read_bytes() == b"one two\n"
+
+
+def test_apply_verifier_exception_blocks(tmp_path):
+    src = tmp_path / "d.md"
+    src.write_bytes(b"one two\n")
+
+    def boom(o, ed):
+        raise RuntimeError("verifier down")
+
+    r = apply_selective(str(src), [_e(0, 3, b"ONE")], boom, BackupConfig(root=str(tmp_path / "bk")))
+    assert r["status"] == "blocked" and src.read_bytes() == b"one two\n"
+
+
 def test_apply_all_blocked_is_no_op_or_blocked(tmp_path):
     src = tmp_path / "d.md"
     src.write_bytes(b"one two\n")
