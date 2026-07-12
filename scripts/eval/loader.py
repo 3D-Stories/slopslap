@@ -59,10 +59,39 @@ def _overlaps(a, b) -> bool:
     return not (a[1] <= b[0] or a[0] >= b[1])
 
 
+# every field of the binding schema must be PRESENT with the right type — a missing field
+# is a FIXTURE_ERROR, never an empty collection that makes a gate pass vacuously (WF5-diff F3).
+_REQUIRED_FIELDS = {
+    "schema_version": int,
+    "genre": str,
+    "control": bool,
+    "byte_policy": dict,
+    "editable_ranges": list,
+    "protected_spans": list,
+    "invariant_regions": list,
+    "expected_invariants": list,
+    "allowed_claim_atoms": list,
+    "seeded_defects": list,
+}
+
+
 def validate_manifest(original: bytes, manifest: dict) -> List[str]:
-    """Return a list of problems (empty = valid)."""
+    """Return a list of problems (empty = valid). Fail-closed on any missing/mistyped field."""
     problems: List[str] = []
     n = len(original)
+
+    for field, typ in _REQUIRED_FIELDS.items():
+        if field not in manifest:
+            problems.append(f"missing required field '{field}'")
+        elif not isinstance(manifest[field], typ):
+            problems.append(
+                f"field '{field}' must be {typ.__name__}, got {type(manifest[field]).__name__}"
+            )
+    if "control_reason" not in manifest:
+        problems.append("missing required field 'control_reason'")
+    # any structural problem above makes the rest unsafe to index
+    if problems:
+        return problems
 
     if manifest.get("schema_version") != SCHEMA_VERSION:
         problems.append(
@@ -71,6 +100,10 @@ def validate_manifest(original: bytes, manifest: dict) -> List[str]:
     genre = manifest.get("genre")
     if genre not in VALID_GENRES:
         problems.append(f"genre '{genre}' not in {sorted(VALID_GENRES)}")
+
+    encoding = manifest.get("byte_policy", {}).get("encoding")
+    if encoding != "utf-8":
+        problems.append(f"byte_policy.encoding '{encoding}' unsupported (only utf-8)")
 
     editable = [(r["start_byte"], r["end_byte"]) for r in manifest.get("editable_ranges", [])]
     protected = [

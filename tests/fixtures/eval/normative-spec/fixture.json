@@ -33,6 +33,7 @@
       "end_byte": 250,
       "checks": [
         "numbers",
+        "units",
         "modality",
         "negation"
       ],

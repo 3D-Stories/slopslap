@@ -57,3 +57,11 @@ def test_broken_link_detected():
     rev = "see [docs](https://x.example here\n"  # missing close paren
     violations = mdstructure.compare(orig, rev)
     assert any("unterminated" in v for v in violations)
+
+
+def test_broken_inline_code_delimiter_detected():
+    # deleting a closing backtick turns a code span into literal text (WF5-diff F2)
+    orig = "use the `flag` here\n"
+    rev = "use the `flag here\n"
+    violations = mdstructure.compare(orig, rev)
+    assert any("inline code-span" in v for v in violations)

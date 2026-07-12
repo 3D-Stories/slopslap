@@ -99,8 +99,30 @@ def _norm_num(m: re.Match) -> str:
     return f"{cmp_}{sign}{val}{pct}"
 
 
+# number immediately followed by an optional unit token (%, or a short alpha word) — so a
+# unit change (200 ms -> 200 s) is caught even when the bare number is unchanged (WF5-diff F4).
+_QUANTITY_RE = re.compile(
+    r"(?P<cmp>[<>]=?|≤|≥|±)?\s*"
+    r"(?P<sign>[-−+])?"
+    r"(?P<val>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)"
+    r"\s*(?P<unit>%|[A-Za-z]{1,12})?"
+)
+
+
 def numbers(text: str) -> Counter:
     return Counter(_norm_num(m) for m in _NUM_RE.finditer(text))
+
+
+def quantities(text: str) -> Counter:
+    """value+unit tuples, e.g. ``200|ms``. A changed unit changes the multiset."""
+    out: Counter = Counter()
+    for m in _QUANTITY_RE.finditer(text):
+        cmp_ = (m.group("cmp") or "").replace("≤", "<=").replace("≥", ">=")
+        sign = (m.group("sign") or "").replace("−", "-")
+        val = m.group("val").replace(",", "")
+        unit = (m.group("unit") or "").lower()
+        out[f"{cmp_}{sign}{val}|{unit}"] += 1
+    return out
 
 
 def dates(text: str) -> Counter:
@@ -138,7 +160,7 @@ def proper_nouns(text: str) -> Counter:
 # check-name -> extractor, used for region-scoped preservation.
 CHECK_EXTRACTORS = {
     "numbers": numbers,
-    "units": numbers,  # units ride along with the numeric token in this MVP
+    "units": quantities,  # value+unit tuple, so a unit change is caught (WF5-diff F4)
     "modality": modality,
     "negation": negation,
     "conditions": conditions,

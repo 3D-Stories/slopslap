@@ -16,6 +16,7 @@ def _base():
         "expected_invariants": [],
         "allowed_claim_atoms": [],
         "seeded_defects": [],
+        "control_reason": None,
     }
 
 
@@ -66,6 +67,25 @@ def test_control_with_editable_ranges_rejected():
     m["control"] = True
     m["editable_ranges"] = [{"start_byte": 0, "end_byte": 3}]
     assert any("control fixture" in p for p in validate_manifest(ORIG, m))
+
+
+def test_missing_required_field_rejected():
+    # a truncated manifest missing a gate-defining field must be FIXTURE_ERROR, not vacuous (F3)
+    m = _base()
+    del m["protected_spans"]
+    assert any("missing required field 'protected_spans'" in p for p in validate_manifest(ORIG, m))
+
+
+def test_mistyped_field_rejected():
+    m = _base()
+    m["editable_ranges"] = "not-a-list"
+    assert any("must be list" in p for p in validate_manifest(ORIG, m))
+
+
+def test_bad_encoding_rejected():
+    m = _base()
+    m["byte_policy"] = {"encoding": "latin-1", "trailing_newline": "preserve"}
+    assert any("encoding" in p for p in validate_manifest(ORIG, m))
 
 
 def test_unknown_invariant_check_rejected():

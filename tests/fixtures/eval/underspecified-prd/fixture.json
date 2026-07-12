@@ -20,6 +20,7 @@
       "end_byte": 193,
       "checks": [
         "numbers",
+        "units",
         "modality"
       ],
       "policy": "preserve_all"

@@ -55,12 +55,14 @@ def structural_features(text: str) -> dict:
     fence_lines = len(_FENCE_LINE_RE.findall(text))
     toks = _tokens(text)
     code_blocks = sum(1 for t in toks if t.type in ("fence", "code_block"))
+    code_inline = sum(1 for t in toks if t.type == "code_inline")
     parsed_links = sum(1 for t in toks if t.type in ("link_open", "image"))
     raw_openers = len(_LINK_OPENER_RE.findall(text))
     broken_links = max(0, raw_openers - parsed_links)
     return {
         "fence_lines": fence_lines,
         "code_blocks": code_blocks,
+        "code_inline": code_inline,
         "parsed_links": parsed_links,
         "raw_link_openers": raw_openers,
         "broken_links": broken_links,
@@ -84,5 +86,12 @@ def compare(original: str, revision: str) -> List[str]:
         violations.append(
             f"introduced {r['broken_links'] - o['broken_links']} unterminated "
             f"link/image destination(s)"
+        )
+    if r["code_inline"] < o["code_inline"]:
+        # a deleted closing backtick turns a code span into literal text (fewer code_inline
+        # tokens) — an inline-code delimiter was broken (WF5-diff F2).
+        violations.append(
+            f"inline code-span count dropped {o['code_inline']} -> {r['code_inline']} "
+            f"(broken backtick delimiter)"
         )
     return violations

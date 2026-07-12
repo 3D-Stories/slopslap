@@ -167,6 +167,28 @@ from the hard gates only. Then `acceptance_state`:
 Each judge dimension carries explicit 0/1/2 anchors (0 = harmful, 1 = neutral/equal, 2 =
 better-than-baseline) defined in `eval-cases.md`.
 
+## Post-diff-review resolutions — WF5 on the built diff (`docs/reviews/increment-1-diff-2026-07-12.md`, 0 Crit / 7 High / 1 Med, all confirmed, all fixed)
+
+The built runner was fail-open on several paths; every finding was a real gap and is fixed with a
+regression test:
+- **F1** — `run()` now consumes validated `judge.JudgeVerdict`s keyed by baseline and requires the
+  beat-criterion against BOTH `humanizer` AND `original-unchanged` for a canonical PASS (no
+  caller-supplied `beat` boolean, no single-baseline pass).
+- **F2** — `markdown_structure` now also flags a dropped inline code-span (broken backtick delimiter).
+- **F3** — `validate_manifest` requires every binding-schema field present + correctly typed (a
+  truncated manifest is FIXTURE_ERROR, not an empty-collection vacuous pass) and enforces
+  `byte_policy.encoding == utf-8`.
+- **F4** — the `units` check uses a real value+unit quantity extractor (`200 ms` → `200 s` now
+  FAILs); `units` added to the numeric invariant regions.
+- **F5** — a judge `Trial` must carry the COMPLETE dimension set; `evaluate` returns errored on an
+  incomplete trial; `beat_criterion` rejects a median map missing any dimension.
+- **F6** — `revision_sha256`, second-pass `base_hash`, and `pass_index` are mandatory; absent/
+  mismatched ⇒ FIXTURE_ERROR.
+- **F7** — original + revision are strict-utf-8 decoded; corrupt bytes ⇒ FIXTURE_ERROR (no
+  `errors="replace"` laundering).
+- **F8** — malformed edit scripts (`EditError`/base64/`KeyError`/`TypeError`/`ValueError`) are caught
+  and returned as FIXTURE_ERROR instead of crashing the runner.
+
 ## Out of scope for this increment
 The rewriter/skill, the scanner, the full ledger, apply/backup. Those are later increments built to
 pass THIS contract. Runner stays stdlib + `markdown-it-py` only (vendoring lands in #scanner).

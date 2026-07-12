@@ -48,6 +48,29 @@ def test_run_trials_handles_judge_errors():
 def test_trial_validation_rejects_bad_scores():
     import pytest
 
-    t = Trial({"meaning_preservation": 5}, {"meaning_preservation": 1})
+    full = _full(1)
+    full["meaning_preservation"] = 5
+    t = Trial(full, _full(1))
     with pytest.raises(ValueError):
         t.validate()
+
+
+def test_incomplete_dimension_set_rejected():
+    # a partial trial that omits unfavorable dimensions must not validate (WF5-diff F5)
+    import pytest
+
+    partial = {"meaning_preservation": 2}  # only one dimension
+    with pytest.raises(ValueError):
+        Trial(partial, _full(1)).validate()
+
+
+def test_incomplete_trial_makes_evaluate_errored():
+    partial = {"meaning_preservation": 2}
+    trials = [Trial(partial, _full(1)) for _ in range(3)]
+    v = judge.evaluate(trials)
+    assert v.errored and not v.beat
+
+
+def test_beat_criterion_requires_full_dimension_set():
+    # a median map missing dimensions can never beat
+    assert not judge.beat_criterion({"meaning_preservation": 2.0}, _full(1))

@@ -37,9 +37,15 @@ class Trial:
 
     def validate(self) -> None:
         for label, scores in (("candidate", self.candidate), ("baseline", self.baseline)):
+            # the COMPLETE dimension set is required — a partial trial that omits every
+            # unfavorable dimension must not be able to satisfy the beat criterion (WF5-diff F5).
+            missing = set(DIMENSIONS) - set(scores)
+            if missing:
+                raise ValueError(f"{label} trial missing dimensions: {sorted(missing)}")
+            extra = set(scores) - set(DIMENSIONS)
+            if extra:
+                raise ValueError(f"{label} trial has unknown dimensions: {sorted(extra)}")
             for dim, val in scores.items():
-                if dim not in DIMENSIONS:
-                    raise ValueError(f"unknown judge dimension '{dim}'")
                 if val not in (0, 1, 2):
                     raise ValueError(f"{label}.{dim} score {val} not in 0/1/2")
 
@@ -64,9 +70,11 @@ def _median_by_dim(trials: List[Trial], pick) -> Dict[str, float]:
 
 
 def beat_criterion(cand: Dict[str, float], base: Dict[str, float]) -> bool:
-    dims = [d for d in DIMENSIONS if d in cand and d in base]
-    if not dims:
+    # require the COMPLETE dimension set on both sides (WF5-diff F5) — an incomplete median
+    # map can never win.
+    if set(cand) != set(DIMENSIONS) or set(base) != set(DIMENSIONS):
         return False
+    dims = list(DIMENSIONS)
     if sum(cand[d] for d in dims) < sum(base[d] for d in dims):
         return False
     if any(cand[d] < base[d] - 1 for d in dims):  # none worse by more than 1
@@ -82,8 +90,11 @@ def evaluate(trials: List[Trial]) -> JudgeVerdict:
             present=True, errored=True, beat=False,
             detail=f"only {len(trials)} trial(s); >=3 required",
         )
-    for t in trials:
-        t.validate()
+    try:
+        for t in trials:
+            t.validate()
+    except ValueError as err:
+        return JudgeVerdict(present=True, errored=True, beat=False, detail=str(err))
     cand = _median_by_dim(trials, lambda t: t.candidate)
     base = _median_by_dim(trials, lambda t: t.baseline)
     return JudgeVerdict(

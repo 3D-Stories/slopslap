@@ -71,6 +71,15 @@ def test_preservation_region_scoped_modality_change_fail():
     assert r.status is GateStatus.FAIL
 
 
+def test_preservation_region_scoped_unit_change_fail():
+    # 200 ms -> 200 s: bare number unchanged, but the UNIT changed (WF5-diff F4)
+    orig, man = _load("normative-spec")
+    idx = orig.find(b"no less than 200 ms")
+    env, rev = make_envelope(orig, [(idx + len(b"no less than 200 "), idx + len(b"no less than 200 ms"), b"s")])
+    r = G.preservation_region_scoped(orig, rev, parse_edits(env["edits"]), man)
+    assert r.status is GateStatus.FAIL
+
+
 def test_no_new_claim_atoms_pass():
     orig, man = _load("underspecified-prd")
     er = man["editable_ranges"][0]
