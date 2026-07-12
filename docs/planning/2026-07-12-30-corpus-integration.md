@@ -31,6 +31,12 @@ lineage, notes`.
   and `inspiration` items carry `split: null` (they are deterministic-gate or metadata-only,
   never threshold-tuned, so the leak concern does not apply to them). This removes the naming
   collision: "calibration" the lane ≠ the `calibration` split value.
+- **`source_family` MUST reflect TRUE common origin, not the fetch-file (Step-11 Critical).**
+  The humanizer skill is a Wikipedia-*Signs-of-AI-writing* DERIVATIVE — identical before-passages
+  appear in both fetch files — so a family drawn per fetch-file (`wikipedia` vs `humanizer`) let
+  the same content sit in both partitions while the family-string check passed. Both are now ONE
+  family `wikipedia-signs-guide` in a single partition; an independent MIT origin (`stop-slop`)
+  fills the other. A regression test anchors that no wiki-*/hum- item ever spans partitions.
 - **Split by SOURCE FAMILY, not passage (fixes the real leak — self-review H1, peer consult
   "split by source family, not merely by passage").** A content-hash key is NOT enough: the
   humanizer file alone is 29 pairs from ONE Wikipedia guide, file 01 is many passages from one

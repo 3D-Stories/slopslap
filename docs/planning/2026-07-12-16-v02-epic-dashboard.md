@@ -10,12 +10,12 @@ source of truth; the hosted Artifact is a copy).
 
 ## Progress
 
-**0 / 14 children merged** · current: #26 PR open (Tier 0)
+**1 / 14 children merged** · current: #30 PR open (Tier 0)
 
 | Tier | Child | Title | Depth | Deps | Status | PR | Version | Gate delta |
 |---|---|---|---|---|---|---|---|---|
-| 0 | #26 | platform-feasibility spike | full WF2 | — | PR open | (pending) | 0.1.1 | 214→260 (+46), 0 reg |
-| 0 | #30 | corpus integration (manifest + split + fixtures + anchors) | full WF2 | — | queued | — | — | — |
+| 0 | #26 | platform-feasibility spike | full WF2 | — | ✅ merged | #32 | 0.1.1 | 214→267 (+53), 0 reg |
+| 0 | #30 | corpus integration (manifest + split + fixtures + anchors) | full WF2 | — | PR open | (pending) | 0.1.2 | 267→302 (+35), 0 reg |
 | 1 | #17 | semantic verify (real Layer-3 semantic_fn) | lite | #26 | queued | — | — | — |
 | 1 | #18 | protected-span auto-extractor | lite | — | queued | — | — | — |
 | 1 | #19 | invariant-ledger auto-build | lite | — | queued | — | — | — |
@@ -50,4 +50,7 @@ Tier 4: #28 e2e golden (dep #27,#23,#17–#20,#30) · #25 calibration (dep #30)
 
 ## Deviations / blockers
 
-(none yet — see `claude_docs/session_notes/epic-16-autorun-log.md` for the decision log)
+- **D7 (owner-confirmed):** GitHub Actions is billing-blocked org-wide; the `test` CI lane can't
+  run. Owner: "continue local testing and skip the CI on GitHub" (runner being set up). Every
+  child merges on the **green local `pytest`** gate (exit 0). GitHub CI polling skipped.
+- Full decision log: `claude_docs/session_notes/epic-16-autorun-log.md`.
