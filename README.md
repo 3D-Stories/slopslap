@@ -73,7 +73,7 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Status
 
-- **Version:** 0.1.6 (v0.2 epic #16 in progress — live model-in-the-loop).
+- **Version:** 0.1.7 (v0.2 epic #16 in progress — live model-in-the-loop).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; wiring the
@@ -81,6 +81,24 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Changelog
 
+- **0.1.7** — genre classifier + genre-constrained diagnoses (#22). Genre is no longer inert. New
+  `scripts/slopslap_scan/genre.py::classify_genre(doc: bytes, *, declared=None, path=None)` returns
+  `{genre, confidence, reason}` over `general · spec · prd · personal`, honoring the
+  `references/genre-profiles.md` precedence (explicit declaration > file/repo context > structural
+  markers > content inference) and the asymmetric-failure fallback (no usable signal → the
+  most-preservation-heavy profile, **spec**). Genre now ACTUALLY constrains diagnosis via a new
+  `metrics.compute_all(..., genre=None)` seam (threaded through
+  `diagnoses.authorized_ranges_from_diagnoses(..., genre=None)`, so it reaches `verify`'s locality):
+  **spec** suppresses the parallelism/repetition cadence flags (`negative_parallelism`,
+  `rule_of_three`, `repeated_openers`) that would flatten a spec's intentional repetition;
+  **personal** suppresses those plus `punctuation_rates` (em-dashes/cadence are the voice);
+  **PRD** adds an `adjective_requirements` laundering candidate ("must be fast") but never flags
+  aspiration/vision language (no vision-policing). Suppression flips `soft_flag`→False and clears
+  `locations` (with a `suppressed_by_genre` marker) while `count`/`rate` stay as-measured — the
+  scanner never lies about what it counted, it only re-scopes what is an editing candidate. Genre
+  NEVER authorizes an edit or weakens a hard invariant / protected span (keystone rule); it only
+  re-weights candidate selection. Default (`general` / `genre=None`) output is byte-identical to
+  0.1.6. Non-UTF-8 fails loud (`GenreError`).
 - **0.1.6** — live passage-local locality from diagnoses (#20). New
   `scripts/slopslap_scan/diagnoses.py::authorized_ranges_from_diagnoses(doc: bytes, fmt="markdown")`
   derives `[{start_byte, end_byte}]` byte spans of the DIAGNOSED passages — every eligible

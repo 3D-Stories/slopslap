@@ -1,6 +1,6 @@
 {
   "name": "slopslap",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Repairs prose carrying high editorial cost (genericness, unsupported claims, synthetic cadence, obscured responsibility, voice discontinuity) while preserving meaning, technical accuracy, requirements, uncertainty, and intentional voice. NOT an AI-authorship detector: it never treats a stylistic tell as a contaminant. v0.1.0 ships the judgment skill and the audit/suggest/apply commands; invariant checks are model-reported in suggest mode until the deterministic measure-only scanner and byte-exact verifier land in later versions, and apply stays disabled until its mandatory-backup gate ships.",
   "author": {
     "name": "3D-Stories",

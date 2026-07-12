@@ -271,11 +271,80 @@ ALL_METRICS = [
 ]
 
 
-def compute_all(units: List[Unit], extraction_profile: str, source: str = "") -> Dict:
+# ---- genre mechanic (issue #22) ------------------------------------------
+# Genre is the diagnosis/candidate-selection seam (never a hard invariant / protected span):
+# per genre, the cadence/style metrics whose hits are NOT editing candidates because the genre
+# PRESERVES the flagged feature (references/genre-profiles.md). Suppressing = soft_flag False +
+# locations [] (so a genre-preserved passage is no longer a candidate and contributes no
+# authorized range), while count/rate stay AS MEASURED (the scanner never lies about what it
+# counted) and a ``suppressed_by_genre`` marker records why. ``general`` == the default (no
+# suppression, no added metric) so genre=None and genre="general" produce IDENTICAL output.
+GENRE_SUPPRESS = {
+    "general": (),
+    # spec: parallelism/repetition is correctness infrastructure — leave the cadence flags off.
+    "spec": ("negative_parallelism", "rule_of_three", "repeated_openers"),
+    # personal: voice weighted very high — fragments, em-dashes, pet words, cadence are the point.
+    "personal": ("negative_parallelism", "rule_of_three", "repeated_openers", "punctuation_rates"),
+    # prd: no cadence suppression; instead an adjective-as-requirement candidate is ADDED below.
+    "prd": (),
+}
+
+# Evaluative adjectives that, asserted as a requirement ("the UI must be fast"), are laundering
+# candidates in a PRD (genre-profiles.md: "adjectives-as-requirements"). Closed list = precise;
+# a normative modal is REQUIRED so bare aspiration/vision language is never flagged (do not
+# vision-police). This is the smallest honest PRD mechanic the current scanner supports — the
+# "do not vision-police" side needs no code because the scanner never soft-flags aspiration.
+_PRD_REQ_ADJ = (
+    "fast", "quick", "snappy", "simple", "intuitive", "easy", "seamless", "smooth", "robust",
+    "scalable", "flexible", "powerful", "efficient", "reliable", "secure", "performant",
+    "responsive", "modern", "clean", "elegant", "lightweight", "delightful", "user-friendly",
+)
+_ADJ_REQ_RE = re.compile(
+    r"\b(?:must|shall|should)\s+(?:be|feel|look|remain|stay)\s+"
+    r"(?:very\s+|highly\s+|extremely\s+|really\s+|super\s+|more\s+|most\s+|quite\s+|truly\s+|incredibly\s+)?"
+    r"(" + "|".join(_PRD_REQ_ADJ) + r")\b",
+    re.IGNORECASE,
+)
+
+
+def adjective_requirements(units, sw) -> Dict:
+    """PRD-only: an evaluative adjective asserted as a requirement ('the UI must be fast') — a
+    laundering candidate (genre-profiles.md). Aspirational/vision language WITHOUT a normative
+    modal ('our vision is to delight users') is never flagged (do not vision-police)."""
+    hits = []
+    for u in units:
+        for m in _ADJ_REQ_RE.finditer(u.text):
+            hits.append({"match": re.sub(r"\s+", " ", m.group(0))[:48],
+                         "adjective": m.group(1).lower(), "line_start": u.line_start})
+    return _result(len(units), len(hits), None, hits[:25], len(hits) >= 1, "medium", "adj-req-v1")
+
+
+def _apply_genre(out: Dict, genre: str, units, sw, extraction_profile: str) -> None:
+    """Mutate ``out`` in place per genre (candidate-selection seam only — never touches
+    invariants / protected spans). An unknown genre is a caller error (fail loud)."""
+    if genre not in GENRE_SUPPRESS:
+        raise ValueError(f"unknown genre {genre!r}; expected one of {tuple(GENRE_SUPPRESS)}")
+    for name in GENRE_SUPPRESS[genre]:
+        res = out.get(name)
+        if res is None:
+            continue
+        res["soft_flag"] = False
+        res["locations"] = []
+        res["suppressed_by_genre"] = genre
+    if genre == "prd":
+        res = adjective_requirements(units, sw)
+        res["extraction_profile"] = extraction_profile
+        out["adjective_requirements"] = res
+
+
+def compute_all(units: List[Unit], extraction_profile: str, source: str = "",
+                genre: str = None) -> Dict:
     sw = _sentences(units)
     out = {}
     for name, fn in ALL_METRICS:
         res = fn(units, sw)
         res["extraction_profile"] = extraction_profile
         out[name] = res
+    if genre:  # None or "general" both leave the default output untouched (general suppresses nothing)
+        _apply_genre(out, genre, units, sw, extraction_profile)
     return out

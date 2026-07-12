@@ -100,12 +100,17 @@ def _diagnosed_line_ranges(metrics: dict) -> List[tuple]:
     return ranges
 
 
-def authorized_ranges_from_diagnoses(doc: bytes, fmt: str = "markdown") -> List[dict]:
+def authorized_ranges_from_diagnoses(doc: bytes, fmt: str = "markdown",
+                                     genre: str = None) -> List[dict]:
     """Return byte-exact ``[{start_byte, end_byte}]`` for the diagnosed passages of ``doc``.
 
     ``fmt`` is ``"markdown"`` (default) or ``"text"`` — matching the scanner's two pipelines;
-    there is no content sniffing (scanner keystone rule). Ranges are sorted by ``start_byte``
-    and merged so they are pairwise disjoint, ready to drop straight into
+    there is no content sniffing (scanner keystone rule). ``genre`` (issue #22) is an optional
+    ``metrics.GENRE_SUPPRESS`` profile threaded into ``compute_all``: under a genre that
+    PRESERVES a flagged feature the suppressed metric emits no locations, so a passage diagnosed
+    ONLY by those flags is no longer authorized (genre genuinely constrains verify's locality);
+    ``genre=None`` (default) is the general behavior. Ranges are sorted by ``start_byte`` and
+    merged so they are pairwise disjoint, ready to drop straight into
     ``verify(..., authorized_ranges=<result>)``.
 
     Raises ``DiagnosisError`` on an unknown format, non-UTF-8 input, or (markdown) an
@@ -122,10 +127,10 @@ def authorized_ranges_from_diagnoses(doc: bytes, fmt: str = "markdown") -> List[
 
     if fmt == "markdown":
         units = ext.extract_markdown(text, _markdown_it_cls())
-        metrics = met.compute_all(units, EXTRACTION_PROFILE, source=text)
+        metrics = met.compute_all(units, EXTRACTION_PROFILE, source=text, genre=genre)
     else:
         units = ext.extract_text(text)
-        metrics = met.compute_all(units, TEXT_PROFILE, source=text)
+        metrics = met.compute_all(units, TEXT_PROFILE, source=text, genre=genre)
 
     diag = _diagnosed_line_ranges(metrics)
     if not diag:
