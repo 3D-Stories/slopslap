@@ -148,6 +148,25 @@ This increment formalizes the machine-readable **invariant ledger** shared by re
   the L3 contract; a well-behaved injector returns promptly or raises, and verify surfaces that as
   ambiguous. Named limitation, not hidden.
 
+## Post-diff-review resolutions — WF5 on the built diff (`docs/reviews/increment-4-diff-2026-07-12.md`, 0 Crit / 5 High / 1 Med, all confirmed + fixed)
+
+- **H1** — region-scoped number/unit/modality/negation preservation lives in **Layer 2 by design**
+  (per-entry, stricter than L1's inventory), guaranteed complete by the H4 coverage fix — not omitted.
+  edit-locality no longer silently vanishes: with edits present and `authorized_ranges is None`, verify
+  now emits a `locality_unverified` **ASK** (fail-closed, never a silent skip).
+- **H2** — L2 region-multiset equality is a NECESSARY deterministic check; a multiset-preserving
+  reattachment is **Layer 3's** job and ACCEPT requires L3 clean, so the composition is sound (documented
+  ceiling + `ponytail:` comment; attachment-level determinism is a v2 refinement).
+- **H3** (bug) — `normalize_semantic` now validates EVERY concern to a closed dict shape (types,
+  entry_ids, bounded ranges); a stray string/int concern maps to `ambiguous` instead of crashing verify.
+- **H4** — `build_ledger` **raises `LedgerBuildError`** on a missing range, empty checks, or an unknown
+  check — a malformed manifest can't silently yield a vacuous ledger that reaches ACCEPT.
+- **H5** — a two-layer ACCEPT is no longer shippable: `proposal_status='ACCEPT'` ONLY when
+  `semantic_status=='clean'`; `allow_two_layer` yields decision ACCEPT but `proposal_status='BLOCKED'`.
+- **M6** — hunk decisions fold EVERY intersecting finding by the full `REJECT>ASK>SURFACE>ACCEPT`
+  precedence (an ASK finding now marks its hunk ASK), so a per-hunk apply consumer can't retain an
+  uncertain hunk.
+
 ## Out of scope
 The rewriter itself (model), apply/backup (#apply-backup — consumes this verifier), the live semantic
 model call (eval-run). Layer 1 owns the hard accept/reject; nothing here weakens it.

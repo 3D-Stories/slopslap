@@ -93,10 +93,18 @@ def test_ledger_sha256_is_order_independent():
 
 
 # ---- verify decision matrix ----
-def test_no_edit_two_layer_accepts():
+def test_two_layer_accept_is_not_shippable():
     orig, _, led = _spec()
     r = verify(orig, [], led, allow_two_layer=True)
-    assert r["decision"] == "ACCEPT" and r["semantic_status"] == "not_run"
+    # decision ACCEPT for tests, but NOT shippable without Layer 3 (WF5-diff H5)
+    assert r["decision"] == "ACCEPT"
+    assert r["proposal_status"] == "BLOCKED" and r["semantic_status"] == "not_run"
+
+
+def test_only_l3_clean_is_shippable():
+    orig, _, led = _spec()
+    r = verify(orig, [], led, semantic_fn=lambda o, rev, l: {"verdict": "clean", "concerns": []})
+    assert r["decision"] == "ACCEPT" and r["proposal_status"] == "ACCEPT"
 
 
 def test_no_edit_without_l3_is_surface_not_ship():
@@ -177,3 +185,51 @@ def test_invalid_ledger_rejects():
     r = verify(orig, [], led)
     assert r["decision"] == "REJECT"
     assert any(f["code"] == "invalid_ledger" for f in r["findings"])
+
+
+def test_build_ledger_rejects_unknown_check():
+    import pytest
+
+    from slopslap_verification.ledger import LedgerBuildError
+
+    orig = b"the client MUST wait 200 ms here.\n"
+    man = {"invariant_regions": [{"start_byte": 0, "end_byte": 10, "checks": ["telepathy"]}],
+           "protected_spans": []}
+    with pytest.raises(LedgerBuildError):
+        build_ledger(orig, man)
+
+
+def test_build_ledger_rejects_empty_checks():
+    import pytest
+
+    from slopslap_verification.ledger import LedgerBuildError
+
+    orig = b"abcdefghij"
+    man = {"invariant_regions": [{"start_byte": 0, "end_byte": 5, "checks": []}], "protected_spans": []}
+    with pytest.raises(LedgerBuildError):
+        build_ledger(orig, man)
+
+
+def test_locality_unverified_is_ask_when_edits_without_authorized_ranges():
+    orig = b"alpha beta gamma delta epsilon zeta text"
+    led = Ledger(sha256_hex(orig))  # no entries, no protected spans
+    r = verify(orig, [Edit(0, 5, b"ALPHA")], led)  # edits but no authorized_ranges
+    assert r["decision"] == "ASK"
+    assert any(f["code"] == "locality_unverified" for f in r["findings"])
+
+
+def test_malformed_semantic_concern_is_ambiguous_not_crash():
+    orig, _, led = _spec()
+    # a concern that is a string, not a dict — must not crash; must map to ambiguous
+    r = verify(orig, [], led, semantic_fn=lambda o, rev, l: {"verdict": "real", "concerns": ["boom"]})
+    assert r["semantic_status"] == "ambiguous" and r["decision"] == "SURFACE"
+
+
+def test_ask_finding_marks_hunk_ask():
+    # an entry with no L2 rule + an edit in its region -> ASK, and the hunk decision folds to ASK
+    orig = b"alpha beta gamma delta epsilon zeta eta theta text here"
+    led = Ledger(sha256_hex(orig), entries=[
+        LedgerEntry("e0", "causal_claim", 0, 20, sha256_hex(orig[0:20]), {}, "relationship_exact", 700)])
+    r = verify(orig, [Edit(2, 4, b"XY")], led, authorized_ranges=[{"start_byte": 0, "end_byte": 20}])
+    assert r["decision"] == "ASK"
+    assert any(h["decision"] == "ASK" for h in r["hunks"])

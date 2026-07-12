@@ -157,15 +157,27 @@ _CHECK_KIND = {
 }
 
 
+class LedgerBuildError(ValueError):
+    """A malformed manifest cannot silently yield a vacuous ledger (WF5-diff H4)."""
+
+
 def build_ledger(original: bytes, manifest: dict) -> Ledger:
     src = sha256_hex(original)
+    n = len(original)
     entries: List[LedgerEntry] = []
     for ri, region in enumerate(manifest.get("invariant_regions", [])):
+        if "start_byte" not in region or "end_byte" not in region:
+            raise LedgerBuildError(f"invariant_region {ri}: missing byte range")
         s, e = region["start_byte"], region["end_byte"]
-        region_text = original[s:e].decode("utf-8", errors="replace")
-        for check in region.get("checks", []):
+        if not (0 <= s <= e <= n):
+            raise LedgerBuildError(f"invariant_region {ri}: range out of bounds")
+        checks = region.get("checks", [])
+        if not checks:
+            raise LedgerBuildError(f"invariant_region {ri}: no checks (would be vacuous)")
+        for check in checks:
             if check not in _CHECK_KIND:
-                continue
+                raise LedgerBuildError(f"invariant_region {ri}: unknown check {check!r}")
+            region_text = original[s:e].decode("utf-8", errors="replace")
             kind, pres, conf = _CHECK_KIND[check]
             extract = _L2_EXTRACT.get(kind)
             extracted = extract(region_text) if extract else {}
@@ -197,16 +209,40 @@ def _hunks_for_range(edits: List[Edit], start: int, end: int) -> List[str]:
 
 
 def normalize_semantic(output) -> dict:
-    """Validate the Layer-3 callable's output; anything malformed => ambiguous (design R7)."""
+    """Validate the Layer-3 callable's output; ANY malformed shape => ambiguous, never clean
+    (design R7 / WF5-diff H3). Every concern is validated to a closed dict shape so downstream
+    processing cannot crash on a stray string/int."""
     if not isinstance(output, dict):
         return {"verdict": "ambiguous", "concerns": [], "note": "non-dict output"}
     verdict = output.get("verdict")
     if verdict not in ("real", "ambiguous", "clean"):
         return {"verdict": "ambiguous", "concerns": [], "note": "bad verdict"}
-    concerns = output.get("concerns") or []
-    if not isinstance(concerns, list):
-        return {"verdict": "ambiguous", "concerns": [], "note": "bad concerns"}
-    return {"verdict": verdict, "concerns": concerns}
+    raw = output.get("concerns")
+    if raw is None:
+        raw = []
+    if not isinstance(raw, list):
+        return {"verdict": "ambiguous", "concerns": [], "note": "concerns not a list"}
+    clean_concerns = []
+    for c in raw:
+        if not isinstance(c, dict):
+            return {"verdict": "ambiguous", "concerns": [], "note": "a concern is not a dict"}
+        eids = c.get("entry_ids", [])
+        oranges = c.get("original_ranges", [])
+        if not isinstance(eids, list) or not isinstance(oranges, list):
+            return {"verdict": "ambiguous", "concerns": [], "note": "bad concern fields"}
+        norm_ranges = []
+        for rng in oranges:
+            if (isinstance(rng, dict) and isinstance(rng.get("start_byte"), int)
+                    and isinstance(rng.get("end_byte"), int)
+                    and 0 <= rng["start_byte"] <= rng["end_byte"]):
+                norm_ranges.append({"start_byte": rng["start_byte"], "end_byte": rng["end_byte"]})
+            else:
+                return {"verdict": "ambiguous", "concerns": [], "note": "bad range"}
+        clean_concerns.append({
+            "code": str(c.get("code", "semantic")), "message": str(c.get("message", "")),
+            "entry_ids": [str(x) for x in eids], "original_ranges": norm_ranges,
+        })
+    return {"verdict": verdict, "concerns": clean_concerns}
 
 
 def verify(
@@ -243,6 +279,12 @@ def verify(
             findings.append(_finding(1, "hard", r.name, r.detail, disposition="reject"))
         elif r.status is G.GateStatus.FIXTURE_ERROR:
             findings.append(_finding(1, "fixture", r.name, r.detail, disposition="reject"))
+    # edit-locality cannot be confirmed without the authorized ranges — fail closed to ASK when
+    # there ARE edits (never silently skip the gate; WF5-diff H1).
+    if authorized_ranges is None and edits:
+        findings.append(_finding(1, "uncertain", "locality_unverified",
+                                 "edits present but no authorized_ranges supplied; locality unchecked",
+                                 disposition="ask"))
 
     # ---- Layer 2: per-entry survival / attachment ----
     for entry in ledger.entries:
@@ -260,7 +302,11 @@ def verify(
                                      f"ledger entry {entry.id} source boundary is inside an edit",
                                      entry_ids=[entry.id], hunks=hunks, disposition="ask"))
             continue
-        # modified: re-extract and compare, if a deterministic rule exists
+        # modified: re-extract and compare, if a deterministic rule exists.
+        # ponytail: region-wide multiset equality is a NECESSARY deterministic check; a
+        # multiset-preserving REATTACHMENT (an atom moving to another proposition inside the
+        # same region) is Layer 3's job — and ACCEPT requires L3 clean (design R1), so the
+        # composition stays sound. Attachment-level deterministic matching is a v2 refinement.
         extract = _L2_EXTRACT.get(entry.kind)
         if extract is None:
             findings.append(_finding(2, "uncertain", "entry_no_rule",
@@ -313,15 +359,18 @@ def verify(
     else:
         decision = "ACCEPT"
 
-    # attribute findings to hunks
+    # attribute findings to hunks, folding EVERY intersecting finding by the same precedence
+    # as the document (WF5-diff M6), not only rejections.
+    _disp_to_dec = {"reject": "REJECT", "reject_global": "REJECT", "ask": "ASK", "surface": "SURFACE"}
     fid = 0
     for f in findings:
         f["id"] = f"f{fid}"; fid += 1
+        dec = _disp_to_dec.get(f["disposition"], "ACCEPT")
         for h in hunk_recs:
             if h["hunk_id"] in f["implicated_hunk_ids"]:
                 h["finding_ids"].append(f["id"])
-                if f["disposition"] in ("reject", "reject_global"):
-                    h["decision"] = "REJECT"
+                if _RANK[dec] < _RANK[h["decision"]]:
+                    h["decision"] = dec
         if f["disposition"] == "reject_global" or (f["disposition"] == "reject" and not f["implicated_hunk_ids"]):
             for h in hunk_recs:
                 h["revertable"] = False
@@ -329,9 +378,13 @@ def verify(
         for h in hunk_recs:
             h["revertable"] = False
 
+    # a proposal is SHIPPABLE (proposal_status ACCEPT) ONLY when Layer 3 verified it clean.
+    # a two-layer ACCEPT (allow_two_layer, semantic not run) is decision ACCEPT but BLOCKED
+    # (WF5-diff H5) so no production caller ships an adversarially-unverified rewrite.
+    shippable = decision == "ACCEPT" and semantic_status == "clean"
     return {
         "decision": decision,
-        "proposal_status": "ACCEPT" if decision == "ACCEPT" else "BLOCKED",
+        "proposal_status": "ACCEPT" if shippable else "BLOCKED",
         "semantic_status": semantic_status,
         "findings": findings,
         "hunks": hunk_recs,
