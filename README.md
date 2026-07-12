@@ -73,7 +73,7 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Status
 
-- **Version:** 0.1.5 (v0.2 epic #16 in progress — live model-in-the-loop).
+- **Version:** 0.1.6 (v0.2 epic #16 in progress — live model-in-the-loop).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; wiring the
@@ -81,6 +81,20 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Changelog
 
+- **0.1.6** — live passage-local locality from diagnoses (#20). New
+  `scripts/slopslap_scan/diagnoses.py::authorized_ranges_from_diagnoses(doc: bytes, fmt="markdown")`
+  derives `[{start_byte, end_byte}]` byte spans of the DIAGNOSED passages — every eligible
+  `extract.Unit` a scanner metric emitted a per-passage `locations` entry for (any confidence
+  tier; the scanner is candidate-selection-only) — and feeds them straight to
+  `verify(..., authorized_ranges=<result>)` so `gates.edit_locality` is enforced DETERMINISTICALLY
+  on a live doc. Previously locality only fired on a hand-authored fixture `editable_ranges`; a
+  live doc had none, so `authorized_ranges=None` left it prompt-guided (the `locality_unverified`
+  ASK, #17). An edit inside a diagnosed passage passes locality; an edit outside every derived
+  range REJECTs. The three doc-level metrics (sentence-length distribution/dispersion, punctuation
+  rates) carry no per-passage location and never contribute a range — no fabrication; a doc with
+  no located diagnosis yields `[]` and verify then REJECTs any edit (a clean doc is left alone).
+  Byte offsets are exact (UTF-8 line-start table, not char) and non-UTF-8 fails loud
+  (`DiagnosisError`); the markdown path is version-checked in-process like `protected.py`.
 - **0.1.5** — invariant-ledger auto-build for arbitrary prose (#19). New
   `scripts/slopslap_verification/autoledger.py::build_invariant_regions(doc: bytes)` derives
   manifest `invariant_regions` from arbitrary UTF-8 prose — numbers+units, dates, normative modals
