@@ -1,0 +1,31 @@
+{
+  "note": "Recorded live invocation through invoke_semantic (slopslap #26). SYNTHETIC content, no secrets. Envelope model/id fields redacted where identifying.",
+  "cli_version": "2.1.207",
+  "recorded_date": "2026-07-12",
+  "request": {
+    "original_utf8": "The service processes up to 100 requests per second under nominal load.",
+    "revision": "The service handles up to 100 requests per second under nominal load.",
+    "ledger_entry_ids": [
+      "e0"
+    ]
+  },
+  "argv_shape": [
+    "-p",
+    "--model",
+    "sonnet",
+    "--output-format",
+    "json",
+    "--no-session-persistence",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "{\"mcpServers\":{}}"
+  ],
+  "runner_status": "ok",
+  "duration_s_bucket": "<=120s",
+  "semantic_result": {
+    "verdict": "clean",
+    "concerns": []
+  }
+}

@@ -268,5 +268,12 @@ token — random, not a secret; env values redacted).
 - **Fresh-context / auth:** the invocation ran under real host auth in a new process; the
   `init` event is the machine-observable proof of the empty tool surface. Load-bearing
   timeout, envelope-parse, and model-mismatch behaviors are exercised by the deterministic
-  fake-CLI suite (Task 3); one live invocation THROUGH the shipped `invoke_semantic` adapter
-  with the recorded envelope lands in `tests/fixtures/invoke/recorded_invocation.json` (Task 4).
+  fake-CLI suite (Task 3).
+- **Live invocation THROUGH the shipped `invoke_semantic` adapter (Task 4):** a real call
+  with a synthetic original + faithful synonym revision returned `{"verdict":"clean",
+  "concerns":[]}`, runner `status=ok`, duration **11.3s**, no diagnostic — recorded to
+  `tests/fixtures/invoke/recorded_invocation.json`. The gated live test
+  (`tests/test_invoke_live.py::test_live_invocation_through_adapter`, `SLOPSLAP_LIVE=1`)
+  passed against real `claude` in **39.8s**; unset, it SKIPS (CI has no auth). This closes
+  AC1–AC4: mechanism proven end-to-end through shipped code, auth/model/timeout/response
+  contract exercised, fresh context machine-proven, recorded fixture + gated test checked in.
