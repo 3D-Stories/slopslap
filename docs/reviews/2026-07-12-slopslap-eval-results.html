@@ -1,0 +1,537 @@
+<!doctype html><html><head><meta charset=utf-8><title>slopslap eval results</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:2em auto;padding:0 1em;line-height:1.5}table{margin:1em 0}code,pre{font-family:ui-monospace,monospace}</style></head><body><h1>slopslap eval results — the working proof</h1><p style='font-size:1.3em;color:#1a7f37;font-weight:700'>Overall: ✅ PASS</p><p>Engine: <code>opus-4.8</code> — authoring engine recorded, not selected by the plugin (advisory); Fable 5 = OWNER-VERIFY (Fable API — no access confirmed)</p><h2>Per-fixture × baseline (hard-gate pass)</h2><table border='1' cellpadding='6' style='border-collapse:collapse'><tr><th>fixture</th><th>slopslap</th><th>humanizer_emulation</th><th>original_unchanged</th></tr><tr><td>distinctive-essay</td><td>✅ repair</td><td>❌ repair</td><td>✅</td></tr><tr><td>normative-spec</td><td>✅ repair</td><td>✅ abstain</td><td>✅</td></tr><tr><td>underspecified-prd</td><td>✅ repair</td><td>❌ repair</td><td>✅</td></tr><tr><td>clean-personal (control)</td><td>✅ abstain</td><td>❌ repair</td><td>✅</td></tr><tr><td>clean-spec (control)</td><td>✅ abstain</td><td>❌ repair</td><td>✅</td></tr></table><p><b>vs humanizer-emulation:</b> BEATS</p><p><b>kukakuka-prd:</b> abstain — 0 invariant violations, 0 bytes changed.</p><p><b>LLM-judge (secondary):</b> NOT_RUN — secondary + non-gating (contract §7). A cross-model blinded A/B (Codex gpt-5.6-sol) is a documented follow-up; the PRIMARY proof is the programmatic hard gates + abstention below.</p><h2>Full results object</h2><pre style='background:#f6f8fa;padding:12px;overflow:auto'>{
+  "comparison": {
+    "per_fixture": {
+      "clean-personal": {
+        "gates_better": 2,
+        "gates_worse": 0,
+        "humanizer_pass": false,
+        "slopslap_pass": true
+      },
+      "clean-spec": {
+        "gates_better": 2,
+        "gates_worse": 0,
+        "humanizer_pass": false,
+        "slopslap_pass": true
+      },
+      "distinctive-essay": {
+        "gates_better": 1,
+        "gates_worse": 0,
+        "humanizer_pass": false,
+        "slopslap_pass": true
+      },
+      "normative-spec": {
+        "gates_better": 0,
+        "gates_worse": 0,
+        "humanizer_pass": true,
+        "slopslap_pass": true
+      },
+      "underspecified-prd": {
+        "gates_better": 1,
+        "gates_worse": 0,
+        "humanizer_pass": false,
+        "slopslap_pass": true
+      }
+    },
+    "strictly_better_gates": 6,
+    "verdict": "BEATS",
+    "worse_anywhere": false
+  },
+  "done": {
+    "ALL_PASS": true,
+    "beats_or_ties_humanizer_emulation": true,
+    "canonical_all_hard_gates_pass": true,
+    "controls_all_abstain": true,
+    "kukakuka_zero_violations": true,
+    "slopslap_idempotent": true
+  },
+  "engine": "opus-4.8",
+  "engine_note": "authoring engine recorded, not selected by the plugin (advisory); Fable 5 = OWNER-VERIFY (Fable API \u2014 no access confirmed)",
+  "fixtures": {
+    "clean-personal": {
+      "baselines": {
+        "humanizer_emulation": {
+          "baseline": "humanizer_emulation",
+          "changed_bytes": 9,
+          "deterministic_state": "FAIL",
+          "disposition": "repair",
+          "gates": {
+            "control_abstention": "fail",
+            "edit_locality": "fail",
+            "markdown_structure": "pass"
+          },
+          "hard_gates_pass": false,
+          "output_sha256": "8fb21aa955d191f921b0f255c1d769b80cb7e6c1f48bd2f6da3fc86e89b974e7",
+          "provenance": {
+            "note": "representative/emulated de-stylizing policy, NOT the upstream humanizer product",
+            "policy": "humanizer-emulation-v1"
+          },
+          "reason": "applied humanizer-emulation-v1 doc-wide",
+          "required_gates": [
+            "control_abstention",
+            "edit_locality",
+            "markdown_structure"
+          ],
+          "second_pass_edits": 0,
+          "unchanged": false
+        },
+        "original_unchanged": {
+          "baseline": "original_unchanged",
+          "changed_bytes": 0,
+          "deterministic_state": "PASS",
+          "disposition": "abstain",
+          "gates": {
+            "control_abstention": "pass",
+            "edit_locality": "pass",
+            "markdown_structure": "pass"
+          },
+          "hard_gates_pass": true,
+          "output_sha256": "4b43b822e24b4989c6e5de888912549e72c38f92975c602b2c8f72cdda1d1d64",
+          "provenance": {
+            "policy": "identity"
+          },
+          "reason": "no edits",
+          "required_gates": [
+            "control_abstention",
+            "edit_locality",
+            "markdown_structure"
+          ],
+          "second_pass_edits": 0,
+          "unchanged": true
+        },
+        "slopslap": {
+          "baseline": "slopslap",
+          "changed_bytes": 0,
+          "deterministic_state": "PASS",
+          "disposition": "abstain",
+          "gates": {
+            "control_abstention": "pass",
+            "edit_locality": "pass",
+            "markdown_structure": "pass"
+          },
+          "hard_gates_pass": true,
+          "output_sha256": "4b43b822e24b4989c6e5de888912549e72c38f92975c602b2c8f72cdda1d1d64",
+          "provenance": {
+            "engine": "opus-4.8",
+            "engine_note": "authoring engine recorded, not selected by the plugin (advisory)",
+            "policy": "slopslap-judgment-v1"
+          },
+          "reason": "no demonstrated editorial harm (keystone rule)",
+          "required_gates": [
+            "control_abstention",
+            "edit_locality",
+            "markdown_structure"
+          ],
+          "second_pass_edits": 0,
+          "unchanged": true
+        }
+      },
+      "is_control": true
+    },
+    "clean-spec": {
+      "baselines": {
+        "humanizer_emulation": {
+          "baseline": "humanizer_emulation",
+          "changed_bytes": 5,
+          "deterministic_state": "FAIL",
+          "disposition": "repair",
+          "gates": {
+            "control_abstention": "fail",
+            "edit_locality": "fail",
+            "markdown_structure": "pass"
+          },
+          "hard_gates_pass": false,
+          "output_sha256": "7b2f419255e3162e7340901b26cadef84ae383d0ab93b57c0a873d5100143d4a",
+          "provenance": {
+            "note": "representative/emulated de-stylizing policy, NOT the upstream humanizer product",
+            "policy": "humanizer-emulation-v1"
+          },
+          "reason": "applied humanizer-emulation-v1 doc-wide",
+          "required_gates": [
+            "control_abstention",
+            "edit_locality",
+            "markdown_structure"
+          ],
+          "second_pass_edits": 0,
+          "unchanged": false
+        },
+        "original_unchanged": {
+          "baseline": "original_unchanged",
+          "changed_bytes": 0,
+          "deterministic_state": "PASS",
+          "disposition": "abstain",
+          "gates": {
+            "control_abstention": "pass",
+            "edit_locality": "pass",
+            "markdown_structure": "pass"
+          },
+          "hard_gates_pass": true,
+          "output_sha256": "5c3b460fecc139d43824a930354f9d8515614059b0d36f6d43f2c73113fb4ceb",
+          "provenance": {
+            "policy": "identity"
+          },
+          "reason": "no edits",
+          "required_gates": [
+            "control_abstention",
+            "edit_locality",
+            "markdown_structure"
+          ],
+          "second_pass_edits": 0,
+          "unchanged": true
+        },
+        "slopslap": {
+          "baseline": "slopslap",
+          "changed_bytes": 0,
+          "deterministic_state": "PASS",
+          "disposition": "abstain",
+          "gates": {
+            "control_abstention": "pass",
+            "edit_locality": "pass",
+            "markdown_structure": "pass"
+          },
+          "hard_gates_pass": true,
+          "output_sha256": "5c3b460fecc139d43824a930354f9d8515614059b0d36f6d43f2c73113fb4ceb",
+          "provenance": {
+            "engine": "opus-4.8",
+            "engine_note": "authoring engine recorded, not selected by the plugin (advisory)",
+            "policy": "slopslap-judgment-v1"
+          },
+          "reason": "no demonstrated editorial harm (keystone rule)",
+          "required_gates": [
+            "control_abstention",
+            "edit_locality",
+            "markdown_structure"
+          ],
+          "second_pass_edits": 0,
+          "unchanged": true
+        }
+      },
+      "is_control": true
+    },
+    "distinctive-essay": {
+      "baselines": {
+        "humanizer_emulation": {
+          "baseline": "humanizer_emulation",
+          "changed_bytes": 39,
+          "deterministic_state": "FAIL",
+          "disposition": "repair",
+          "gates": {
+            "edit_locality": "fail",
+            "idempotence": "pass",
+            "markdown_structure": "pass",
+            "no_new_claim_atoms": "pass",
+            "preservation_region_scoped": "pass",
+            "protected_spans_intact": "pass"
+          },
+          "hard_gates_pass": false,
+          "output_sha256": "04e88dc0a712e9b71979665d43ee7b74e45f48df2c10a8d2a643184edee18032",
+          "provenance": {
+            "note": "representative/emulated de-stylizing policy, NOT the upstream humanizer product",
+            "policy": "humanizer-emulation-v1"
+          },
+          "reason": "applied humanizer-emulation-v1 doc-wide",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
+          "second_pass_edits": 0,
+          "unchanged": false
+        },
+        "original_unchanged": {
+          "baseline": "original_unchanged",
+          "changed_bytes": 0,
+          "deterministic_state": "PASS",
+          "disposition": "abstain",
+          "gates": {
+            "edit_locality": "pass",
+            "idempotence": "pass",
+            "markdown_structure": "pass",
+            "no_new_claim_atoms": "pass",
+            "preservation_region_scoped": "pass",
+            "protected_spans_intact": "pass"
+          },
+          "hard_gates_pass": true,
+          "output_sha256": "acb0bae5e8c936939cc8ae42ecd22af1137029c039a02409840e4d73db3cff43",
+          "provenance": {
+            "policy": "identity"
+          },
+          "reason": "no edits",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
+          "second_pass_edits": 0,
+          "unchanged": true
+        },
+        "slopslap": {
+          "baseline": "slopslap",
+          "changed_bytes": 615,
+          "deterministic_state": "PASS",
+          "disposition": "repair",
+          "gates": {
+            "edit_locality": "pass",
+            "idempotence": "pass",
+            "markdown_structure": "pass",
+            "no_new_claim_atoms": "pass",
+            "preservation_region_scoped": "pass",
+            "protected_spans_intact": "pass"
+          },
+          "hard_gates_pass": true,
+          "output_sha256": "2089d05a94a8f5c366415f01cf3c396ad454c2c566ebc36614ba3958bbda3712",
+          "provenance": {
+            "engine": "opus-4.8",
+            "engine_note": "authoring engine recorded, not selected by the plugin (advisory)",
+            "policy": "slopslap-judgment-v1"
+          },
+          "reason": "repaired 2 demonstrated-harm passage(s)",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
+          "second_pass_edits": 0,
+          "unchanged": false
+        }
+      },
+      "is_control": false
+    },
+    "normative-spec": {
+      "baselines": {
+        "humanizer_emulation": {
+          "baseline": "humanizer_emulation",
+          "changed_bytes": 0,
+          "deterministic_state": "PASS",
+          "disposition": "abstain",
+          "gates": {
+            "edit_locality": "pass",
+            "idempotence": "pass",
+            "markdown_structure": "pass",
+            "no_new_claim_atoms": "pass",
+            "preservation_region_scoped": "pass",
+            "protected_spans_intact": "pass"
+          },
+          "hard_gates_pass": true,
+          "output_sha256": "3d90415898148d49844ce7fb76e5708790b4b812becf22bcf3cbebe2013d4452",
+          "provenance": {
+            "note": "representative/emulated de-stylizing policy, NOT the upstream humanizer product",
+            "policy": "humanizer-emulation-v1"
+          },
+          "reason": "applied humanizer-emulation-v1 doc-wide",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
+          "second_pass_edits": 0,
+          "unchanged": true
+        },
+        "original_unchanged": {
+          "baseline": "original_unchanged",
+          "changed_bytes": 0,
+          "deterministic_state": "PASS",
+          "disposition": "abstain",
+          "gates": {
+            "edit_locality": "pass",
+            "idempotence": "pass",
+            "markdown_structure": "pass",
+            "no_new_claim_atoms": "pass",
+            "preservation_region_scoped": "pass",
+            "protected_spans_intact": "pass"
+          },
+          "hard_gates_pass": true,
+          "output_sha256": "3d90415898148d49844ce7fb76e5708790b4b812becf22bcf3cbebe2013d4452",
+          "provenance": {
+            "policy": "identity"
+          },
+          "reason": "no edits",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
+          "second_pass_edits": 0,
+          "unchanged": true
+        },
+        "slopslap": {
+          "baseline": "slopslap",
+          "changed_bytes": 189,
+          "deterministic_state": "PASS",
+          "disposition": "repair",
+          "gates": {
+            "edit_locality": "pass",
+            "idempotence": "pass",
+            "markdown_structure": "pass",
+            "no_new_claim_atoms": "pass",
+            "preservation_region_scoped": "pass",
+            "protected_spans_intact": "pass"
+          },
+          "hard_gates_pass": true,
+          "output_sha256": "c4fea54776ce1d4f137d2a2067fb7ed6769e43aea50dccecdcfda6d73cc6eeb8",
+          "provenance": {
+            "engine": "opus-4.8",
+            "engine_note": "authoring engine recorded, not selected by the plugin (advisory)",
+            "policy": "slopslap-judgment-v1"
+          },
+          "reason": "repaired 1 demonstrated-harm passage(s)",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
+          "second_pass_edits": 0,
+          "unchanged": false
+        }
+      },
+      "is_control": false
+    },
+    "underspecified-prd": {
+      "baselines": {
+        "humanizer_emulation": {
+          "baseline": "humanizer_emulation",
+          "changed_bytes": 5,
+          "deterministic_state": "FAIL",
+          "disposition": "repair",
+          "gates": {
+            "edit_locality": "fail",
+            "idempotence": "pass",
+            "markdown_structure": "pass",
+            "no_new_claim_atoms": "pass",
+            "preservation_region_scoped": "pass",
+            "protected_spans_intact": "pass"
+          },
+          "hard_gates_pass": false,
+          "output_sha256": "e465a44c556c7400df7d1b867e95d5587fed9c916050962fb8ea5c4a4c1b7526",
+          "provenance": {
+            "note": "representative/emulated de-stylizing policy, NOT the upstream humanizer product",
+            "policy": "humanizer-emulation-v1"
+          },
+          "reason": "applied humanizer-emulation-v1 doc-wide",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
+          "second_pass_edits": 0,
+          "unchanged": false
+        },
+        "original_unchanged": {
+          "baseline": "original_unchanged",
+          "changed_bytes": 0,
+          "deterministic_state": "PASS",
+          "disposition": "abstain",
+          "gates": {
+            "edit_locality": "pass",
+            "idempotence": "pass",
+            "markdown_structure": "pass",
+            "no_new_claim_atoms": "pass",
+            "preservation_region_scoped": "pass",
+            "protected_spans_intact": "pass"
+          },
+          "hard_gates_pass": true,
+          "output_sha256": "d98ca56cf4501421f8b0c62c57814146529c47b390bbbdc4932583870deddd9a",
+          "provenance": {
+            "policy": "identity"
+          },
+          "reason": "no edits",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
+          "second_pass_edits": 0,
+          "unchanged": true
+        },
+        "slopslap": {
+          "baseline": "slopslap",
+          "changed_bytes": 188,
+          "deterministic_state": "PASS",
+          "disposition": "repair",
+          "gates": {
+            "edit_locality": "pass",
+            "idempotence": "pass",
+            "markdown_structure": "pass",
+            "no_new_claim_atoms": "pass",
+            "preservation_region_scoped": "pass",
+            "protected_spans_intact": "pass"
+          },
+          "hard_gates_pass": true,
+          "output_sha256": "7c544731a5f7cac0a8bd2bfbd95c4738e4531ea9c77db0e7c78b7d483683829a",
+          "provenance": {
+            "engine": "opus-4.8",
+            "engine_note": "authoring engine recorded, not selected by the plugin (advisory)",
+            "policy": "slopslap-judgment-v1"
+          },
+          "reason": "repaired 1 demonstrated-harm passage(s)",
+          "required_gates": [
+            "edit_locality",
+            "protected_spans_intact",
+            "preservation_region_scoped",
+            "no_new_claim_atoms",
+            "markdown_structure",
+            "idempotence"
+          ],
+          "second_pass_edits": 0,
+          "unchanged": false
+        }
+      },
+      "is_control": false
+    }
+  },
+  "judge": {
+    "note": "secondary + non-gating (contract \u00a77). A cross-model blinded A/B (Codex gpt-5.6-sol) is a documented follow-up; the PRIMARY proof is the programmatic hard gates + abstention below.",
+    "status": "not_run"
+  },
+  "kukakuka": {
+    "audit": {
+      "breakdown": {
+        "stock": 0,
+        "transition": 0,
+        "vague": 0
+      },
+      "note": "shipped scanner (markdown) found 0 stock/vague/transition clusters \u2014 clean prose",
+      "slop_clusters": 0,
+      "units_scanned": 107
+    },
+    "changed_bytes": 0,
+    "disposition": "abstain",
+    "edits": 0,
+    "invariant_violations": 0,
+    "ledger": {
+      "entries": 2,
+      "protected_spans": 1
+    },
+    "negative_control_bad_edit_rejected": true,
+    "preservation": {
+      "bytes_total": 28003,
+      "changed_byte_ratio": 0.0,
+      "headings_preserved": true
+    },
+    "reason": "no demonstrated editorial harm (keystone rule)"
+  },
+  "schema_version": 1
+}</pre></body></html>
