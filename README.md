@@ -73,7 +73,7 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Status
 
-- **Version:** 0.1.4 (v0.2 epic #16 in progress — live model-in-the-loop).
+- **Version:** 0.1.5 (v0.2 epic #16 in progress — live model-in-the-loop).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; wiring the
@@ -81,6 +81,16 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Changelog
 
+- **0.1.5** — invariant-ledger auto-build for arbitrary prose (#19). New
+  `scripts/slopslap_verification/autoledger.py::build_invariant_regions(doc: bytes)` derives
+  manifest `invariant_regions` from arbitrary UTF-8 prose — numbers+units, dates, normative modals
+  (MUST/SHALL/SHOULD/MUST NOT), negation, conditions, cross-references, and defined terms — instead
+  of hand-declaring them. It REUSES the `atoms.py` detectors (no second parser) and defers
+  kind/preservation/confidence to the ledger's `_CHECK_KIND` R3 table (extended with `cross_refs`
+  and `defined_terms` checks). Segmentation is sentence-level so a multiset-preserving edit is
+  checked against the whole sentence; byte offsets are exact (UTF-8, not char) and non-UTF-8 fails
+  loud (`LedgerBuildError`). Output drops straight into `build_ledger`, and a weakening edit
+  (a changed number, a MUST→SHOULD downgrade) then REJECTS at verify.
 - **0.1.4** — protected-span auto-extractor for arbitrary input (#18). New
   `scripts/slopslap_scan/protected.py::extract_protected_spans(doc: bytes)` REUSES the scan
   tokenizer (the vendored/pinned markdown-it parser + `extract.py`'s URL matchers) to emit
