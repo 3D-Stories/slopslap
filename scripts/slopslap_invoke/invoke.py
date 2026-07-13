@@ -52,6 +52,18 @@ _DIAG_INVALID = "semantic_invalid_response"
 _AMBIGUOUS: dict = {"verdict": "ambiguous", "concerns": []}
 
 
+def _record_status(sink: Optional[dict], status: str) -> None:
+    """Record ``invocation_status`` into ``sink`` (the #27 §7 out-param), STICKY-WORST: once a
+    non-``ok`` status is recorded, a later ``ok`` never overwrites it (a later successful call
+    must not launder an earlier timeout/failure). ``sink is None`` is a no-op — the default keeps
+    ``invoke_semantic`` byte-identical to its pre-#27 behavior."""
+    if sink is None:
+        return
+    if status == "ok" and sink.get("invocation_status", "ok") != "ok":
+        return
+    sink["invocation_status"] = status
+
+
 @dataclass
 class InvocationResult:
     """Internal transport result. NEVER crosses the public ``invoke_semantic`` boundary."""
@@ -269,12 +281,22 @@ def invoke_semantic(
     model: str,
     timeout_s: float = 60.0,
     executable: Optional[str] = None,
+    status_sink: Optional[dict] = None,
 ) -> dict:
     """CLOSED public semantic seam. Returns EXACTLY ``{"verdict", "concerns"}``.
 
     Bind the keywords for the ``verify(..., semantic_fn=...)`` 3-positional seam with
     ``functools.partial(invoke_semantic, model=..., timeout_s=...)``. Every failure collapses
     to ``{"verdict": "ambiguous", "concerns": []}`` (never "clean") with a diagnostic logged.
+
+    ``status_sink`` (#27 §7 — additive, default-inert) is an optional dict the caller supplies to
+    learn the typed invocation OUTCOME without breaking the closed ``{verdict, concerns}`` return.
+    When non-None, ``status_sink["invocation_status"]`` is set on EVERY return path — ``ok`` only
+    on a successfully parsed model verdict, else the failure slug (``timeout``/``cli_missing``/
+    ``nonzero_exit``/``parse_error``/``model_mismatch``/``invalid_request``). It is STICKY-WORST
+    (see ``_record_status``): a later ``ok`` never launders an earlier failure — the seam may be
+    re-invoked many times per run by apply's re-verify loop. ``None`` (default) is a no-op, so the
+    return shape and behavior are byte-identical to the pre-#27 seam.
     """
     if not model:
         raise ValueError("model must be a non-empty string")
@@ -286,11 +308,13 @@ def invoke_semantic(
             revision = bytes(revision).decode("utf-8")
         except UnicodeDecodeError as err:
             _LOG.warning("%s: revision is not valid utf-8: %s", _DIAG_INVALID, err)
+            _record_status(status_sink, "invalid_request")
             return dict(_AMBIGUOUS)
 
     exe = executable if executable is not None else shutil.which("claude")
     if not exe:
         _LOG.warning("%s: claude executable not found (which('claude') is None)", _DIAG_TRANSPORT)
+        _record_status(status_sink, "cli_missing")
         return dict(_AMBIGUOUS)
 
     # The seam is documented as TOTAL: it never raises on any input. `original` is meant to be
@@ -301,18 +325,24 @@ def invoke_semantic(
         request = contract.build_request(original, revision, ledger_canonical)
     except contract.InvalidRequestError as err:
         _LOG.warning("%s: request build rejected: %s", _DIAG_INVALID, err)
+        _record_status(status_sink, "invalid_request")
         return dict(_AMBIGUOUS)
     except (AttributeError, KeyError, TypeError) as err:
         _LOG.warning("%s: malformed original/ledger at request build: %r", _DIAG_INVALID, err)
+        _record_status(status_sink, "invalid_request")
         return dict(_AMBIGUOUS)
 
     result = _run_claude(request, model=model, timeout_s=timeout_s, executable=exe)
     if result.status != "ok":
         _LOG.warning("%s: invocation failed (status=%s)", result.diagnostic_code, result.status)
+        _record_status(status_sink, result.status)
         return dict(_AMBIGUOUS)
 
     try:
-        return contract.parse_response(result.result_text, ledger_canonical)
+        parsed = contract.parse_response(result.result_text, ledger_canonical)
     except (AttributeError, KeyError, TypeError) as err:
         _LOG.warning("%s: malformed ledger at response parse: %r", _DIAG_INVALID, err)
+        _record_status(status_sink, "parse_error")
         return dict(_AMBIGUOUS)
+    _record_status(status_sink, "ok")
+    return parsed
