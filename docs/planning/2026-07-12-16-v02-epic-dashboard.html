@@ -107,8 +107,8 @@ a{color:var(--lagoon)}
   </header>
 
   <!-- PROGRESS: update width% + caption on each merge -->
-  <div class="bar"><i style="width:50%"></i></div>
-  <p class="barcap">7 / 14 children merged · Tier 0+1 COMPLETE (#26 #30 #17 #18 #19 #20 #22 ✅) · next Tier 2 #27 · version 0.1.7</p>
+  <div class="bar"><i style="width:57%"></i></div>
+  <p class="barcap">8 / 14 children merged · Tier 0+1 COMPLETE + Tier 2 assembler (#26 #30 #17 #18 #19 #20 #22 #27 ✅) · next Tier 3 #23 · version 0.1.8</p>
 
   <div class="legend">
     <span class="chip merged"><span class="dot" style="background:var(--lagoon)"></span>merged + closed</span>
@@ -219,16 +219,18 @@ T4  #28 e2e golden (dep #27 #23 #17–#20 #30) · #25 calibration (dep #30)</div
   <h2>Tier 2 — the assembler</h2>
   <p class="sec-sub">full WF2 · WF5-F1: the seam that was missing</p>
   <div class="grid">
-    <div class="card queued" id="c27">
+    <div class="card merged" id="c27">
       <div class="id">T2 · #27</div>
       <h3>Live-orchestration seam</h3>
       <div class="dep">depends on #26, #17–#20 · blocks #28, #29</div>
-      <span class="st">queued</span>
+      <span class="st">merged + closed</span>
       <ul>
-        <li class="pending">Assemble audit → verify → suggest → apply end-to-end</li>
-        <li class="pending">Stage ordering, data handoffs, error propagation, dry-run acceptance</li>
+        <li>new <code>slopslap_assemble</code> pkg: audit → verify → (suggest) → apply for arbitrary docs</li>
+        <li><code>AuditResult</code> + <code>StageResult</code>/<code>RunResult</code> envelope (ok|blocked|failed|aborted), <code>_EXIT_CLASS</code> 0/2/3/4</li>
+        <li>path+digest boundary guard; additive <code>status_sink</code> reclassifies ops failure vs policy</li>
+        <li>JSON CLI (audit/run); Step-8a High fixed (post-apply sink re-read); peer + 3 Opus + Codex reviews</li>
       </ul>
-      <div class="kv">PR — · version — · gate —</div>
+      <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/41">#41</a> · v0.1.8 · gate 369→410 (+41, 0 reg)</div>
     </div>
   </div>
 
