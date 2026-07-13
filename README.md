@@ -58,6 +58,25 @@ instructions**.
 - **`slopslap_apply/`** — backup-gated apply with **per-hunk selective rollback**; the backup
   (outside the repo by default) is the universal safety net.
 
+### Live-orchestration seam (v0.2)
+
+- **`slopslap_assemble/`** — the **assembler**: the one seam that chains
+  **audit → verify → (suggest) → apply** end-to-end for an *arbitrary* document, not just the
+  frozen eval fixtures. `audit_document(path)` derives a byte-exact manifest + invariant ledger
+  from any UTF-8 doc (genre classified once and threaded through), packaging a snapshot-immutable
+  `AuditResult`; `run_candidate` / `assemble` validate a candidate edit-script, run the 3-layer
+  verifier with the derived authorization ranges, and (dry-run) route the shippable subset through
+  the backup-gated apply engine. Every stage returns a uniform envelope
+  (`ok | blocked | failed | aborted`); a run returns a `RunResult` whose overall status is the
+  worst stage and whose exit code is a static class map — **0** ok · **2** policy-blocked · **3**
+  invalid input/contract · **4** stage execution failure. A **policy** block (out-of-range edit,
+  weakened invariant, ambiguous verdict) reads differently from an **execution** failure, and a
+  semantic *invocation* failure is never laundered into a policy verdict. Thin JSON CLI:
+  `python3 scripts/slopslap_assemble/assemble.py audit --path P` and
+  `… run --path P --edits EDITS.json --dry-run` each emit exactly one JSON `RunResult` (no source
+  bytes; the ledger as `{canonical, sha256}`). `run` is dry-run only until the apply-flip
+  (`write=False`, source never mutated).
+
 ## The working proof
 
 `scripts/eval/run_eval.py` replays frozen candidate edit-scripts through the production runner +
@@ -73,7 +92,7 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Status
 
-- **Version:** 0.1.7 (v0.2 epic #16 in progress — live model-in-the-loop).
+- **Version:** 0.1.8 (v0.2 epic #16 in progress — live model-in-the-loop).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; wiring the
@@ -81,6 +100,26 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Changelog
 
+- **0.1.8** — live-orchestration seam, the assembler (#27). New `scripts/slopslap_assemble/` chains
+  **audit → verify → (suggest) → apply** end-to-end for an ARBITRARY document — the missing seam
+  the v0.2 epic needs (WF5 finding F1: `#17–#24` were components with no assembler). `build_manifest`
+  derives a `build_ledger` manifest from any UTF-8 doc; `audit_document` packages a
+  snapshot-immutable `AuditResult` (genre resolved once and threaded to both the metrics run and the
+  range deriver; `audit_status` `clean`/`flagged` preserved distinct from the `reject_all`
+  authorization overload); `run_candidate` / `assemble` validate a candidate edit-script (parse +
+  bounds/overlap BEFORE verify), re-check source identity at the run boundary (path + digest, so an
+  `AuditResult` can't be replayed against a different file with identical bytes), run the 3-layer
+  verifier with the derived authorization ranges, and (dry-run) route the shippable subset through
+  the backup-gated apply engine — re-verifying against the untouched original each attempt. Uniform
+  stage envelope (`ok | blocked | failed | aborted`) + a `RunResult` whose exit code is a static
+  class map (0 ok · 2 policy-blocked · 3 invalid input/contract · 4 execution failure); a semantic
+  INVOCATION failure (`semantic_invocation_failed`, exit 4) is kept distinct from a policy block
+  (exit 2) via an additive, default-inert `status_sink` out-param on `invoke_semantic`. Thin JSON
+  CLI (`assemble.py audit|run`) emits exactly one `RunResult` with no source bytes (ledger as
+  `{canonical, sha256}`). Ships with an end-to-end dry-run acceptance golden (ACCEPT flows clean +
+  REJECT blocks mutation, offline stub; the source stays byte-identical). `run` is dry-run only
+  (`write=False`) until the apply-flip (#29). `SLOPSLAP_LIVE=1` selects a real fresh-context
+  `claude -p` semantic pass; offline (default) uses a hardcoded `clean` stub — no model call.
 - **0.1.7** — genre classifier + genre-constrained diagnoses (#22). Genre is no longer inert. New
   `scripts/slopslap_scan/genre.py::classify_genre(doc: bytes, *, declared=None, path=None)` returns
   `{genre, confidence, reason}` over `general · spec · prd · personal`, honoring the
