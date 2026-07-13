@@ -126,10 +126,37 @@ def apply_selective(
     try:
         with open(source, "rb") as fh:
             original = fh.read()
-        orig_stat = os.stat(source)  # capture identity (dev/ino) for the pre-replace guard (H5)
+        orig_stat = os.stat(source)  # capture identity (dev/ino/nlink) for the pre-replace guard (H5)
     except OSError as err:
         report.update(status="error", errors=[f"cannot read source: {err}"])
         return report
+
+    # --- #21 hardening: fail-closed edge-case guards BEFORE any mutation (incl. the backup) ---
+    # Hardlink: os.replace creates a NEW inode, so mutating a hardlinked file leaves the OTHER links
+    # on the old bytes. Refuse, fail closed. (adv H4: re-checked at the pre-replace guard too, since
+    # a second link can appear after this stat.)
+    if orig_stat.st_nlink > 1:
+        report.update(status="blocked",
+                      errors=[f"refusing to mutate a hardlinked file ({orig_stat.st_nlink} links); "
+                              f"atomic replace would orphan the other link(s)"])
+        return report
+    # Symlink: model C follows the link and replaces its TARGET (`source` is already realpath'd).
+    # Record which concrete file was mutated so the caller sees it. The path-substitution race guard
+    # is the dev/inode + content-sha re-check at the pre-replace boundary below — NOT O_NOFOLLOW,
+    # which only pins the final open's last component and cannot bind the pathname-based os.replace.
+    if os.path.islink(source_path):
+        report["followed_symlink"] = f"{source_path} -> {source}"
+    # Extended attributes (xattr/ACL/security labels) are NOT carried across the inode replacement.
+    # Detect + warn loudly (not a hard block) so the loss is legible, never silent. (adv H3)
+    _listxattr = getattr(os, "listxattr", None)
+    if _listxattr is not None:
+        try:
+            if _listxattr(source):
+                report["warnings"].append(
+                    "extended attributes (xattr/ACL/security labels) will NOT be preserved across "
+                    "the atomic replacement")
+        except OSError:
+            pass
 
     # sort into the SAME order ledger-verify labels hunks (by start,end), so h0..hN align.
     all_edits = sorted(_edits(edits_input), key=lambda e: (e.start_byte, e.end_byte))
@@ -229,14 +256,25 @@ def apply_selective(
         return _block(report, f"re-read failed: {err}")
     if (live_stat.st_dev, live_stat.st_ino) != (orig_stat.st_dev, orig_stat.st_ino):
         return _block(report, "source identity (dev/inode) changed since read; not clobbering")
+    if live_stat.st_nlink > 1:  # adv H4: a hardlink created AFTER the initial pre-backup stat
+        return _block(report, f"source became hardlinked ({live_stat.st_nlink} links) since read; "
+                              f"not clobbering (would orphan the other link(s))")
     if _sha256(live) != report["original_digest"]:
         return _block(report, "source changed since read (concurrent edit); not clobbering")
 
     # --- atomic replace with a complete-write + read-back guard (H2) ---
     tmp = source + f".slopslap.tmp.{os.getpid()}"
     try:
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, stat_mode(orig_stat))
+        # create with a SAFE default (0o600), then fchmod to the EXACT source mode — the create-mode
+        # arg is umask-masked, so relying on it could ship a wrong (often more-restrictive) mode
+        # while reporting success (adv H2). fchmod failure fails closed: the temp is not yet swapped,
+        # so the outer except cleans it and aborts with the source intact.
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         try:
+            try:
+                os.fchmod(fd, stat_mode(orig_stat))  # EXACT mode, not umask-masked
+            except OSError as err:
+                raise OSError(f"fchmod (exact-mode preservation) failed: {err}") from err
             _write_all(fd, candidate)  # loop until every byte lands (no short-write corruption)
             if os.environ.get("SLOPSLAP_FSYNC") == "1":
                 os.fsync(fd)
