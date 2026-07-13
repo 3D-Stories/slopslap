@@ -163,3 +163,124 @@ def test_parse_never_returns_clean_from_missing_output():
     # empty result text, and a valid envelope with no parsable object => ambiguous, never clean
     assert parse_response(_env(""), canon) == AMBIG
     assert parse_response(_env("   "), canon)["verdict"] == "ambiguous"
+
+
+# ---- status_sink out-param (#27, §7): typed invocation outcome, additive + default-inert ----
+import os  # noqa: E402
+import stat  # noqa: E402
+
+from slopslap_invoke.invoke import invoke_semantic  # noqa: E402
+
+_SINK_MODEL = "claude-test-model"
+
+
+def _exe(tmp_path, body, name="fake_claude.py"):
+    p = tmp_path / name
+    p.write_text("#!/usr/bin/env python3\n" + body)
+    p.chmod(p.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    return str(p)
+
+
+def _ok_exe(tmp_path, verdict="clean"):
+    """A fake claude emitting a valid success envelope echoing the requested --model."""
+    body = (
+        "import sys, json\n"
+        "argv = sys.argv[1:]\n"
+        "model = argv[argv.index('--model')+1] if '--model' in argv else ''\n"
+        f"result = json.dumps({{'verdict': {verdict!r}, 'concerns': []}})\n"
+        "env = {'type': 'result', 'model': model, 'result': result}\n"
+        "sys.stdout.write(json.dumps(env))\n"
+    )
+    return _exe(tmp_path, body, name="ok_cli.py")
+
+
+def test_status_sink_records_ok_on_success(tmp_path):
+    orig, canon = _canon()
+    exe = _ok_exe(tmp_path)
+    sink = {}
+    out = invoke_semantic(orig, "rev", canon, model=_SINK_MODEL, timeout_s=5.0,
+                          executable=exe, status_sink=sink)
+    assert out == {"verdict": "clean", "concerns": []}
+    assert sink["invocation_status"] == "ok"
+
+
+def test_status_sink_records_cli_missing(tmp_path):
+    orig, canon = _canon()
+    sink = {}
+    out = invoke_semantic(orig, "rev", canon, model=_SINK_MODEL, timeout_s=5.0,
+                          executable="/nonexistent/claude-xyz", status_sink=sink)
+    assert out == {"verdict": "ambiguous", "concerns": []}
+    assert sink["invocation_status"] != "ok"
+    assert sink["invocation_status"] == "cli_missing"
+
+
+def test_status_sink_records_nonzero_exit_on_failing_executable(tmp_path):
+    orig, canon = _canon()
+    exe = _exe(tmp_path, "import sys\nsys.exit(7)\n", name="boom.py")
+    sink = {}
+    out = invoke_semantic(orig, "rev", canon, model=_SINK_MODEL, timeout_s=5.0,
+                          executable=exe, status_sink=sink)
+    assert out == {"verdict": "ambiguous", "concerns": []}
+    assert sink["invocation_status"] == "nonzero_exit"
+
+
+def test_status_sink_records_invalid_request_on_non_utf8_revision(tmp_path):
+    orig, canon = _canon()
+    exe = _ok_exe(tmp_path)
+    sink = {}
+    out = invoke_semantic(orig, b"\xff\xfe", canon, model=_SINK_MODEL, timeout_s=5.0,
+                          executable=exe, status_sink=sink)
+    assert out == {"verdict": "ambiguous", "concerns": []}
+    assert sink["invocation_status"] == "invalid_request"
+
+
+def test_status_sink_records_invalid_request_on_malformed_ledger(tmp_path):
+    # a ledger entry missing 'source' fails at request build -> invalid_request (non-ok), seam-safe
+    exe = _ok_exe(tmp_path)
+    bad_canon = {"schema_version": 1, "source_sha256": "0" * 64,
+                 "entries": [{"id": "e0", "kind": "literal"}], "protected_spans": []}
+    sink = {}
+    out = invoke_semantic(b"hello", "rev", bad_canon, model=_SINK_MODEL, timeout_s=5.0,
+                          executable=exe, status_sink=sink)
+    assert out == {"verdict": "ambiguous", "concerns": []}
+    assert sink["invocation_status"] != "ok"
+    assert sink["invocation_status"] == "invalid_request"
+
+
+def test_absent_sink_is_byte_identical_to_today(tmp_path):
+    """Default None sink: the {verdict, concerns} return is unchanged and nothing else leaks."""
+    orig, canon = _canon()
+    exe = _ok_exe(tmp_path, verdict="clean")
+    without = invoke_semantic(orig, "rev", canon, model=_SINK_MODEL, timeout_s=5.0, executable=exe)
+    with_sink = invoke_semantic(orig, "rev", canon, model=_SINK_MODEL, timeout_s=5.0,
+                                executable=exe, status_sink={})
+    assert without == with_sink == {"verdict": "clean", "concerns": []}
+    # a failure path is identical with/without the sink too
+    a = invoke_semantic(orig, "rev", canon, model=_SINK_MODEL, timeout_s=5.0,
+                        executable="/nonexistent/claude-xyz")
+    b = invoke_semantic(orig, "rev", canon, model=_SINK_MODEL, timeout_s=5.0,
+                        executable="/nonexistent/claude-xyz", status_sink={})
+    assert a == b == {"verdict": "ambiguous", "concerns": []}
+
+
+def test_status_sink_is_sticky_worst_fail_then_ok(tmp_path):
+    """A later ok must never launder an earlier failure recorded in the SAME sink."""
+    orig, canon = _canon()
+    ok_exe = _ok_exe(tmp_path)
+    sink = {}
+    invoke_semantic(orig, "rev", canon, model=_SINK_MODEL, timeout_s=5.0,
+                    executable="/nonexistent/claude-xyz", status_sink=sink)
+    assert sink["invocation_status"] == "cli_missing"
+    invoke_semantic(orig, "rev", canon, model=_SINK_MODEL, timeout_s=5.0,
+                    executable=ok_exe, status_sink=sink)
+    assert sink["invocation_status"] == "cli_missing"  # sticky: stays non-ok
+
+
+def test_status_sink_ok_only_when_sink_was_clean(tmp_path):
+    """A fresh sink through a successful call records ok (sticky-worst allows ok when nothing worse)."""
+    orig, canon = _canon()
+    ok_exe = _ok_exe(tmp_path)
+    sink = {}
+    invoke_semantic(orig, "rev", canon, model=_SINK_MODEL, timeout_s=5.0,
+                    executable=ok_exe, status_sink=sink)
+    assert sink["invocation_status"] == "ok"
