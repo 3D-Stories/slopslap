@@ -92,7 +92,7 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Status
 
-- **Version:** 0.1.11 (v0.2 epic #16 in progress — live model-in-the-loop).
+- **Version:** 0.1.12 (v0.2 epic #16 in progress — live model-in-the-loop).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; wiring the
@@ -100,6 +100,15 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Changelog
 
+- **0.1.12** — one-shot manual voice sample (#24). A user can paste a short voice sample inline with a
+  suggest/apply request; `scripts/slopslap_scan/voiceprint.py::extract_voice_features` returns
+  **measure-only** diction signals (register / contraction rate / punctuation profile /
+  first-second-third-person lean) used ONLY to bias the choice among ALREADY-SAFE phrasings. No
+  persistence, no learning, no hook (that's the deferred v2 capture). The voiceprint's fixed place in
+  the authority order — `protected > invariants + no-fabrication > genre > current instruction > voiceprint >
+  default` — means it never authorizes an edit, never widens a boundary, and never adds
+  fragments/profanity to long-form to match a sample; the keystone holds. SKILL.md + suggest.md carry
+  the contract; voiceprint.md already pointed here.
 - **0.1.11** — apply command **enabled** (#29, WF5 F4 enablement half). The v0.1.8 dry-run write-fence
   is removed; the mutating path is reached via an explicit `apply` CLI subcommand
   (`assemble.py apply --path … --edits …`) — `run` stays dry-run-only (the safe default preview), so a

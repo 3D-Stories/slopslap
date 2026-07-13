@@ -107,8 +107,8 @@ a{color:var(--lagoon)}
   </header>
 
   <!-- PROGRESS: update width% + caption on each merge -->
-  <div class="bar"><i style="width:79%"></i></div>
-  <p class="barcap">11 / 14 children merged · Tier 0+1+2 done + #23 #21 #29 (… #21 #29 ✅) · next Tier 3 #24 · version 0.1.11</p>
+  <div class="bar"><i style="width:86%"></i></div>
+  <p class="barcap">12 / 14 children merged · Tier 0+1+2+3 COMPLETE (… #29 #24 ✅) · next Tier 4 #28 #25 · version 0.1.12</p>
 
   <div class="legend">
     <span class="chip merged"><span class="dot" style="background:var(--lagoon)"></span>merged + closed</span>
@@ -273,13 +273,17 @@ T4  #28 e2e golden (dep #27 #23 #17–#20 #30) · #25 calibration (dep #30)</div
       </ul>
       <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/48">#48</a> · v0.1.11 · gate 434→440 (+6, 0 reg)</div>
     </div>
-    <div class="card queued" id="c24">
+    <div class="card merged" id="c24">
       <div class="id">T3 · #24</div>
       <h3>Manual voice sample</h3>
       <div class="dep">no deps</div>
-      <span class="st">queued</span>
-      <ul><li class="pending">One-shot manual voice sample, no learning</li></ul>
-      <div class="kv">PR — · version — · gate —</div>
+      <span class="st">merged + closed</span>
+      <ul>
+        <li>extract_voice_features: measure-only diction signals (contraction/len/punctuation/person-lean)</li>
+        <li>one-shot inline bias among ALREADY-SAFE phrasings; no persistence/learning/hook</li>
+        <li>authority-order fixed (voiceprint 2nd-from-last); never authorizes/widens an edit</li>
+      </ul>
+      <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/49">#49</a> · v0.1.12 · gate 440→448 (+8, 0 reg)</div>
     </div>
   </div>
 
