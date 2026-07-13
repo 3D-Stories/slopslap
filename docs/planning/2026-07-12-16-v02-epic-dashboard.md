@@ -10,7 +10,7 @@ source of truth; the hosted Artifact is a copy).
 
 ## Progress
 
-**11 / 14 children merged** · Tier 0+1+2 done, Tier 3 (#23,#21,#29) · next: Tier 3 — #24 (lite), then Tier 4
+**12 / 14 children merged** · Tier 0+1+2+3 COMPLETE · next: Tier 4 — #28, #25 (#25 sets 0.2.0)
 
 | Tier | Child | Title | Depth | Deps | Status | PR | Version | Gate delta |
 |---|---|---|---|---|---|---|---|---|
@@ -25,7 +25,7 @@ source of truth; the hosted Artifact is a copy).
 | 3 | #23 | suggest → deterministic verifier wiring | full WF2 | — | ✅ merged | #44 | 0.1.9 | 415→423 (+8), 0 reg |
 | 3 | #21 | apply write-strategy hardening | full WF2 | — | ✅ merged | #45 | 0.1.10 | 423→434 (+11), 0 reg |
 | 3 | #29 | apply-command enablement | lite | #21, #27 | ✅ merged | #48 | 0.1.11 | 434→440 (+6), 0 reg |
-| 3 | #24 | manual voice sample (one-shot) | lite | — | queued | — | — | — |
+| 3 | #24 | manual voice sample (one-shot) | lite | — | ✅ merged | #49 | 0.1.12 | 440→448 (+8), 0 reg |
 | 4 | #28 | live e2e validation golden (safety verdicts) | lite | #27, #23, #17–#20, #30 | queued | — | — | — |
 | 4 | #25 | scanner threshold calibration (held-out split) | lite | #30 | queued | — | — | — |
 
