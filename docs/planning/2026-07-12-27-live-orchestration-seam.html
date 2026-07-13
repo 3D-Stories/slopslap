@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>slopslap #27 — Live-Orchestration Seam</title>
+<style>
+:root{--bg:#f6f7f8;--surface:#fff;--ink:#1a2126;--ink-2:#4b5a63;--ink-3:#7b8a92;
+--line:#dde3e6;--accent:#0f766e;--code:#eef1f3}
+@media(prefers-color-scheme:dark){:root{--bg:#12181c;--surface:#1a2228;--ink:#e7edf0;
+--ink-2:#a8b6bd;--ink-3:#71808a;--line:#2a353c;--accent:#2dd4bf;--code:#232d34}}
+:root[data-theme=dark]{--bg:#12181c;--surface:#1a2228;--ink:#e7edf0;--ink-2:#a8b6bd;
+--ink-3:#71808a;--line:#2a353c;--accent:#2dd4bf;--code:#232d34}
+:root[data-theme=light]{--bg:#f6f7f8;--surface:#fff;--ink:#1a2126;--ink-2:#4b5a63;
+--ink-3:#7b8a92;--line:#dde3e6;--accent:#0f766e;--code:#eef1f3}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+font:15px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px 72px}
+header{padding:40px 0 18px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.eyebrow{color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+h1{font-size:clamp(22px,4vw,30px);margin:.3em 0;font-weight:750;letter-spacing:-.02em}
+h2{font-size:19px;font-weight:700;margin:1.4em 0 .4em}
+h3{font-size:16px;font-weight:650;margin:1.2em 0 .3em}
+p,li{color:var(--ink-2)}
+code{background:var(--code);border-radius:4px;padding:1px 5px;font:12.5px/1.4 ui-monospace,Menlo,Consolas,monospace}
+pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto}
+pre code{background:none;padding:0}
+blockquote{border-left:3px solid var(--accent);margin:.6em 0;padding:.2em 0 .2em 14px;color:var(--ink-3)}
+table{border-collapse:collapse;width:100%;margin:.6em 0;font-size:13.5px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.telemetry th{white-space:nowrap;color:var(--ink-3);width:1%}
+.telemetry-section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 18px 14px;margin-top:24px}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div class="eyebrow">rawgentic design artifact · updated 2026-07-12 20:22 MDT</div>
+<h1>slopslap #27 — Live-Orchestration Seam</h1>
+
+</header>
+<main>
+<h1>Design — #27 live-orchestration seam (the assembler)</h1>
+<ul>
+<li>Date: 2026-07-12</li>
+<li>Issue: [#27](https://github.com/3D-Stories/slopslap/issues/27) · Epic [#16](https://github.com/3D-Stories/slopslap/issues/16) Tier 2</li>
+<li>Complexity: complex_feature (Full WF2)</li>
+<li>Depends on: #26 (platform-feasibility ✓), #17–#20 ✓. Blocks: #28, #29.</li>
+</ul>
+<h2>1. Goal</h2>
+<p>v0.1 shipped deterministic prose-repair mechanics + a FROZEN eval demonstration (seeded candidate edits). The live, model-in-the-loop path — run audit/verify/apply on an <strong>arbitrary</strong> document — is not assembled. <code>#17–#24</code> are components with no assembler (WF5 finding F1). This issue builds the missing seam: one module that chains <strong>audit → verify → (suggest) → apply</strong> end-to-end for any doc, with defined command entry points, stage ordering, explicit stage-boundary data contracts, legible error propagation, and an <strong>end-to-end dry-run acceptance test</strong>.</p>
+<h2>2. Scope boundaries (kept deliberately tight)</h2>
+<table>
+<thead><tr><th>In scope for #27</th><th>Deferred to</th></tr></thead>
+<tbody>
+<tr><td>New seam package that derives a ledger manifest from an arbitrary doc, verifies a candidate edit-script, and (dry-run) applies</td><td>—</td></tr>
+<tr><td>Stage-boundary data contract (single <code>AuditResult</code> aggregate) + a uniform stage-result envelope</td><td>—</td></tr>
+<tr><td>End-to-end <strong>dry-run</strong> golden (<code>write=False</code>): ACCEPT-flows-clean + REJECT-blocks-mutation, offline stub</td><td>—</td></tr>
+<tr><td>Live semantic-fn factory mirroring <code>eval/semantic.py</code> (<code>SLOPSLAP_LIVE</code> gate)</td><td>—</td></tr>
+<tr><td>Command entry-point CONTRACT documented (what a command shells out to)</td><td>apply flip → #29</td></tr>
+<tr><td>The live model *generating* the edit-script; suggest→verifier deterministic tests</td><td>#23</td></tr>
+<tr><td>Flipping <code>commands/apply.md</code>&#x27;s <code>mutation_unavailable</code> sentinel</td><td>#29 (dep #21+#27)</td></tr>
+<tr><td>Live SAFETY golden (assert reject/blocked with a real model)</td><td>#28</td></tr>
+<tr><td><code>cross_refs</code>/<code>defined_terms</code> whitelist lag (#36) in <code>atoms.CHECK_EXTRACTORS</code> + <code>eval/loader.validate_manifest</code></td><td>#28 (see §7)</td></tr>
+</tbody>
+</table>
+<p><strong>Why the split holds:</strong> #27 is *plumbing + proof-of-safety-without-a-model*. It must not gold-plate into live generation (#23/command-prose) or command enablement (#29). The dry-run golden proves the seam is correct and safe using the offline clean stub; #28 later proves it under a real model.</p>
+<h2>3. Approaches considered</h2>
+<p><strong>A. New <code>scripts/slopslap_assemble/</code> package (RECOMMENDED).</strong> A sibling to <code>slopslap_verification</code>, <code>slopslap_invoke</code>, <code>slopslap_apply</code>, following the established package-per-subsystem convention. Imports the lower-level modules; owns the arbitrary-doc manifest builder, the <code>AuditResult</code> aggregate, the stage-result envelope, the top-level <code>run_seam</code>, the live-semantic-fn factory, and a thin CLI. Pros: matches existing structure; keeps eval harness untouched (it stays a frozen proof, not repurposed); clean import graph. Cons: one more package (acceptable — it is the assembler the epic explicitly wants).</p>
+<p><strong>B. Extend <code>eval/runner.py</code>.</strong> Rejected. The eval runner is fixture-shaped (<code>fixture</code>/<code>baseline</code> fields, frozen seeded candidates, <code>RunResult</code>/<code>State</code> enum) and documented as a *proof harness, not the production seam*. Repurposing it would couple arbitrary-doc orchestration to fixture semantics and risk regressing the v0.1 proof.</p>
+<p><strong>C. Put the seam in <code>slopslap_verification</code>.</strong> Rejected. Verification is one stage; the assembler spans scan→verify→apply and would invert the dependency direction (verification would import apply).</p>
+<p>Recommendation: <strong>A</strong> — new <code>scripts/slopslap_assemble/</code> package.</p>
+<h2>4. Data contracts (the core of #27)</h2>
+<blockquote>Peer-consult (GPT Soul via Codex, <code>docs/reviews/peer-rawgentic-peer-problem-27-2026-07-12.md</code>)</blockquote>
+<blockquote>contributed: the explicit <code>authorization</code> state encoding (§4.1), the <code>ok|blocked|failed|aborted</code></blockquote>
+<blockquote>stage vocabulary (§4.3), the source-digest boundary re-check (§4.2), and the CLI-hygiene rules</blockquote>
+<blockquote>(§4.4). Folded in below with these attributions.</blockquote>
+<h3>4.1 <code>AuditResult</code> — the single audit-stage aggregate</h3>
+<p>Produced by <code>audit_document(doc)</code>, consumed by verify/apply. Fields:</p>
+<pre><code>AuditResult(
+  schema_version: int = 1,
+  run_id: str,                             # deterministic: short hash of source_sha256 (golden-stable, no uuid/clock)
+  source_path: str,                        # RESOLVED absolute path of the audited file (adv A6: policy binds to file identity, not just content)
+  source_sha256: str,                      # sha256(doc) — provenance/anti-drift snapshot identity
+  byte_length: int,
+  fmt: str,                                # &quot;markdown&quot;|&quot;text&quot;
+  genre: str,                              # classify_genre resolved genre
+  genre_confidence: str,                   # &quot;high&quot;|&quot;medium&quot;|&quot;low&quot;
+  genre_reason: str,
+  audit_status: str,                       # &quot;clean&quot;|&quot;flagged&quot; (adv A1) — flagged iff ANY metric emitted a location OR any doc-level soft_flag is true
+  metrics: dict,                           # compute_all result (measure-only; consumer: audit_status derivation + CLI surfacing)
+  authorization: dict,                     # {&quot;state&quot;: &quot;authorized&quot;|&quot;reject_all&quot;|&quot;locality_unverified&quot;, &quot;ranges&quot;: [{start_byte,end_byte}]}  (peer contribution — see below)
+  protected_spans: list[dict],             # [{start_byte,end_byte,sha256,kind}] (#18)
+  invariant_regions: list[dict],           # [{start_byte,end_byte,checks[]}] (#19 autoledger)
+  ledger: Ledger,                          # build_ledger(doc, manifest) — the in-process verify contract object
+)</code></pre>
+<p><strong><code>audit_status</code> (adversarial finding A1 — cleanliness must survive the <code>reject_all</code> conflation).</strong> <code>authorization.state == &quot;reject_all&quot;</code> deliberately covers BOTH a genuinely clean doc AND a doc-level-only-flagged doc (the <code>[]</code> overload inherited from <code>diagnoses</code>). <code>audit_status</code> preserves the distinction the authorization state erases: <code>clean</code> = no metric emitted any location and no doc-level <code>soft_flag</code>; <code>flagged</code> otherwise. The empty-candidate policy (§10 case 8) keys on <code>audit_status</code>, never on <code>authorization.state</code> — a missing model output on a flagged doc is always visible (<code>blocked</code>/<code>candidate_empty</code>), even when the authorization is reject-all.</p>
+<p><strong>Pipeline-run note (self-review F4 resolution).</strong> The seam runs the scan pipeline twice: once via <code>compute_all</code> (consumers: <code>audit_status</code>, <code>metrics</code>) and once inside <code>authorized_ranges_from_diagnoses</code> (owns range derivation). Genre is resolved ONCE and threaded to both. Accepted cost — target docs are prose-sized; upgrade path = expose a combined ranges+metrics API in <code>diagnoses.py</code> if profiling ever cares.</p>
+<p><strong>Authorization state (peer contribution — resolves the <code>[]</code>/<code>None</code> overload).</strong> The analysis flagged that <code>diagnoses.authorized_ranges_from_diagnoses</code> overloads <code>[]</code> (clean OR doc-level-only-flagged → reject-all) and that a *separate, external* <code>None</code> means locality_unverified/ASK. The seam encodes this explicitly instead of leaking the ambiguity downstream:</p>
+<ul>
+<li>ranges non-empty → <code>state=&quot;authorized&quot;</code>, pass <code>ranges</code> to <code>verify(authorized_ranges=...)</code>.</li>
+<li>ranges <code>== []</code> → <code>state=&quot;reject_all&quot;</code>, pass <code>[]</code> (verify&#x27;s <code>edit_locality</code> rejects any edit against an empty editable set).</li>
+<li>deriver unavailable / undecidable → <code>state=&quot;locality_unverified&quot;</code>, pass <code>None</code> (verify fails CLOSED to ASK). #27&#x27;s audit path always derives (a parser-unavailable failure surfaces as <code>diagnosis_error</code>, not this state), so <code>locality_unverified</code> is reachable only at the <code>run_candidate</code> API boundary (a caller handing in an <code>AuditResult</code> with that state); the golden exercises it via that API path. No CLI flag emits it (round-2 L3: the earlier &quot;CLI opt-out&quot; claim was dropped — the flag was never built and isn&#x27;t needed for #27).</li>
+</ul>
+<p><code>build_manifest(doc)</code> is the <strong>missing glue</strong>: <code>{invariant_regions: build_invariant_regions(doc), protected_spans: extract_protected_spans(doc)}</code>, then <code>build_ledger(doc, manifest)</code>. No defensive empty-region filter is needed — confirmed at source: <code>autoledger.build_invariant_regions</code> never emits a region with empty <code>checks</code> (<code>if not checks: continue</code>, autoledger.py:110-111), and <code>build_ledger</code> only raises <code>LedgerBuildError</code> on an empty/OOB/unknown check (ledger.py:183-187). A doc with no invariant regions and no protected spans yields an <strong>empty-but-valid</strong> ledger (<code>entries=[]</code>, <code>protected_spans=[]</code>) — not an error — which <code>verify</code> treats as &quot;no invariants to violate&quot;.</p>
+<p>The candidate edit-script is an <strong>explicit input to verify/run, never part of <code>AuditResult</code></strong> (peer key-decision): the audit is snapshot-immutable; edits arrive separately from suggest/model/dry-run seed.</p>
+<h3>4.2 Stage ordering + what flows between stages</h3>
+<pre><code>                 doc: bytes  (+ declared_genre?, path?, fmt=&quot;markdown&quot;)
+                     │
+   ┌─────────────────▼──────────────────┐
+   │ AUDIT                               │
+   │  classify_genre(doc, declared, path)│──► genre
+   │  authorized_ranges_from_diagnoses(  │──► authorized_ranges   (genre threaded in)
+   │      doc, fmt, genre)               │
+   │  extract_protected_spans(doc)       │──► protected_spans
+   │  build_invariant_regions(doc)       │──► invariant_regions
+   │  build_manifest → build_ledger      │──► ledger
+   └─────────────────┬──────────────────┘
+                     │ AuditResult
+   ┌─────────────────▼──────────────────┐   edits: list[Edit]  (from suggest/model, or seeded in dry-run)
+   │ VERIFY                              │◄── candidate edit-script
+   │  ledger.verify(doc, edits, ledger,  │──► verify_result {decision, proposal_status,
+   │    authorized_ranges, semantic_fn)  │       semantic_status, findings, hunks, ledger_sha256}
+   └─────────────────┬──────────────────┘
+                     │ verify_result
+   ┌─────────────────▼──────────────────┐
+   │ APPLY (dry-run in #27)              │
+   │  apply_selective(path, edits,       │──► apply report {status, mutated, backup, ...}
+   │    verify_fn=&lt;bound verify&gt;, write) │       write=False ⇒ mutated=False, file untouched
+   └─────────────────────────────────────┘</code></pre>
+<p><code>verify_fn</code> passed to <code>apply_selective</code> is <code>ledger.verify</code> <strong>bound</strong> with this run&#x27;s ledger + authorized_ranges + semantic_fn (a closure <code>lambda original, edits: verify(original, edits, ledger, authorized_ranges=..., semantic_fn=...)</code>), so apply re-verifies against the live original each attempt (apply&#x27;s re-verify loop rebuilds from untouched original — the closure must not capture a stale revision). The SAME bound verifier serves both the seam&#x27;s verify stage and apply&#x27;s re-verify loop — one audit, one policy (peer risk: divergent verification).</p>
+<p><strong>Source-identity boundary re-check (peer + adversarial A6 — TOCTOU and identity guard).</strong> All byte offsets, spans, and ledger evidence belong to the audited snapshot <strong>of a specific file</strong>. <code>run_candidate</code> binds both: (1) the resolved target path must equal <code>AuditResult.source_path</code> (an <code>AuditResult</code> cannot be replayed against a different file that happens to hold identical bytes — adv A6), and (2) the file&#x27;s current sha256 must equal <code>source_sha256</code>. Either mismatch → verify/apply stage <code>failed</code> / <code>code=&quot;digest_mismatch&quot;</code> (path mismatch: <code>code=&quot;path_mismatch&quot;</code>), downstream aborted. (<code>apply_selective</code> additionally re-checks path/dev/inode + content sha at replace time — the seam check catches drift *earlier*, before backup creation.)</p>
+<h3>4.3 Stage-result envelope (error propagation) — peer status vocabulary folded in</h3>
+<p>Every stage returns a uniform envelope so a failure is legible and never silent. Status vocabulary adopts the peer&#x27;s four states (richer than a bare ok/error — a <strong>policy</strong> block reads differently from an <strong>execution</strong> failure):</p>
+<pre><code>StageResult(stage: str,                    # &quot;audit&quot;|&quot;candidate&quot;|&quot;verify&quot;|&quot;apply&quot;
+            status: str,                    # &quot;ok&quot; | &quot;blocked&quot; | &quot;failed&quot; | &quot;aborted&quot;
+            code: str,                      # stable slug: &quot;ok&quot;,&quot;genre_error&quot;,&quot;diagnosis_error&quot;,&quot;protected_span_error&quot;,
+                                            #   &quot;ledger_build_error&quot;,&quot;invalid_edits&quot;,&quot;candidate_empty&quot;,&quot;verify_not_shippable&quot;,
+                                            #   &quot;apply_blocked&quot;,&quot;digest_mismatch&quot;,&quot;upstream_not_ok&quot;
+            message: str,
+            data: &lt;AuditResult|edits|verify_result|apply report|None&gt;,
+            errors: list[dict], warnings: list[str])
+
+RunResult(schema_version: int, run_id: str, status: str,   # overall = worst stage status
+          stages: list[StageResult], audit, verification, apply)   # summaries; apply/verification None when not reached</code></pre>
+<ul>
+<li><code>ok</code> — stage succeeded.</li>
+<li><code>blocked</code> — a <strong>policy</strong> stop, not a crash: verify returned non-shippable (<code>decision != ACCEPT</code>, or</li>
+</ul>
+<p>  <code>proposal_status != ACCEPT</code>, or <code>semantic_status != clean</code>), or the candidate was empty on a   non-clean audit. The full verify_result is preserved in <code>data</code> — non-ACCEPT is never collapsed to a   generic error (peer risk). Apply is then <code>aborted</code>.</p>
+<ul>
+<li><code>failed</code> — an execution error (bad bytes, parser missing, malformed edits, digest mismatch).</li>
+<li><code>aborted</code> — a downstream stage that did not run because an upstream stage was not <code>ok</code>; carries</li>
+</ul>
+<p>  <code>code=&quot;upstream_not_ok&quot;</code> + the causal stage (peer key-decision: emit explicit aborted results,   never a silent partial run).</p>
+<p><code>run_candidate</code>/<code>assemble</code> return one <code>RunResult</code>. Any exception inside a stage is caught and converted to a <code>failed</code> envelope naming <code>code</code> — a stage never raises past the seam, and every stage after the first non-<code>ok</code> is explicitly <code>aborted</code>. <strong>No timestamps/durations in the envelope</strong> — the peer flagged them as golden-brittleness; #27 omits them (add an injectable clock later if a perf need arises). <code>run_id</code> is a deterministic short hash of <code>source_sha256</code>, so goldens are stable.</p>
+<p><strong>Overall status + exit-code mapping (adv A3 + self F2 — was undefined).</strong> Overall <code>RunResult.status</code> = the worst stage status under the total order <strong><code>failed</code> &gt; <code>blocked</code> &gt; <code>aborted</code> &gt; <code>ok</code></strong> (an <code>aborted</code> can never be worst in practice — it only exists downstream of a <code>failed</code>/<code>blocked</code>, which outranks it). CLI exit code derives mechanically from (overall status, first non-ok code):</p>
+<table>
+<thead><tr><th>Overall status</th><th>First non-ok <code>code</code> class</th><th>Exit</th></tr></thead>
+<tbody>
+<tr><td>ok</td><td>—</td><td>0</td></tr>
+<tr><td>blocked</td><td>any policy code (<code>verify_not_shippable</code>, <code>candidate_empty</code>, <code>apply_blocked</code>)</td><td>2</td></tr>
+<tr><td>failed</td><td>contract/input codes: <code>invalid_edits</code>, <code>path_mismatch</code>, <code>digest_mismatch</code>, bad CLI args, unreadable/non-UTF-8 input (<code>genre_error</code>)</td><td>3</td></tr>
+<tr><td>failed</td><td>execution codes: <code>protected_span_error</code>, <code>diagnosis_error</code>, <code>ledger_build_error</code>, <code>semantic_invocation_failed</code>, <code>apply</code> report <code>status==&quot;error&quot;</code></td><td>4</td></tr>
+</tbody>
+</table>
+<p><strong>Bad-bytes ownership (round-2 fix):</strong> <code>classify_genre</code> runs FIRST in the audit stage and raises <code>GenreError</code> on non-UTF-8 (genre.py:137-138), so ALL bad-bytes failures surface as <code>genre_error</code> (exit 3) before <code>diagnoses</code>/<code>protected</code> ever run. <code>diagnosis_error</code> is therefore parser-unavailable-only → exit 4, and each <code>code</code> slug is statically assigned to exactly ONE class in the implementation (a <code>_EXIT_CLASS</code> dict) — no runtime judgment, no message sniffing. <code>upstream_not_ok</code> tags only <code>aborted</code> stages and is never exit-determining — it deliberately has no <code>_EXIT_CLASS</code> row. <strong>Vocabulary rule (adv A4):</strong> the words used by stage envelopes are exactly <code>ok|blocked|failed|aborted</code>; the string <code>&quot;error&quot;</code> appears only INSIDE relayed sub-reports (e.g. <code>apply_selective</code>&#x27;s <code>report[&quot;status&quot;]</code>), and a relayed <code>status==&quot;error&quot;</code> report makes the apply stage <code>failed</code> (exit 4), while a relayed <code>status==&quot;blocked&quot;</code> report makes it <code>blocked</code> (exit 2). Malformed edit-scripts are ALWAYS a <code>candidate</code>-stage <code>failed</code> (adv A5) — verify never sees them (<code>parse_edits</code> + bounds/overlap validation run in the candidate stage).</p>
+<h3>4.4 CLI hygiene (peer contribution)</h3>
+<p><code>main(argv)</code> exposes <code>audit</code> and <code>run</code> subcommands, each emitting exactly one JSON <code>RunResult</code> to stdout, diagnostics to stderr, with stable exit codes: <strong>0</strong> ok · <strong>2</strong> policy-blocked · <strong>3</strong> invalid input/contract · <strong>4</strong> stage execution failure. <strong>Source bytes are never embedded in the JSON</strong> (content-leak + oversized envelope): expose <code>source_sha256</code>, <code>byte_length</code>, structured evidence, and the ledger as <code>{&quot;canonical&quot;: ledger.canonical_obj(), &quot;sha256&quot;: ledger.ledger_sha256()}</code> — never a raw Python-pickled <code>Ledger</code>. The in-process API passes the live <code>Ledger</code> object directly (no serialization).</p>
+<h2>5. File changes</h2>
+<ul>
+<li><strong>NEW</strong> <code>scripts/slopslap_assemble/__init__.py</code> — package marker + <code>sys.path</code> bootstrap (mirrors siblings).</li>
+<li><strong>NEW</strong> <code>scripts/slopslap_assemble/assemble.py</code> — <code>AuditResult</code>, <code>StageResult</code>, <code>RunResult</code>,</li>
+</ul>
+<p>  <code>build_manifest</code>, <code>audit_document</code>, <code>run_candidate</code>, <code>assemble</code> (audit+run in one call),   <code>live_semantic_fn</code>, <code>main(argv)</code> CLI (<code>audit</code> / <code>run</code> subcommands). One module (ponytail: split   into contracts.py/cli.py only if it outgrows ~500 lines — the peer&#x27;s 3-file layout is deferred,   not adopted, to keep the diff minimal).</p>
+<ul>
+<li><strong>NEW</strong> <code>tests/test_assemble_seam.py</code> — the end-to-end dry-run golden + unit tests.</li>
+<li><strong>EDIT</strong> <code>scripts/slopslap_invoke/invoke.py</code> — additive optional <code>status_sink</code> out-param on</li>
+</ul>
+<p>  <code>invoke_semantic</code> (adv A2, §7). Default-inert; return contract unchanged.</p>
+<ul>
+<li><strong>Audit metrics source:</strong> the seam calls the library APIs directly (<code>extract_markdown</code>/</li>
+</ul>
+<p>  <code>extract_text</code> + <code>compute_all(genre=...)</code>) — NOT <code>scan_prose.py:main()</code> in-process (peer risk:   couples orchestration to CLI behavior). <code>authorized_ranges_from_diagnoses</code> re-runs the same   pipeline internally (accepted double-run, §4.1); genre is resolved ONCE and threaded to both call   sites (peer risk: suppression/authorization disagreement).</p>
+<ul>
+<li><strong><code>live_semantic_fn</code> vs <code>eval_semantic_fn</code> (self-review F3):</strong> deliberately NOT a reuse of</li>
+</ul>
+<p>  <code>scripts/eval/semantic.py:eval_semantic_fn</code> — the seam factory must inject the <code>status_sink</code>   (A2) and must not import from the eval proof-harness package into production. One-line-justified   duplication of a ~6-line gate pattern.</p>
+<ul>
+<li><strong>EDIT</strong> <code>README.md</code> — Assembler section + Changelog entry.</li>
+<li><strong>EDIT</strong> <code>.claude-plugin/plugin.json</code> — version bump (patch).</li>
+<li><strong>EDIT</strong> <code>tests/test_scaffold.py:69</code> — pinned version assert bump.</li>
+<li><strong>EDIT</strong> dashboard <code>docs/planning/2026-07-12-16-v02-epic-dashboard.{md,html}</code> — #27 row.</li>
+<li>Command <code>.md</code> files: <strong>documented contract only</strong> in this PR (audit/suggest stay prose; apply stays</li>
+</ul>
+<p>  disabled — flip is #29). No behavioral edit to <code>commands/apply.md</code>&#x27;s sentinel here.</p>
+<h2>6. Error handling &amp; failure modes</h2>
+<p>(Vocabulary per §4.3 — <code>ok|blocked|failed|aborted</code>; &quot;error&quot; appears only inside relayed sub-reports.)</p>
+<ul>
+<li><strong>Non-UTF-8 doc</strong> → <code>audit</code> stage <code>failed</code> / <code>code=&quot;genre_error&quot;</code> or <code>&quot;diagnosis_error&quot;</code> (both raise on bad bytes); downstream stages <code>aborted</code>. Exit 3 (invalid input).</li>
+<li><strong>Pinned markdown parser unavailable</strong> → <code>DiagnosisError</code>/<code>ProtectedSpanError</code> → audit <code>failed</code> (never a silent degraded scan). Exit 4 (execution).</li>
+<li><strong>Malformed edit-script (out of bounds / overlapping / bad base64)</strong> → <code>candidate</code> stage <code>failed</code> / <code>code=&quot;invalid_edits&quot;</code> — BEFORE verify runs (adv A5). Exit 3.</li>
+<li><strong>Empty authorized_ranges with edits present</strong> (<code>reject_all</code>) → <code>ledger.verify</code> rejects via locality; verify <code>blocked</code> — full verify_result preserved. Exit 2.</li>
+<li><strong><code>locality_unverified</code></strong> (ranges <code>None</code>) → verify fails CLOSED to ASK → <code>blocked</code>. Exit 2.</li>
+<li><strong>Semantic model verdict ambiguous/real</strong> (successfully obtained) → policy: verify <code>blocked</code>. Exit 2.</li>
+<li><strong>Semantic INVOCATION failure</strong> (subprocess/timeout/CLI-missing/parse — detected via the</li>
+</ul>
+<p>  <code>status_sink</code>, §7) → verify stage <code>failed</code> / <code>code=&quot;semantic_invocation_failed&quot;</code> (adv A2: an ops   failure is not a policy verdict). Exit 4. Verify&#x27;s internal fail-closed-to-ambiguous still holds   underneath as defense-in-depth — the sink only reclassifies the stage, never weakens the verdict.</p>
+<ul>
+<li><strong>Path or digest mismatch at the run boundary</strong> → <code>failed</code> / <code>code=&quot;path_mismatch&quot;</code>/<code>&quot;digest_mismatch&quot;</code>; apply <code>aborted</code>. Exit 3.</li>
+<li><strong>Apply concurrent-edit / backup failure</strong> → <code>apply_selective</code> fails closed; the relayed report&#x27;s</li>
+</ul>
+<p>  <code>status==&quot;error&quot;</code> → apply stage <code>failed</code> (exit 4); <code>status==&quot;blocked&quot;</code> → <code>blocked</code> (exit 2). <code>mutated=False</code> either way.</p>
+<ul>
+<li><strong>dry_run (<code>write=False</code>)</strong> → <code>apply_candidate</code> calls <code>apply_selective(..., write=False)</code>: verify</li>
+</ul>
+<p>  still runs, <strong>a verified backup IS created first</strong> (<code>create_verified_backup</code> runs before the   <code>write</code> short-circuit — apply.py:138-147 vs 215-218; self-review F1), the report says   <code>mutated=False</code>, and the SOURCE file on disk is byte-identical. The dry-run safety guarantee is   &quot;source unmutated&quot;, NOT &quot;no artifacts&quot;: the golden points <code>BackupConfig.backup_dir</code> at a   test-owned tmp dir and asserts the backup exists there + source untouched.</p>
+<h2>7. Platform / external dependencies</h2>
+<p>platform_apis:</p>
+<ul>
+<li>api: fresh-context <code>claude -p</code> subprocess invocation via slopslap_invoke.invoke.invoke_semantic on the local shell/runtime</li>
+</ul>
+<p>  feasibility: verified via existing-call-site — scripts/slopslap_invoke/invoke.py:264 (invoke_semantic, proven by the #26 platform-feasibility spike, PR #32) and scripts/eval/semantic.py:20 (eval_semantic_fn SLOPSLAP_LIVE gate, wired by #17, PR #34; exercised end-to-end in the run_eval kukakuka path). The seam&#x27;s live_semantic_fn factory reuses this exact call site — no new platform surface.   failure: fail-loud   surface: verify_result.semantic_status + proposal_status (BLOCKED unless semantic_status==&quot;clean&quot;) — asserted in the golden&#x27;s ACCEPT case. invoke_semantic is fail-closed: any subprocess/timeout/parse failure collapses to verdict=&quot;ambiguous&quot;, which the decision rule folds to SURFACE/ASK, never a silent ACCEPT; the dry-run/offline path invokes NO platform API (explicitly injected clean stub).</p>
+<p>The offline seam path (dry-run golden, default) uses no platform API. The live path is precedented exactly by #26/#17 — no unproven dependency.</p>
+<p><strong>Typed invocation outcome (adv A2 — ops failure ≠ policy verdict).</strong> <code>invoke_semantic</code> is a CLOSED contract: returns EXACTLY <code>{&quot;verdict&quot;,&quot;concerns&quot;}</code>, <code>InvocationResult</code> never leaks, failures are only logged (invoke.py:1-13, 310-315). The seam must still distinguish &quot;the model judged this ambiguous&quot; (policy → <code>blocked</code>, exit 2) from &quot;the invocation never succeeded&quot; (ops → <code>failed</code>, exit 4). Fix: an <strong>additive optional out-param</strong> on <code>invoke_semantic</code> — <code>status_sink: Optional[dict] = None</code>. When passed, invoke_semantic records <code>{&quot;invocation_status&quot;: &lt;ok|timeout|cli_missing|nonzero_exit|parse_error|model_mismatch|invalid_request&gt;}</code> into it before returning; the RETURN shape is unchanged and <code>None</code> (default) keeps today&#x27;s behavior byte-identical — the closed <code>{&quot;verdict&quot;,&quot;concerns&quot;}</code> doctrine holds. The seam&#x27;s <code>live_semantic_fn</code> passes a per-run sink; after <code>verify</code> returns, a sink status ≠ <code>ok</code> reclassifies the verify stage to <code>failed</code>/<code>code=&quot;semantic_invocation_failed&quot;</code> while the verdict inside verify stays fail-closed ambiguous (defense-in-depth, unchanged). The offline stub never touches the sink (<code>ok</code> by construction). This is the one modification to an existing module (<code>scripts/slopslap_invoke/invoke.py</code>) — additive, default-inert, covered by unit tests (sink populated on injected timeout/missing-CLI; absent sink identical to today).</p>
+<p><strong>Sink completeness invariant (round-2 fix):</strong> the sink is set to a non-<code>ok</code> value on <strong>every</strong> non-clean return path of <code>invoke_semantic</code>, not just the enumerated <code>InvocationResult</code> statuses — including the three internal-contract ambiguous returns: non-UTF-8 revision (invoke.py:289 → <code>invalid_request</code>), malformed original/ledger at request build (invoke.py:307 → <code>invalid_request</code>), and malformed ledger at response parse (invoke.py:318 → <code>parse_error</code>). A successfully-obtained model verdict (real/ambiguous/clean) records <code>ok</code> — only those are policy. Unit tests cover the internal-contract paths too (malformed-ledger input → sink non-<code>ok</code> → seam exit 4).</p>
+<p><strong>Sink stickiness (round-2 adversarial):</strong> <code>verify</code> calls <code>semantic_fn</code> exactly once per invocation (single call site, ledger.py:334-336) — but <code>apply_selective</code>&#x27;s bounded re-verify loop invokes the bound verifier repeatedly, so the semantic_fn may run multiple times per RUN. The sink is therefore <strong>sticky-worst</strong>: a non-<code>ok</code> status, once recorded, is never overwritten by a later <code>ok</code> (a later successful call must not launder an earlier timeout). Unit test: two sequential calls, first failing, second ok → sink stays non-<code>ok</code>.</p>
+<h2>8. Security implications</h2>
+<ul>
+<li>Apply mutates a user file: the seam always routes apply through <code>apply_selective</code> (backup-first,</li>
+</ul>
+<p>  atomic, concurrent-edit guard) — never a raw write. #27&#x27;s golden runs <code>write=False</code>, so no   mutation occurs in tests.</p>
+<ul>
+<li>The seam passes UNTRUSTED doc bytes to <code>classify_genre</code>/scan/autoledger — all pure Python over</li>
+</ul>
+<p>  bytes, no <code>eval</code>, no subprocess-with-doc-content except the isolated fresh-context <code>claude -p</code>   (scrubbed env, empty tools/MCP, own process group — proven by #26).</p>
+<ul>
+<li>No secrets, no network beyond the model invocation the platform already sanctions.</li>
+</ul>
+<h2>9. #36 deferral (documented decision D-27a)</h2>
+<p><code>autoledger._checks_for</code> emits <code>cross_refs</code>/<code>defined_terms</code> (autoledger.py:68,70); these are present in <code>ledger._CHECK_KIND</code> (ledger.py:163-164) but MISSING from <code>atoms.CHECK_EXTRACTORS</code> (atoms.py:161-167, 5 entries) and <code>eval/loader.py:validate_manifest</code> (loader.py:147, 5-entry inline set). The #27 seam routes through <code>ledger.verify</code>, whose Layer-2 <code>_L2_EXTRACT</code> is <strong>kind-keyed</strong> (has <code>cross_reference</code> + <code>defined_term</code>) and handles both correctly. The seam does NOT call <code>gates.preservation_region_scoped</code> or <code>loader.validate_manifest</code>. <strong>Therefore #27 does not trip #36.</strong> The gap only bites the eval-fixture pipeline; #28 (live golden) may route autoledger output through those gates, so #36 is folded into #28. The seam&#x27;s <code>build_manifest</code> uses only <code>build_ledger</code>&#x27;s own 7-entry <code>_CHECK_KIND</code> whitelist (which already accepts cross_refs/defined_terms) — verified by a unit test in this PR.</p>
+<h2>10. Testing / acceptance</h2>
+<p>Suite: <code>pytest tests/ -q</code> (D7 local gate; has_ci=false). New <code>tests/test_assemble_seam.py</code> (cases 6–9 peer contributions; cases 3/5/8/11/12 amended per the Step-4 loop-back findings):</p>
+<p>1. <strong><code>build_manifest</code></strong> on an arbitrary doc → manifest with <code>invariant_regions</code> (each with non-empty    <code>checks</code>) + <code>protected_spans</code>; <code>build_ledger</code> accepts it (incl. a doc with cross_refs/defined_terms    checks — proves the seam&#x27;s manifest path is not #36-gapped). 2. <strong><code>audit_document</code></strong> returns a well-formed <code>AuditResult</code> (genre classified, <code>audit_status</code>    correct on a clean and a flagged doc, authorization state encoded, ledger valid via    <code>validate_ledger</code>, <code>run_id</code> deterministic, <code>source_path</code> resolved). 3. <strong>End-to-end dry-run ACCEPT golden (self-review F1 fix):</strong> a doc + a benign in-authorized-range    edit-script (offline clean stub injected explicitly) → <code>assemble(write=False)</code> with    <code>BackupConfig.backup_dir</code> pointed at a test-owned tmp dir → stage order    audit→candidate→verify→apply all <code>ok</code>, verify shippable, apply report <code>mutated=False</code>, expected    <code>final_digest</code>; <strong>the SOURCE file on disk is byte-identical</strong> (the safety assertion) AND <strong>a    verified backup EXISTS in the tmp backup dir</strong> (apply.py creates it before the <code>write=False</code>    short-circuit — asserting reality, not the wish). 4. <strong>End-to-end dry-run REJECT golden ×2:</strong> (a) an edit outside authorized ranges; (b) an edit that    changes a protected span / a number invariant → verify <code>blocked</code> (full verify_result preserved in    <code>data</code>), apply stage <code>aborted</code> with <code>upstream_not_ok</code> and <code>data is None</code> (an aborted stage has NO    apply report — round-2 fix: assert the stage status + absent data, not a <code>mutated</code> field that    doesn&#x27;t exist), <strong>the source file byte-for-byte identical on disk</strong>, and no backup created    (verify blocks before apply is ever invoked — the no-artifact assertion is valid HERE, unlike    case 3). 5. <strong>Stage propagation + exit codes (adv A5 + F2):</strong> non-UTF-8 doc → audit <code>failed</code>, all downstream    stages explicitly <code>aborted</code>, CLI exit 3; malformed edit-script (overlap/out-of-bounds) →    <code>candidate</code> stage <code>failed</code>/<code>invalid_edits</code> BEFORE verify runs (verify absent or aborted), exit 3. 6. <strong><code>locality_unverified</code> policy state</strong> (peer): ranges <code>None</code> reaches verify → ASK → <code>blocked</code>,    exit 2 — the <code>None</code> path is exercised, not just documented. 7. <strong><code>reject_all</code> policy state</strong> (peer): clean doc (<code>ranges == []</code>) + a nonempty candidate → verify    <code>blocked</code> (locality rejects every edit), exit 2. 8. <strong>Empty candidate policy (adv A1 fix — keyed on <code>audit_status</code>, not authorization):</strong>    edits <code>== []</code> on an <code>audit_status==&quot;clean&quot;</code> doc → <code>ok</code> no-op (exit 0); edits <code>== []</code> on an    <code>audit_status==&quot;flagged&quot;</code> doc → <code>blocked</code>/<code>candidate_empty</code> (exit 2) — EVEN when    <code>authorization.state==&quot;reject_all&quot;</code> (doc-level-only-flagged). Missing model output is never a    silent success on a flagged doc. 9. <strong>Digest/path-mismatch guards</strong> (peer + adv A6): file modified between audit and run →    <code>failed</code>/<code>digest_mismatch</code>; same bytes at a DIFFERENT path → <code>failed</code>/<code>path_mismatch</code>; apply    never invoked in either. Exit 3. 10. <strong>Empty doc / no invariants</strong> → empty-but-valid ledger, verify handles it (no <code>LedgerBuildError</code>). 11. <strong>Semantic invocation failure (adv A2):</strong> a <code>semantic_fn</code> whose sink reports     <code>invocation_status != &quot;ok&quot;</code> (injected: simulate timeout/CLI-missing) → verify stage     <code>failed</code>/<code>semantic_invocation_failed</code>, exit 4 — distinct from case 6&#x27;s policy <code>blocked</code>.     Plus <code>status_sink</code> unit tests in <code>tests/test_invoke_contract.py</code>: sink populated on failure,     absent sink → behavior byte-identical to today. 12. <strong>Exit-code table:</strong> unit test over <code>_EXIT_CLASS</code> — every <strong>exit-determining</strong> code slug maps     to exactly one exit class (<code>upstream_not_ok</code> excluded — it tags only <code>aborted</code> stages and never     drives the exit); the CLI returns 0/2/3/4 per the table.</p>
+<p>(Case-3 authoring note, round-2: the ACCEPT edit must actually change bytes — an identical replacement makes <code>apply_selective</code> return <code>status=&quot;no_op&quot;</code> (apply.py:212-213), not <code>&quot;applied&quot;</code>.)</p>
+<p>Red-before-green: tests authored first, confirmed failing (no <code>slopslap_assemble</code> module), then the module makes them pass. Full suite re-run after; delta reported vs the recorded baseline (<strong>369 passed, 1 skipped, exit 0</strong> — the skip is the <code>SLOPSLAP_LIVE</code>-gated live-invocation test; self-review F5 wording fix).</p>
+<h2>11. Review provenance</h2>
+<p><strong>Peer consult:</strong> <code>docs/reviews/peer-rawgentic-peer-problem-27-2026-07-12.md</code> (GPT Soul via Codex). Adopted: authorization-state encoding, <code>ok|blocked|failed|aborted</code> stage vocabulary + explicit <code>aborted</code> downstream results, source-digest boundary re-check, CLI hygiene (no source bytes in JSON, ledger <code>{canonical,sha256}</code>, exit codes 0/2/3/4), golden cases 6–9, library-API-not-CLI for metrics, genre-resolved-once threading, no timestamps in envelopes (golden stability). Deferred: 3-file package layout (single module until it outgrows), <code>started_at</code>/<code>duration_ms</code> fields, <code>retriable</code> error flag (no retry consumer exists yet — YAGNI).</p>
+<p><strong>Step-4 gate (design loop-back 1 of global 3, consumed 2026-07-13):</strong> self-review (Opus <code>rawgentic-reviewer</code>) + adversarial-on-design (Codex, <code>docs/reviews/2026-07-12-27-live-orchestration-seam-md-2026-07-13.md</code>). Folded fixes: F1 dry-run backup reality (§6, §10.3/10.4), A1 <code>audit_status</code> cleanliness (§4.1, §10.8), A2 typed semantic invocation outcome via <code>status_sink</code> (§7, §6, §10.11), A3+F2 status ordering + exit-code table (§4.3, §10.12), A4 vocabulary purge (§6), A5 candidate-stage edit validation (§4.3, §10.5), A6 path-identity binding (§4.1, §4.2, §10.9), F3 justified non-reuse of <code>eval_semantic_fn</code> (§5), F4 metrics consumer named + accepted double-run (§4.1), F5 baseline wording (§10).</p>
+<p><strong>Step-4 round 2 (no loop-back consumed — no surviving Critical/High):</strong> self-review r2 PASS (all round-1 Crit/High confirmed resolved at source); fixes applied in place: bad-bytes ownership rule (<code>genre_error</code> owns decode, <code>diagnosis_error</code> = parser-unavailable-only, §4.3), sink completeness invariant + stickiness (§7), <code>upstream_not_ok</code> exit-class exclusion (§10.12), case-3 bytes-must-change authoring note (§10). Adversarial r2: R2-1 (verifier closure digest) <strong>refuted with evidence</strong> — <code>validate_ledger</code> digest-checks first (ledger.py:119-120), a drifted original is REJECT/BLOCKED fail-closed inside verify, so no unsafe-apply path exists; in-apply drift surfaces as REJECT (safe; the seam&#x27;s §4.2 pre-check catches earlier drift with the typed code). R2-2 stale (reviewed pre-fix text; already fixed). R2-3 folded as sink stickiness (§7). R2-4 folded as the case-4 aborted-stage assertion fix (§10.4).</p>
+
+</main>
+<footer>Last updated: 2026-07-12 20:22 MDT · generated by hooks/render_artifact.py — self-contained, no external resources.</footer>
+</div>
+</body>
+</html>

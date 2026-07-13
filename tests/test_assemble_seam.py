@@ -403,6 +403,36 @@ def test_diagnoses_markdown_it_cls_symbol_present():
     assert callable(getattr(diagnoses, "_markdown_it_cls", None))
 
 
+# ---- Step-11 Low (L5): lock the apply-report status -> stage-status/exit mapping (blocked/error/raise) ----
+def _apply_stage_for(tmp_path, monkeypatch, fake):
+    import slopslap_assemble.assemble as A
+    src = _write(tmp_path, "doc.md", GOLDEN_DOC)
+    audit = audit_document(src, declared_genre="general").data
+    monkeypatch.setattr(A, "apply_selective", fake)
+    run = run_candidate(audit, [Edit(28, 32, b"quick")], semantic_fn=CLEAN_STUB, write=False,
+                        apply_config=_bconf(tmp_path))
+    return run, _stage(run, "apply")
+
+
+def test_apply_report_blocked_maps_to_exit_2(tmp_path, monkeypatch):
+    run, ap = _apply_stage_for(tmp_path, monkeypatch,
+                               lambda *a, **k: {"status": "blocked", "mutated": False, "errors": ["x"]})
+    assert ap.status == "blocked" and ap.code == "apply_blocked" and exit_code(run) == 2
+
+
+def test_apply_report_error_maps_to_exit_4(tmp_path, monkeypatch):
+    run, ap = _apply_stage_for(tmp_path, monkeypatch,
+                               lambda *a, **k: {"status": "error", "mutated": False, "errors": ["boom"]})
+    assert ap.status == "failed" and ap.code == "apply_error" and exit_code(run) == 4
+
+
+def test_apply_raising_is_caught_as_failed_stage(tmp_path, monkeypatch):
+    def _raise(*a, **k):
+        raise OSError("disk gone")
+    run, ap = _apply_stage_for(tmp_path, monkeypatch, _raise)
+    assert ap.status == "failed" and ap.code == "apply_error" and exit_code(run) == 4
+
+
 # ---- live_semantic_fn factory: offline default is the clean stub, no model call ----
 def test_live_semantic_fn_offline_is_clean_stub():
     fn = live_semantic_fn()  # SLOPSLAP_LIVE unset -> offline clean stub

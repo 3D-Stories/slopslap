@@ -42,7 +42,9 @@ python3 scripts/slopslap_assemble/assemble.py run --path PATH --edits EDITS.json
 aborted`. Read the **exit code** as the verdict:
 
 - **0** — shippable: every stage `ok` (dry-run `apply` reports `mutated: false`, a verified backup
-  is written, the source is byte-identical).
+  is written, the source is byte-identical). **Offline caveat:** without `SLOPSLAP_LIVE=1` the
+  Layer-3 adversarial semantic verdict is a hardcoded `clean` stub (no model call), so an offline
+  exit 0 proves the deterministic layers only. Set `SLOPSLAP_LIVE=1` for a real semantic verdict.
 - **2** — policy block: `verify` returned non-shippable (out-of-range edit, weakened invariant,
   touched protected span, ambiguous semantic verdict), or an empty candidate on a flagged audit.
   The full verify_result is preserved in the `verify` stage's `data`.

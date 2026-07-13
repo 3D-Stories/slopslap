@@ -1,6 +1,6 @@
 """The live-orchestration seam: audit -> candidate -> verify -> apply for an arbitrary doc (#27).
 
-Design: docs/planning/2026-07-12-live-orchestration-seam.md. This module is the missing assembler
+Design: docs/planning/2026-07-12-27-live-orchestration-seam.md. This module is the missing assembler
 the v0.2 epic wants — it derives a ledger manifest from any UTF-8 doc, verifies a candidate
 edit-script against it, and (dry-run) routes the shippable subset through the backup-gated apply
 engine. Every stage returns a uniform envelope (``StageResult``); one run returns a ``RunResult``
@@ -572,8 +572,14 @@ def main(argv=None) -> int:
         with open(args.edits, "r", encoding="utf-8") as fh:
             edits_input = json.load(fh)
     except (OSError, ValueError) as err:
+        # Honor §4.4: every `run` invocation emits exactly one JSON RunResult to stdout
+        # (diagnostic to stderr), so a machine consumer never has to special-case bad --edits.
         sys.stderr.write(f"slopslap-assemble: cannot read --edits {args.edits!r}: {err}\n")
-        return 3  # invalid input / contract
+        bad = _build_run("", [StageResult("candidate", "failed", "invalid_edits",
+                                          f"cannot read --edits: {err}", data=None,
+                                          errors=[{"code": "invalid_edits", "detail": str(err)}])])
+        sys.stdout.write(json.dumps(_run_to_json(bad)) + "\n")
+        return exit_code(bad)  # invalid input / contract -> 3
     if isinstance(edits_input, dict) and "edits" in edits_input:
         edits_input = edits_input["edits"]
 
