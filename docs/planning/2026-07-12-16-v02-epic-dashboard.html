@@ -107,8 +107,8 @@ a{color:var(--lagoon)}
   </header>
 
   <!-- PROGRESS: update width% + caption on each merge -->
-  <div class="bar"><i style="width:57%"></i></div>
-  <p class="barcap">8 / 14 children merged · Tier 0+1 COMPLETE + Tier 2 assembler (#26 #30 #17 #18 #19 #20 #22 #27 ✅) · next Tier 3 #23 · version 0.1.8</p>
+  <div class="bar"><i style="width:64%"></i></div>
+  <p class="barcap">9 / 14 children merged · Tier 0+1+2 done + #23 (#26 #30 #17 #18 #19 #20 #22 #27 #23 ✅) · next Tier 3 #21 · version 0.1.9</p>
 
   <div class="legend">
     <span class="chip merged"><span class="dot" style="background:var(--lagoon)"></span>merged + closed</span>
@@ -237,13 +237,17 @@ T4  #28 e2e golden (dep #27 #23 #17–#20 #30) · #25 calibration (dep #30)</div
   <h2>Tier 3 — wiring / apply / voice</h2>
   <p class="sec-sub">WF2: #23, #21 · lite: #29, #24</p>
   <div class="grid">
-    <div class="card queued" id="c23">
+    <div class="card merged" id="c23">
       <div class="id">T3 · #23</div>
       <h3>Suggest → verifier wiring</h3>
       <div class="dep">no deps · full WF2</div>
-      <span class="st">queued</span>
-      <ul><li class="pending">Deterministic verifier integration: input, verdict handling, rejection</li></ul>
-      <div class="kv">PR — · version — · gate —</div>
+      <span class="st">merged + closed</span>
+      <ul>
+        <li>suggest invariant-check is now the deterministic verifier (Layers 1+2), not model-reported</li>
+        <li>docs-authority: SKILL.md / commands/suggest.md / engine.md; seam verdict is the check</li>
+        <li>deterministic tests: modality/negation/protected-span BLOCK + CLI entry path + doc-drift guard</li>
+      </ul>
+      <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/44">#44</a> · v0.1.9 · gate 415→423 (+8, 0 reg)</div>
     </div>
     <div class="card queued" id="c21">
       <div class="id">T3 · #21</div>

@@ -96,9 +96,11 @@ axes. Never a single "AI %" or "sloppiness score" — those invite normalization
   and any missing evidence. **No edits, no rewrites, no diffs.**
 <!-- anchor:mode-suggest -->
 - **suggest (default)** — diagnosis + a focused diff for each authorized repair + the invariant-check
-  result. (In this version the invariant check is **model-reported**; the deterministic byte-exact
-  verifier — `references/invariant-ledger.md` — is wired into the flow in a later increment and then
-  owns the hard accept/reject.) Ask a question ONLY for a fact that blocks a specific proposed repair.
+  result. The invariant-check is the **deterministic byte-exact verifier** — the live-orchestration
+  seam (`scripts/slopslap_assemble/`, wired as of the #27 increment) runs `references/invariant-ledger.md`'s
+  Layers 1+2 over the proposed diff and **owns the hard accept/reject** (numbers, units, modality,
+  negation, conditions, protected spans). Present the verifier's verdict, not a self-narrated
+  "all intact". Ask a question ONLY for a fact that blocks a specific proposed repair.
   Placeholders like
   `[DEFINE X]` are proposed OUTSIDE the document unless the user approves inserting them (inserting one
   can make an invalid document look complete).
@@ -138,5 +140,5 @@ MOST preservation-heavy applicable profile. See `references/genre-profiles.md`.
 - `references/genre-profiles.md` — per-genre preservation priorities + the asymmetric-failure rule.
 - `references/engine.md` — model/effort guidance (advisory: the session, not the plugin, owns the model).
 - `references/scanner-metrics.md` + `references/invariant-ledger.md` — the measure-only scanner and the
-  byte-exact verifier (arrive with the scanner / ledger increments); the scanner MEASURES, it never
-  verdicts, and it never authorizes an edit.
+  byte-exact verifier (the verifier is wired into the suggest flow as of #27); the scanner MEASURES, it
+  never verdicts, and it never authorizes an edit.
