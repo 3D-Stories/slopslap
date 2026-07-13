@@ -23,6 +23,24 @@ from typing import Callable, List, Optional
 # Set deliberately high relative to the current corpus so nothing auto-promotes on thin data.
 _MIN_POINTS_PER_METRIC = 20
 
+# Provisional scanner-metric -> corpus-tell map (which tell each metric is evidence FOR). Used to
+# label a scanned item positive/negative for a metric. Judgment-y and provisional — revisit when the
+# corpus gains verbatim text and real per-stratum numbers can validate each mapping. A scanned metric
+# NOT in this map is SKIPPED (never identity-mislabeled against a mismatched tell name).
+DEFAULT_METRIC_TELL_MAP = {
+    "rule_of_three": "rule_of_three",
+    "negative_parallelism": "synthetic_cadence",
+    "sentence_length_distribution": "synthetic_cadence",
+    "sentence_length_dispersion": "synthetic_cadence",
+    "paragraph_sentence_count_runs": "synthetic_cadence",
+    "repeated_openers": "synthetic_cadence",
+    "transition_clusters": "synthetic_cadence",
+    "punctuation_rates": "em_dash_overuse",
+    "vague_attribution": "genericness",
+    "stock_lexical_clusters": "lexical_structural",
+    "bold_label_density": "lexical_structural",
+}
+
 
 def _f1(tp: int, fp: int, fn: int) -> float:
     denom = 2 * tp + fp + fn
@@ -76,12 +94,14 @@ def _bucket() -> dict:
 
 def _score(bucket: dict) -> dict:
     tp, fp, fn, ab, n = bucket["tp"], bucket["fp"], bucket["fn"], bucket["abstained"], bucket["n"]
-    decided = tp + fp + fn + bucket["tn"]
+    # precision/recall are None (undefined) when the denominator is empty — a classifier that
+    # flagged nothing (tp+fp==0) or a stratum with no positives (tp+fn==0) makes no precision/recall
+    # CLAIM, rather than a misleading 1.0 (L3).
     return {
         "n": n, "abstained": ab,
         "abstention_rate": round(ab / n, 4) if n else None,
-        "precision": round(tp / (tp + fp), 4) if (tp + fp) else (None if decided == 0 else 1.0),
-        "recall": round(tp / (tp + fn), 4) if (tp + fn) else (None if decided == 0 else 1.0),
+        "precision": round(tp / (tp + fp), 4) if (tp + fp) else None,
+        "recall": round(tp / (tp + fn), 4) if (tp + fn) else None,
     }
 
 
@@ -114,10 +134,18 @@ def evaluate_points(held_out: List[dict], thresholds: dict) -> dict:
 
 def _points_from_items(items: List[dict], scan_fn: Callable, load_text: Callable,
                        metric_tell_map: Optional[dict] = None) -> List[dict]:
-    """Scan each item that has verbatim text; emit one labeled point per (metric, item). A point is
-    POSITIVE for a metric iff that metric's mapped tell is in the item's ``tells`` (and the item is
-    not a control); control / tell-absent items are the negatives. Items with no text yield nothing.
+    """Scan each item that has verbatim text; emit one labeled point per (metric, item).
+
+    Labeling per (metric, item), where the metric maps to tell T:
+      - control item OR item with NO tells    -> NEGATIVE (a genuinely clean sample for every metric)
+      - non-control item whose tells include T -> POSITIVE
+      - non-control item flagged for OTHER tells only -> SKIP (cross-tell noise: AI slop co-occurs
+        across tells, so such an item is neither a clean negative nor a positive for T — mislabeling
+        it as a negative would bias the fitted threshold).
+    A metric with no entry in the tell map is SKIPPED (never identity-mislabeled). Text-less items
+    yield nothing.
     """
+    tmap = metric_tell_map if metric_tell_map is not None else DEFAULT_METRIC_TELL_MAP
     pts: List[dict] = []
     for it in items:
         path = it.get("verbatim_path")
@@ -129,15 +157,15 @@ def _points_from_items(items: List[dict], scan_fn: Callable, load_text: Callable
         control = bool(it.get("control"))
         length = _length_bucket(text)
         for metric, res in metrics.items():
-            tell = (metric_tell_map or {}).get(metric, metric)
-            positive = (not control) and (tell in tells)
-            # only a control or an item that legitimately lacks this tell is a clean negative;
-            # an item flagged for OTHER tells is neither a clean positive nor negative for THIS
-            # metric -> skip (avoid mislabeling cross-tell noise).
-            if not positive and not control and tell not in tells and tells:
-                # tell-absent on a non-control, otherwise-flagged item: treat as negative only if it
-                # is a genuine clean sample; here we keep it as a negative (tell truly absent).
-                pass
+            if metric not in tmap:
+                continue  # unmapped scanner metric -> skip, never mislabel against a mismatched tell
+            tell = tmap[metric]
+            if control or not tells:
+                positive = False              # clean/control sample: a negative for every metric
+            elif tell in tells:
+                positive = True               # this metric's tell is present
+            else:
+                continue                      # flagged for other tells only -> cross-tell, skip
             pts.append({"metric": metric, "value": float(res.get("rate") or 0.0),
                         "positive": positive, "genre": it.get("genre", "?"),
                         "length": length, "tell": tell, "item_id": it.get("item_id")})

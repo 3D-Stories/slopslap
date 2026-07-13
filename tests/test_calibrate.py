@@ -97,8 +97,39 @@ def test_calibrate_corpus_uses_text_when_available():
     def _load(path):
         return "POS" if path in ("p1.md", "h1.md") else "NEG"
 
-    report = calibrate_corpus(manifest, scan_fn=_scan, load_text=_load)
+    report = calibrate_corpus(manifest, scan_fn=_scan, load_text=_load, metric_tell_map={"rule_of_three": "rule_of_three"})
     assert report["calibration"]["usable_points"] == 2
     assert report["held_out"]["usable_points"] == 1
     # measure-only stays the default until an explicit validation bar is met (n far too small here)
     assert report["promoted"] is False and report["verdict"] == "measure_only"
+
+
+def test_no_promotion_even_when_point_bar_met():
+    # feed >= _MIN_POINTS_PER_METRIC labeled points per metric; promotion must STILL be withheld
+    # (structural no-auto-promote — promotion needs human sign-off, never automated here). (L4)
+    manifest = []
+    for i in range(24):
+        pos = i % 2 == 0
+        manifest.append({"item_id": f"c{i}", "split": "calibration",
+                         "tells": (["rule_of_three"] if pos else []), "control": (not pos),
+                         "genre": "general", "source_family": f"f{i}", "verbatim_path": f"c{i}.md"})
+    def _scan(text):
+        return {"rule_of_three": {"rate": 0.9 if text == "POS" else 0.0}}
+    def _load(path):
+        idx = int(path[1:].split(".")[0])
+        return "POS" if idx % 2 == 0 else "NEG"
+    report = calibrate_corpus(manifest, scan_fn=_scan, load_text=_load,
+                              metric_tell_map={"rule_of_three": "rule_of_three"})
+    assert report["calibration"]["usable_points"] >= 20
+    assert report["promoted"] is False and report["verdict"] == "measure_only"
+
+
+def test_unmapped_metric_is_skipped_not_mislabeled():
+    # a scanned metric absent from the tell map is SKIPPED, never identity-mislabeled (M2)
+    manifest = [{"item_id": "x", "split": "calibration", "tells": ["rule_of_three"], "control": False,
+                 "genre": "general", "source_family": "f", "verbatim_path": "x.md"}]
+    def _scan(text):
+        return {"punctuation_rates": {"rate": 0.5}}   # not in the passed map
+    report = calibrate_corpus(manifest, scan_fn=_scan, load_text=lambda p: "T",
+                              metric_tell_map={"rule_of_three": "rule_of_three"})
+    assert report["calibration"]["usable_points"] == 0   # the unmapped metric produced no point
