@@ -107,8 +107,8 @@ a{color:var(--lagoon)}
   </header>
 
   <!-- PROGRESS: update width% + caption on each merge -->
-  <div class="bar"><i style="width:93%"></i></div>
-  <p class="barcap">13 / 14 children merged · Tier 0-3 + #28 (… #24 #28 ✅) · next Tier 4 #25 (FINAL, sets 0.2.0) · version 0.1.13</p>
+  <div class="bar"><i style="width:100%"></i></div>
+  <p class="barcap">14 / 14 children merged · ALL TIERS COMPLETE (#26 #30 #17 #18 #19 #20 #22 #27 #23 #21 #29 #24 #28 #25 ✅) · version 0.2.0 · epic #16 closed</p>
 
   <div class="legend">
     <span class="chip merged"><span class="dot" style="background:var(--lagoon)"></span>merged + closed</span>
@@ -302,13 +302,17 @@ T4  #28 e2e golden (dep #27 #23 #17–#20 #30) · #25 calibration (dep #30)</div
       </ul>
       <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/50">#50</a> · v0.1.13 · gate 448→454 (+6, 0 reg)</div>
     </div>
-    <div class="card queued" id="c25">
+    <div class="card merged" id="c25">
       <div class="id">T4 · #25</div>
       <h3>Scanner threshold calibration</h3>
       <div class="dep">depends on #30 · held-out split, never tune on it</div>
-      <span class="st">queued</span>
-      <ul><li class="pending">Fit on calibration split; report on held-out; thresholds measure-only until validated</li></ul>
-      <div class="kv">PR — · version — · gate —</div>
+      <span class="st">merged + closed</span>
+      <ul>
+        <li>calibrate.py harness: fit-on-calibration / report-per-stratum-on-held-out / never-tune, never auto-promote</li>
+        <li>honest verdict MEASURE-ONLY — corpus tunable items carry no verbatim text (0 usable points)</li>
+        <li>sets 0.2.0 + retires the stale "model-reported until…" manifest description</li>
+      </ul>
+      <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/51">#51</a> · v0.2.0 · gate 454→462 (+8, 0 reg)</div>
     </div>
   </div>
 
