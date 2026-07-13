@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "genre": "technical",
+  "control": false,
+  "provenance": "Real-world QA of ./input/'Winnipeg Base - SMS year in reveiw.pptx' (notesSlide1). Label supplied by the document owner 2026-07-13: VALID (minor). Embedded span is a minimal excerpt.",
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [],
+  "protected_spans": [],
+  "invariant_regions": [],
+  "expected_invariants": [
+    {
+      "kind": "missing_support",
+      "text": "the 'less than 10% ... in an Aviation organization' benchmark has no shown basis; it is the support the good-news claim rests on",
+      "preservation": "surface_only",
+      "region": null
+    }
+  ],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "simulation",
+      "region": "unsupported-benchmark",
+      "note": "The '<10% typical proactive rate in an Aviation organization' benchmark is the basis for framing the 22% rate as a 'good news story', asserted with no source shown. editorial_harm=low, diagnosis_confidence=low-med. Remedy = FLAG the missing basis OUTSIDE the document; NEVER fabricate a citation. editable_ranges is empty on purpose: no edit is authorized, so any inserted source is fabrication and Layer-1 no_new_claim_atoms must REJECT it. This fixture can never be a golden repair."
+    }
+  ],
+  "control_reason": null,
+  "expected_preservation_failure": true
+}

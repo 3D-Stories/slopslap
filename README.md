@@ -170,7 +170,7 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.2.0 — v0.2 epic (#16) **complete**: live model-in-the-loop audit → verify → suggest
+- **Version:** 0.2.1 — v0.2 epic (#16) **complete**: live model-in-the-loop audit → verify → suggest
   → apply for arbitrary documents.
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
@@ -180,6 +180,15 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.2.1** — real-world QA calibration fixtures. Captures three eval cases from a live audit/suggest
+  run on an aviation-SMS deck, labeled by the document owner: two must-abstain controls (first-pass
+  false positives — a numeric "contradiction" whose figures have different referents; an honest
+  `has/could` hedge on an illustrative example) and one flag-only true positive (an unsupported
+  benchmark; remedy = flag, never fabricate a citation). Data-only under `tests/fixtures/eval/qa-*`
+  with a hermetic validity guard (`tests/test_qa_fixtures.py`); not yet in the pinned `run_eval`
+  inventory (that needs a live-model first-pass digest — tracked follow-up). Encodes two calibration
+  lessons: a numeric contradiction that only appears once you assume a shared referent is a pass, and
+  an explicit could/may hedge on an example is honest marking, not `simulation`.
 - **0.2.0** — scanner threshold calibration + the v0.2 epic close (#25, final Tier-4 child). Ships
   `scripts/slopslap_corpus/calibrate.py`, the calibration harness: it fits per-metric thresholds on the
   #30 corpus CALIBRATION partition only, reports precision/recall/abstention per stratum
