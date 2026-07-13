@@ -1,6 +1,6 @@
 ---
-description: Apply editorial repairs in place (backup-gated, explicit request only). UNAVAILABLE in the MVP until the mandatory pre-mutation backup gate ships — refuses cleanly and points you to /slopslap:suggest.
-argument-hint: "<writable file to repair in place>"
+description: Apply editorial repairs via backup-first, staged, verified, atomic pathname replacement (explicit request only). Currently disabled pending command enablement — refuses cleanly and points you to /slopslap:suggest.
+argument-hint: "<writable file to repair>"
 ---
 
 This command would invoke the `slopslap` skill (`skills/slopslap/SKILL.md`) in **apply** mode.

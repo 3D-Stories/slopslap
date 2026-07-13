@@ -4,6 +4,18 @@ Default location is a user-local state dir OUTSIDE the repo so originals can't b
 commit. An in-tree `.slopslap/backups/` override fails closed unless git containment is verified.
 Backups are owner-private, exclusively created, digest-verified, and fsync'd (file + directory)
 BEFORE any mutation is permitted.
+
+Metadata policy (model C — #21): the apply engine replaces the source INODE via an atomic
+`os.replace`, so metadata is carried deliberately, not implicitly. The file MODE is preserved
+exactly (`os.fchmod` to the source mode on the staged temp, umask-independent; on a platform lacking
+`os.fchmod` the applied file keeps an owner-only 0o600 mode and a warning is emitted). Ownership is
+NOT changed (no `os.chown` — the applied file is owned by the applying user, and a partial chmod/chown
+would be a security-posture hazard). ACLs, extended attributes (incl. security labels), timestamps,
+and file flags are NOT preserved across the inode replacement — when the source carries xattrs the
+engine emits a loud warning so the loss is legible. Durability (crash safety) requires
+`SLOPSLAP_FSYNC=1`; production MUST set it. The opt-in default is a sandbox workaround (some sandboxes
+hang on fsync); read-back verification — not fsync — is the correctness net, and a skipped fsync is
+always surfaced as a warning.
 """
 
 from __future__ import annotations

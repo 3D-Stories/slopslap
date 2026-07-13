@@ -105,9 +105,12 @@ axes. Never a single "AI %" or "sloppiness score" — those invite normalization
   `[DEFINE X]` are proposed OUTSIDE the document unless the user approves inserting them (inserting one
   can make an invalid document look complete).
 <!-- anchor:mode-apply -->
-- **apply** — in-place mutation, on explicit request only, and **gated by a mandatory pre-mutation
-  backup**. Until the backup gate ships (see the apply command), apply is UNAVAILABLE and must refuse
-  with `status: mutation_unavailable` — it never silently falls back to editing or to an implicit audit.
+- **apply** — mutation on explicit request only, via **backup-first, staged, verified, atomic
+  pathname replacement** (never live-byte editing): a mandatory verified backup is written first, the
+  revision is staged in a same-directory temp, verified, then `os.replace` atomically swaps the source
+  pathname. Hardlinked sources are refused fail-closed; symlinks are followed to their target and
+  reported. The apply COMMAND stays disabled (`status: mutation_unavailable`) until it is wired to the
+  engine (a later increment) — it never silently falls back to editing or to an implicit audit.
 
 <!-- anchor:cap -->
 ## Behavioral limits
