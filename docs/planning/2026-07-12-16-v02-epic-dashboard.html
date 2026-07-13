@@ -107,8 +107,8 @@ a{color:var(--lagoon)}
   </header>
 
   <!-- PROGRESS: update width% + caption on each merge -->
-  <div class="bar"><i style="width:64%"></i></div>
-  <p class="barcap">9 / 14 children merged · Tier 0+1+2 done + #23 (#26 #30 #17 #18 #19 #20 #22 #27 #23 ✅) · next Tier 3 #21 · version 0.1.9</p>
+  <div class="bar"><i style="width:71%"></i></div>
+  <p class="barcap">10 / 14 children merged · Tier 0+1+2 done + #23 #21 (… #27 #23 #21 ✅) · next Tier 3 #29 · version 0.1.10</p>
 
   <div class="legend">
     <span class="chip merged"><span class="dot" style="background:var(--lagoon)"></span>merged + closed</span>
@@ -249,13 +249,17 @@ T4  #28 e2e golden (dep #27 #23 #17–#20 #30) · #25 calibration (dep #30)</div
       </ul>
       <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/44">#44</a> · v0.1.9 · gate 415→423 (+8, 0 reg)</div>
     </div>
-    <div class="card queued" id="c21">
+    <div class="card merged" id="c21">
       <div class="id">T3 · #21</div>
       <h3>Apply write-strategy hardening</h3>
       <div class="dep">no deps · full WF2 · foundational</div>
-      <span class="st">queued</span>
-      <ul><li class="pending">Metadata policy, hardlink fail-closed, symlink no-follow, EXDEV abort, fsync-in-prod, spec prose</li></ul>
-      <div class="kv">PR — · version — · gate —</div>
+      <span class="st">merged + closed</span>
+      <ul>
+        <li>hardlink fail-closed (pre-backup + tight pre-commit re-check), exact mode via fchmod</li>
+        <li>symlink followed+reported, xattr-loss warned, EXDEV/replace-fail abort (never copy-over-live)</li>
+        <li>spec prose "in-place" → backup-first/staged/verified/atomic replacement; no os.chown/O_NOFOLLOW</li>
+      </ul>
+      <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/45">#45</a> · v0.1.10 · gate 423→434 (+11, 0 reg)</div>
     </div>
     <div class="card queued" id="c29">
       <div class="id">T3 · #29</div>
