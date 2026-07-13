@@ -15,6 +15,13 @@ The name says "slap" — ignore that impulse. An em-dash, a fragment, a tricolon
 none is harm on its own. Harm is prose that does less than it claims, hides who is responsible,
 asserts what it hasn't shown, or buries its own meaning. When in doubt, slopslap changes nothing.
 
+## Overview
+
+The **visual plugin overview** — the skill, the four commands, the
+protect→diagnose→invariants→rewrite→verify loop, the six harm categories, and the v0.2 engine — is
+live at **[3d-stories.github.io/slopslap](https://3d-stories.github.io/slopslap)** (also
+[in-repo](docs/index.html)).
+
 ## Install
 
 It's a standard Claude Code plugin — clone/point Claude Code at this repo. The judgment lives in
