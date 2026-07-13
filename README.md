@@ -100,6 +100,16 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Changelog
 
+- **0.1.9** — suggest's invariant-check is now the **deterministic verifier**, not a model claim (#23,
+  WF5 F2 deterministic half). The suggest command routes its proposed diff through the #27 seam and
+  presents `slopslap_verification`'s real `verify` verdict (Layers 1+2 — numbers, units, modality,
+  negation, conditions, protected spans); a diff that violates an invariant is BLOCKED regardless of
+  any model. Retires the "model-reported / verifier arrives in a later increment" language in
+  `SKILL.md` and `references/engine.md`. Deterministic tests lock verifier input construction, verdict
+  handling, and rejection behavior (modality / negation / protected-span violations blocked with no
+  model in the loop) + the CLI entry path. No new production logic — the wiring is the #27 seam; this
+  makes the suggest *contract* authoritative. (The `plugin.json` description's stale "model-reported"
+  clause is retired in #25 per the v0.2 plan.) Live semantic golden is #28.
 - **0.1.8** — live-orchestration seam, the assembler (#27). New `scripts/slopslap_assemble/` chains
   **audit → verify → (suggest) → apply** end-to-end for an ARBITRARY document — the missing seam
   the v0.2 epic needs (WF5 finding F1: `#17–#24` were components with no assembler). `build_manifest`
