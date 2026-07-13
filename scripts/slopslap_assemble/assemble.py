@@ -63,6 +63,7 @@ _EXIT_CLASS = {
     "diagnosis_error": 4,
     "ledger_build_error": 4,
     "semantic_invocation_failed": 4,
+    "verify_error": 4,
     "apply_error": 4,
 }
 
@@ -393,8 +394,15 @@ def run_candidate(audit: AuditResult, edits, *, semantic_fn=None, write: bool = 
     # --- verify: one audit, one policy. authorization state chooses the ranges arg ---
     authorized = None if audit.authorization["state"] == "locality_unverified" \
         else audit.authorization["ranges"]
-    verify_result = verify(original, parsed, audit.ledger,
-                           authorized_ranges=authorized, semantic_fn=semantic_fn)
+    try:
+        verify_result = verify(original, parsed, audit.ledger,
+                               authorized_ranges=authorized, semantic_fn=semantic_fn)
+    except Exception as err:  # noqa: BLE001 - the seam never raises past a stage (§4.3)
+        verify_stage = StageResult("verify", "failed", "verify_error",
+                                   f"verify raised {type(err).__name__}", data=None,
+                                   errors=[{"code": "verify_error", "detail": repr(err)}])
+        return _build_run(audit.run_id, [audit_stage, candidate_stage, verify_stage]
+                          + _aborted(["apply"], "verify"))
     shippable = (verify_result["decision"] == "ACCEPT"
                  and verify_result["proposal_status"] == "ACCEPT"
                  and verify_result["semantic_status"] == "clean")
@@ -424,9 +432,28 @@ def run_candidate(audit: AuditResult, edits, *, semantic_fn=None, write: bool = 
         return verify(orig_bytes, es, audit.ledger,
                       authorized_ranges=authorized, semantic_fn=semantic_fn)
 
-    report = apply_selective(src, parsed, _bound_verify, config=apply_config, write=write)
+    try:
+        report = apply_selective(src, parsed, _bound_verify, config=apply_config, write=write)
+    except Exception as err:  # noqa: BLE001 - the seam never raises past a stage (§4.3)
+        apply_stage = StageResult("apply", "failed", "apply_error",
+                                  f"apply raised {type(err).__name__}", data=None,
+                                  errors=[{"code": "apply_error", "detail": repr(err)}])
+        return _build_run(audit.run_id, [audit_stage, candidate_stage, verify_stage, apply_stage])
+
+    # apply's re-verify loop re-invokes semantic_fn against the SAME sticky sink (§7). Re-read it:
+    # an ops failure that struck ONLY during apply (verify-stage call succeeded, a later re-verify
+    # timed out) must surface as semantic_invocation_failed / exit 4 — never laundered into a
+    # policy `blocked` or a clean `applied` (adv A2, Step-8a High). Sticky-worst makes the read
+    # meaningful across the multi-call loop.
     st = report.get("status")
-    if st in ("applied", "no_op"):
+    apply_sink_status = _sink_status(semantic_fn)
+    if apply_sink_status != "ok":
+        apply_stage = StageResult(
+            "apply", "failed", "semantic_invocation_failed",
+            f"semantic invocation failed during apply (status={apply_sink_status}); an ops failure "
+            f"is not a policy verdict", data=report,
+            errors=[{"code": "semantic_invocation_failed", "invocation_status": apply_sink_status}])
+    elif st in ("applied", "no_op"):
         apply_stage = StageResult("apply", "ok", "ok", f"apply {st}", data=report,
                                   warnings=report.get("warnings", []))
     elif st == "blocked":

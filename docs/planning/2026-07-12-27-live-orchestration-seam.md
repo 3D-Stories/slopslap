@@ -103,7 +103,7 @@ reject-all) and that a *separate, external* `None` means locality_unverified/ASK
 explicitly instead of leaking the ambiguity downstream:
 - ranges non-empty → `state="authorized"`, pass `ranges` to `verify(authorized_ranges=...)`.
 - ranges `== []` → `state="reject_all"`, pass `[]` (verify's `edit_locality` rejects any edit against an empty editable set).
-- deriver unavailable / undecidable (e.g. markdown parser missing when a caller opts to proceed) → `state="locality_unverified"`, pass `None` (verify fails CLOSED to ASK). #27 always derives, so this state is reachable only via an explicit CLI opt-out; the golden exercises it directly.
+- deriver unavailable / undecidable → `state="locality_unverified"`, pass `None` (verify fails CLOSED to ASK). #27's audit path always derives (a parser-unavailable failure surfaces as `diagnosis_error`, not this state), so `locality_unverified` is reachable only at the `run_candidate` API boundary (a caller handing in an `AuditResult` with that state); the golden exercises it via that API path. No CLI flag emits it (round-2 L3: the earlier "CLI opt-out" claim was dropped — the flag was never built and isn't needed for #27).
 
 `build_manifest(doc)` is the **missing glue**: `{invariant_regions: build_invariant_regions(doc),
 protected_spans: extract_protected_spans(doc)}`, then `build_ledger(doc, manifest)`. No defensive

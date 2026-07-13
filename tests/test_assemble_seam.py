@@ -348,6 +348,61 @@ def test_semantic_invocation_failure_is_failed_not_blocked(tmp_path):
     assert _stage(run, "apply").status == "aborted"
 
 
+# ---- Step-8a High: ops failure that strikes ONLY during apply's re-verify loop must NOT be
+#      laundered into policy-blocked/success — the sink is re-read AFTER apply (adv A2, §7). ----
+def test_semantic_failure_during_apply_reverify_is_failed_not_laundered(tmp_path):
+    src = _write(tmp_path, "doc.md", GOLDEN_DOC)
+    audit = audit_document(src, declared_genre="general").data
+    sink = {}
+
+    class _MidApplyFailSem:
+        """clean on the verify-stage call (sink stays ok -> reaches apply), then records a
+        sticky ops failure on the apply re-verify call(s). The seam must re-read the sink
+        after apply_selective and reclassify to semantic_invocation_failed (exit 4)."""
+        def __init__(self):
+            self.calls = 0
+            self.status_sink = sink
+
+        def __call__(self, original, revision, ledger_canonical):
+            self.calls += 1
+            if self.calls >= 2:  # apply's re-verify loop -> sticky-worst records the failure
+                self.status_sink["invocation_status"] = "timeout"
+            return {"verdict": "clean", "concerns": []}
+
+    edit = Edit(28, 32, b"quick")  # otherwise-shippable
+    run = run_candidate(audit, [edit], semantic_fn=_MidApplyFailSem(), write=False,
+                        apply_config=_bconf(tmp_path))
+    assert _stage(run, "verify").status == "ok"        # verify-stage call was clean
+    apply_stage = _stage(run, "apply")
+    assert apply_stage.status == "failed" and apply_stage.code == "semantic_invocation_failed"
+    assert exit_code(run) == 4  # exit 4, NOT the exit-0 "applied" or exit-2 "apply_blocked" launder
+
+
+# ---- Step-8a Medium: an unexpected raise inside verify() never escapes the seam (§4.3) ----
+def test_verify_raising_is_caught_as_failed_stage(tmp_path, monkeypatch):
+    import slopslap_assemble.assemble as A
+    src = _write(tmp_path, "doc.md", GOLDEN_DOC)
+    audit = audit_document(src, declared_genre="general").data
+
+    def _boom(*a, **k):
+        raise RuntimeError("verify blew up")
+    monkeypatch.setattr(A, "verify", _boom)
+
+    run = run_candidate(audit, [Edit(28, 32, b"quick")], semantic_fn=CLEAN_STUB, write=False,
+                        apply_config=_bconf(tmp_path))
+    vstage = _stage(run, "verify")
+    assert vstage.status == "failed" and vstage.code == "verify_error"
+    assert exit_code(run) == 4  # inside the 0/2/3/4 contract, not an uncaught traceback (exit 1)
+    assert _stage(run, "apply").status == "aborted"
+
+
+# ---- Step-8a Low (L2): the private cross-module parser helper the seam reaches into exists.
+#      Guards against a silent break if slopslap_scan.diagnoses refactors it away. ----
+def test_diagnoses_markdown_it_cls_symbol_present():
+    from slopslap_scan import diagnoses
+    assert callable(getattr(diagnoses, "_markdown_it_cls", None))
+
+
 # ---- live_semantic_fn factory: offline default is the clean stub, no model call ----
 def test_live_semantic_fn_offline_is_clean_stub():
     fn = live_semantic_fn()  # SLOPSLAP_LIVE unset -> offline clean stub
