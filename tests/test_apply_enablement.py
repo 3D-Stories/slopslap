@@ -96,6 +96,21 @@ def test_cli_apply_subcommand_mutates(tmp_path):
     assert src.read_bytes() == _GOLDEN.replace(b"fast", b"quick")   # real mutation via the command surface
 
 
+# ---- adv-diff H1: a real write on a non-live semantic layer surfaces a deterministic-only warning ----
+def test_write_true_offline_warns_deterministic_only(tmp_path):
+    from slopslap_verification.editscript import Edit
+    from slopslap_assemble.assemble import live_semantic_fn
+    src = tmp_path / "doc.md"
+    src.write_bytes(_GOLDEN)
+    # live_semantic_fn() offline == the clean stub tagged semantic_mode="offline_stub"
+    run = assemble(str(src), [Edit(28, 32, b"quick")], declared_genre="general",
+                   semantic_fn=live_semantic_fn(), write=True,
+                   apply_config=BackupConfig(root=str(tmp_path / "bk")))
+    ap = [s for s in run.stages if s.stage == "apply"][0]
+    assert ap.status == "ok" and ap.data["mutated"] is True
+    assert any("deterministic layers only" in w.lower() for w in ap.warnings), ap.warnings
+
+
 # ---- CLI: `run` stays dry-run only — never mutates, even now that apply exists ----
 def test_cli_run_still_dry_run_only(tmp_path):
     proc, src = _cli(tmp_path, ["run"], _GOLDEN)

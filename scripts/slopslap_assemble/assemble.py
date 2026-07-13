@@ -454,8 +454,12 @@ def run_candidate(audit: AuditResult, edits, *, semantic_fn=None, write: bool = 
     try:
         report = apply_selective(src, parsed, _bound_verify, config=apply_config, write=write)
     except Exception as err:  # noqa: BLE001 - the seam never raises past a stage (§4.3)
+        # apply_selective catches its own OSErrors and returns reports, so this is a backstop for an
+        # UNEXPECTED raise. If a backup was already written it lives in the configured backup dir —
+        # name it so recovery is possible even though the report was lost (adv-diff M4).
         apply_stage = StageResult("apply", "failed", "apply_error",
-                                  f"apply raised {type(err).__name__}", data=None,
+                                  f"apply raised {type(err).__name__}; if a backup was written it is in "
+                                  f"the configured backup dir — check it before retrying", data=None,
                                   errors=[{"code": "apply_error", "detail": repr(err)}])
         return _build_run(audit.run_id, [audit_stage, candidate_stage, verify_stage, apply_stage], mode)
 
@@ -473,8 +477,15 @@ def run_candidate(audit: AuditResult, edits, *, semantic_fn=None, write: bool = 
             f"is not a policy verdict", data=report,
             errors=[{"code": "semantic_invocation_failed", "invocation_status": apply_sink_status}])
     elif st in ("applied", "no_op"):
-        apply_stage = StageResult("apply", "ok", "ok", f"apply {st}", data=report,
-                                  warnings=report.get("warnings", []))
+        warns = list(report.get("warnings", []))
+        # A real mutation whose Layer-3 semantic check was NOT a live model (offline stub / injected)
+        # rests on the deterministic layers alone — legible in the output, not just the docs (adv-diff
+        # H1). Meaning-changing edits that preserve every syntactic invariant are the residual risk.
+        if write and st == "applied" and mode != "live":
+            warns.append(f"applied on the DETERMINISTIC layers only (semantic_mode={mode}); the "
+                         f"Layer-3 semantic check was not a live model — set SLOPSLAP_LIVE=1 for a "
+                         f"model-verified apply")
+        apply_stage = StageResult("apply", "ok", "ok", f"apply {st}", data=report, warnings=warns)
     elif st == "blocked":
         apply_stage = StageResult("apply", "blocked", "apply_blocked",
                                   "apply blocked (backup/attribution/convergence)", data=report,

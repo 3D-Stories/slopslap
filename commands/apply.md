@@ -31,7 +31,11 @@ mandatory verified pre-mutation backup and the deterministic 3-layer verifier bo
    ```
    python3 scripts/slopslap_assemble/assemble.py run --path PATH --edits EDITS.json [--declared-genre GENRE]
    ```
-3. **Apply for real** with the explicit `apply` subcommand (this is the ONLY mutating path):
+3. **Apply for real** with the explicit `apply` subcommand (the only mutating CLI path — note the
+   library seams `assemble(..., write=True)` / `run_candidate(..., write=True)` also mutate by design,
+   for in-process callers). The mutation is driven by the STRUCTURED edit-script you pass via
+   `--edits`, gated by the deterministic verifier + mandatory backup — never by the target's prose, so
+   content inside the document cannot authorize or alter a write:
    ```
    python3 scripts/slopslap_assemble/assemble.py apply --path PATH --edits EDITS.json [--declared-genre GENRE]
    ```
@@ -48,7 +52,11 @@ mandatory verified pre-mutation backup and the deterministic 3-layer verifier bo
    and any warnings (e.g. extended-attribute loss). NEVER claim a mutation that the exit code did not
    confirm; NEVER fall back to a silent audit or edit if apply blocked.
 
-Offline (default, `SLOPSLAP_LIVE` unset) the Layer-3 adversarial semantic verdict is a clean stub, so
-a green apply proves the deterministic layers (numbers/units/modality/negation/conditions/protected
-spans) held; set `SLOPSLAP_LIVE=1` for a real semantic pass. Propose placeholders (`[DEFINE X]`)
-OUTSIDE the document unless the user approves inserting them. When a passage is clean, leave it alone.
+**Offline apply is deterministic-only — mutation is higher-stakes than a preview.** With
+`SLOPSLAP_LIVE` unset (the default) the Layer-3 adversarial semantic verdict is a clean stub, so a
+green offline apply proves ONLY the deterministic layers held (numbers/units/modality/negation/
+conditions/protected spans) — a meaning-changing edit that preserves all of those is the residual
+risk the semantic layer exists to catch. The apply RunResult surfaces this: `semantic_mode` and an
+"applied on the DETERMINISTIC layers only" warning whenever a real write ran without a live model.
+**For a model-verified mutation set `SLOPSLAP_LIVE=1`.** Propose placeholders (`[DEFINE X]`) OUTSIDE
+the document unless the user approves inserting them. When a passage is clean, leave it alone.
