@@ -17,7 +17,8 @@ import re
 import subprocess
 import sys
 
-from slopslap_verification.editscript import Edit, parse_edits, sha256_hex
+from eval.candidates import Candidate, _span
+from slopslap_verification.editscript import Edit, apply_edits, parse_edits, sha256_hex
 from slopslap_verification.ledger import build_ledger, verify
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -31,14 +32,26 @@ def _clean_stub(original, revision, ledger_canonical):
 
 
 # --------------------------------------------------------------- verifier input construction
-def test_suggest_candidate_diff_roundtrips_to_editscript():
-    """A suggest candidate diff serializes to the {start_byte,end_byte,replacement_b64} the seam
-    consumes and round-trips through parse_edits to the same Edit."""
-    e = Edit(5, 9, b"quick")
-    wire = {"start_byte": e.start_byte, "end_byte": e.end_byte,
-            "replacement_b64": base64.b64encode(e.replacement).decode("ascii")}
-    back = parse_edits([wire])
-    assert back == [e]
+def test_suggest_candidate_constructs_verifier_input_from_a_diff():
+    """A suggest candidate — a (harm-substring -> replacement) repair — constructs the exact
+    {start_byte,end_byte,replacement_b64} edit-script the verifier consumes. Exercises the real
+    diff->edit-script path (_span locates the harm bytes, to_envelope serializes), not just a
+    hand-built dict round-trip."""
+    original = b"The platform is fast, reliable, and scalable.\n"
+    harm, repair = b"fast, reliable, and scalable", b"reliable"  # collapse the tricolon
+    s, e = _span(original, harm)
+    assert (s, e) != (-1, -1)
+    edit = Edit(s, e, repair)
+    cand = Candidate(baseline="slopslap", fixture="t", input_sha256=sha256_hex(original),
+                     disposition="repair", reason="tricolon", edits=[edit])
+    env = cand.to_envelope(original)
+    # the constructed edit-script targets EXACTLY the harm bytes
+    assert env["edits"][0]["start_byte"] == s and env["edits"][0]["end_byte"] == e
+    # and it round-trips to the same Edit the verifier will apply
+    back = parse_edits(env["edits"])
+    assert back == [edit]
+    # applying it yields the intended repair (the verifier's `original` -> `revision` transform)
+    assert apply_edits(original, back) == b"The platform is reliable.\n"
 
 
 # --------------------------------------------------------------- deterministic BLOCK (no model)
@@ -127,6 +140,23 @@ def test_cli_invariant_violation_exits_2(tmp_path):
     out = json.loads(proc.stdout)
     vstage = [s for s in out["stages"] if s["stage"] == "verify"][0]
     assert vstage["status"] == "blocked" and vstage["code"] == "verify_not_shippable"
+
+
+def test_cli_run_without_dry_run_flag_is_still_non_mutating(tmp_path):
+    """suggest is non-mutating in v0.1.x REGARDLESS of --dry-run (the CLI hardcodes write=False; the
+    write path is fenced until #29). Omitting the flag must NOT mutate the source (Med — the flag is
+    reserved, not the safety boundary)."""
+    src = tmp_path / "doc.md"
+    src.write_bytes(_GOLDEN_DOC)
+    ef = tmp_path / "edits.json"
+    ef.write_text(json.dumps([{"start_byte": 28, "end_byte": 32,
+                               "replacement_b64": base64.b64encode(b"quick").decode("ascii")}]))
+    proc = subprocess.run([sys.executable, _SEAM, "run", "--path", str(src), "--edits", str(ef),
+                           "--declared-genre", "general"],  # NO --dry-run
+                          capture_output=True, text=True, cwd=_ROOT,
+                          env={**os.environ, "SLOPSLAP_LIVE": ""})
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert src.read_bytes() == _GOLDEN_DOC  # unmutated even without --dry-run
 
 
 # --------------------------------------------------------------- doc-drift guard (red -> green)

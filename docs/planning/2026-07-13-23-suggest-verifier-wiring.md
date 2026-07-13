@@ -119,3 +119,13 @@ model in the loop).
 
 No new trust surface. Suggest stays non-mutating (write=False); the seam's dry-run boundary (#27)
 holds. Untrusted target content remains data, never instructions (keystone unchanged).
+
+## 9. Review provenance
+
+- **Step 4 self-review** (Opus): PASS, thesis (no new production logic) confirmed at source. 4 Med + 1 Low folded into §4/§7 (M1 dedupe vs #27 tests, M2 inline-text→temp-file entry path, M3 SKILL.md:141-142 also stale, M4 plugin.json v0.1.9 contradiction named, L1 bad citation dropped). Peer consult + adversarial-on-design skipped per D-23a (proportionate to a docs+tests change).
+- **Step 11 code review** (Opus full-diff): PASS. Med fixed — README Status "Version:" bumped 0.1.8→0.1.9. Low — dashboard #23 row (updated in the PR). Out-of-scope catches folded: rendered this doc's `.html` companion (workspace mandate).
+- **Step 11 adversarial diff** (Codex, `docs/reviews/rawgentic-23-branch-diff-2026-07-13.md`): 2 High + 1 Med + 1 Low, all dispositioned:
+  - High (input-construction test shallow): FIXED — the test now builds a suggest candidate via `eval/candidates._span`/`to_envelope` (real diff→edit-script path), asserts it targets the harm bytes, round-trips, and applies to the intended repair.
+  - High (edit-script has no per-range preimage → in-bounds-wrong-offset): the whole-file digest + Layers-1/2 result-verify already block an *unsafe applied* edit; suggest.md "fail-closed" wording made precise (digest = whole-file, bounds = invalid_edits, result = verify). A self-checking per-range preimage is an editscript/#27-schema hardening, out of #23's docs-authority scope → **follow-up filed**.
+  - Med (`--dry-run` optional, unmutating-when-omitted untested): FIXED — CLI `run` hardcodes write=False (confirmed assemble.py:579-581); added `test_cli_run_without_dry_run_flag_is_still_non_mutating`; suggest.md clarifies the flag is reserved, not the safety boundary.
+  - Low (plugin.json v0.1.9 contradiction): already named (M4) + owner-deferred to #25. No action.
