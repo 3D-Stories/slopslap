@@ -15,6 +15,13 @@ The name says "slap" — ignore that impulse. An em-dash, a fragment, a tricolon
 none is harm on its own. Harm is prose that does less than it claims, hides who is responsible,
 asserts what it hasn't shown, or buries its own meaning. When in doubt, slopslap changes nothing.
 
+## Overview
+
+The **visual plugin overview** — the skill, the four commands, the
+protect→diagnose→invariants→rewrite→verify loop, the six harm categories, and the v0.2 engine — is
+live at **[3d-stories.github.io/slopslap](https://3d-stories.github.io/slopslap)** (also
+[in-repo](docs/index.html)).
+
 ## Install
 
 It's a standard Claude Code plugin — clone/point Claude Code at this repo. The judgment lives in
@@ -90,13 +97,86 @@ Offline (default) it uses a hardcoded `clean` stub (the frozen faithful candidat
 clean; `scripts/eval/semantic.py`), so offline the run exercises the full L3 fold plumbing — not a
 real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval/run_eval.py --write`.
 
+## In action
+
+Illustrative before → after repairs, one per harm class. In every case the demonstrated harm is
+removed and **nothing else is touched** — facts, numbers, requirements, and voice survive. These
+show the *judgment*; the machine-checked proof on a real 421-line document is in **The working
+proof** above.
+
+### Emptiness + simulation — cut the filler, flag the unbacked claim (don't invent support)
+
+> **Before.** In today's rapidly evolving landscape, it is important to note that our platform
+> leverages a robust, scalable, and cutting-edge architecture to deliver best-in-class performance
+> that our users have come to know and love. Whether you are a seasoned professional or just
+> starting out, our solution empowers you to unlock your full potential and achieve remarkable
+> results across a wide range of use cases.
+
+> **After.** Our platform runs on a distributed architecture. `[claim: "best-in-class performance" —
+> no benchmark or measurement shown]` `[claim: "users have come to know and love" — no evidence of
+> adoption cited]`
+
+slopslap deletes the empty framing (`In today's rapidly evolving landscape…`, `Whether you are a
+seasoned professional…`) because removing it loses no intent, collapses the `robust, scalable, and
+cutting-edge` tricolon to the one word carrying meaning, and **flags** the two simulated claims
+rather than repairing or inventing evidence for them. It does not assert the platform *isn't*
+best-in-class — only that the prose hasn't shown it. `editorial-harm: high · confidence: high`.
+
+### Laundering — convert the vague ask to a question; preserve the real requirement byte-for-byte
+
+> **Before.** The retry subsystem should be robust, intuitive, and user-friendly under all
+> conditions, providing a seamless and delightful experience for operators. The client MUST retry a
+> failed request at most 5 times, waiting no less than 200 ms and no more than 2000 ms between
+> attempts, and MUST NOT retry a `429` before the `Retry-After` interval has elapsed.
+
+> **After.** `[non-testable — what does "robust, intuitive, and user-friendly under all conditions"
+> require an operator to be able to do? name the observable behavior]` The client MUST retry a
+> failed request at most 5 times, waiting no less than 200 ms and no more than 2000 ms between
+> attempts, and MUST NOT retry a `429` before the `Retry-After` interval has elapsed.
+
+The first sentence is evaluative language wearing a requirement's clothes, so slopslap converts it
+to a question — it **never deletes** laundered text, because the intent behind it is load-bearing.
+The genuine normative sentence is preserved exactly: every number (`5`, `200 ms`, `2000 ms`), every
+modal (`MUST`, `MUST NOT`), the negation, and the protected `` `429` ``/`` `Retry-After` `` spans
+are byte-identical. `editorial-harm: med · confidence: high`.
+
+### Epistemic distortion — restore the hidden actor without inventing one; keep the honest hedge
+
+> **Before.** It was determined that a configuration error had been introduced, and it is believed
+> that the outage may have possibly been caused by an unrelated deployment that was rolled out around
+> the same timeframe. Mistakes were made, and steps are being taken to ensure this will never happen
+> again.
+
+> **After.** We introduced a configuration error. The outage **may** have been compounded by an
+> unrelated deployment rolled out around the same time — `[actor unclear: who rolled out the
+> unrelated deployment?]` we have not confirmed this. We have added a pre-deploy config check to
+> catch this class of error.
+
+The passive `It was determined` / `Mistakes were made` hides who acted, so slopslap restores the
+first-person actor where the source implies it and **flags** the one it genuinely can't resolve
+rather than fabricating a name. It keeps the real uncertainty (`may have`) — that hedge is honest,
+not slop — while cutting the hedge-*pile* (`may have possibly been`) and the empty
+`never happen again` promise, replacing it with the concrete step the text actually supports.
+`editorial-harm: high · confidence: med`.
+
+### What it leaves alone
+
+> A short, sharp fragment. An em-dash for a sudden turn — like this. A deliberate second-person
+> aside, because that's how this author writes.
+
+slopslap changes **nothing** here. None of these is harm: the fragment is intentional, the em-dash
+earns its place, the voice is distinctive and consistent. The keystone holds — no demonstrated harm,
+no edit. *When in doubt, it changes nothing.*
+
 ## Status
 
-- **Version:** 0.2.0 (v0.2 epic #16 in progress — live model-in-the-loop).
+- **Version:** 0.2.0 — v0.2 epic (#16) **complete**: live model-in-the-loop audit → verify → suggest
+  → apply for arbitrary documents.
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
-- **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; wiring the
-  `apply` command to the apply engine; a live cross-model LLM-judge A/B (currently secondary/not-run).
+- **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
+  cross-model LLM-judge A/B (currently secondary/not-run). Scanner thresholds stay measure-only until
+  a licensed calibration corpus with verbatim text clears the validation bar.
 
 ## Changelog
 
