@@ -91,7 +91,10 @@ def test_modality_flip_blocked(tmp_path):
     i = _DOC.index(b"must never")
     proc, _ = _run(tmp_path, _DOC, [(i, i + len(b"must never"), b"may")])
     assert proc.returncode == 2, proc.stdout + proc.stderr
-    assert _stage(json.loads(proc.stdout), "verify")["data"]["decision"] == "REJECT"
+    v = _stage(json.loads(proc.stdout), "verify")["data"]
+    # pin the finding code (not just REJECT) so the block can't be satisfied by an incidental
+    # edit_locality if range-derivation ever degrades — self-contained like the number test (review Med)
+    assert v["decision"] == "REJECT" and any(f["code"] == "entry_weakened" for f in v["findings"])
 
 
 def test_protected_span_edit_blocked(tmp_path):
