@@ -26,7 +26,7 @@ It's a standard Claude Code plugin — clone/point Claude Code at this repo. The
 |---|---|
 | `/slopslap:audit <target>` | read-only diagnosis — one typed record per demonstrated harm (category · evidence · harm+impact · two ratings · permitted remedy). No edits. |
 | `/slopslap:suggest <target>` | **(default)** diagnosis + a focused diff per authorized repair + the invariant-check result. Non-mutating. |
-| `/slopslap:apply <file>` | repair via **backup-first, staged, verified, atomic pathname replacement** (never live-byte editing; hardlinks refused, symlinks followed+reported). Disabled in this MVP (fails closed with `status: mutation_unavailable`) until the engine is wired to the command (#29). |
+| `/slopslap:apply <file>` | repair via **backup-first, staged, verified, atomic pathname replacement** (never live-byte editing; hardlinks refused, symlinks followed+reported). Enabled (#29) — mutates ONLY after a verified backup + the 3-layer verifier pass; fails closed otherwise. |
 | `/slopslap:voiceprint show\|reset\|export\|delete` | v2 (deferred) — reserved; returns `status: not_implemented_mvp` and stores/reads nothing. |
 
 Every command carries the keystone sentence verbatim and treats the target text as **data, not
@@ -92,7 +92,7 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Status
 
-- **Version:** 0.1.10 (v0.2 epic #16 in progress — live model-in-the-loop).
+- **Version:** 0.1.11 (v0.2 epic #16 in progress — live model-in-the-loop).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; wiring the
@@ -100,6 +100,18 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Changelog
 
+- **0.1.11** — apply command **enabled** (#29, WF5 F4 enablement half). The v0.1.8 dry-run write-fence
+  is removed; the mutating path is reached via an explicit `apply` CLI subcommand
+  (`assemble.py apply --path … --edits …`) — `run` stays dry-run-only (the safe default preview), so a
+  real file mutation can never be triggered by a flag typo. Every apply stays **backup-gated +
+  verifier-gated**: it mutates only after a mandatory verified backup and the 3-layer verifier both
+  pass, and fails closed on a backup failure. `commands/apply.md` rewritten from the disabled
+  `mutation_unavailable` sentinel to the real flow (dry-run-first, exit-code contract 0/2/3/4, "never
+  claim an unconfirmed mutation"). Offline (`SLOPSLAP_LIVE` unset) apply rests on the deterministic
+  layers only and says so — a real write on a non-live semantic layer emits an "applied on the
+  deterministic layers only" warning + `semantic_mode`; set `SLOPSLAP_LIVE=1` for a model-verified
+  apply (adversarial-diff fold). Reviewed: Opus diff PASS + Codex adversarial diff (3 High + 1 Med
+  folded). Live safety golden is #28.
 - **0.1.10** — apply write-strategy hardening (#21, WF5 F4). The backup-gated apply engine's model-C
   edge cases are closed with failure-injection tests: **hardlinked** sources are refused fail-closed
   (before the backup, and re-checked at the pre-replace boundary — a link created mid-flight can't
