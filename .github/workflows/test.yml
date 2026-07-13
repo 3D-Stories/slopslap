@@ -5,7 +5,9 @@ on:
   pull_request:
 jobs:
   pytest:
-    runs-on: ubuntu-latest
+    runs-on:
+      group: 3ds-fleet
+      labels: [self-hosted, linux]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
