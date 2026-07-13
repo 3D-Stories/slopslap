@@ -10,7 +10,7 @@ source of truth; the hosted Artifact is a copy).
 
 ## Progress
 
-**9 / 14 children merged** · Tier 0+1+2 done, Tier 3 started (#23) · next: Tier 3 — #21 (full WF2)
+**10 / 14 children merged** · Tier 0+1+2 done, Tier 3 (#23,#21) · next: Tier 3 — #29 (lite, dep #21+#27 ✓)
 
 | Tier | Child | Title | Depth | Deps | Status | PR | Version | Gate delta |
 |---|---|---|---|---|---|---|---|---|
@@ -23,7 +23,7 @@ source of truth; the hosted Artifact is a copy).
 | 1 | #22 | genre classifier constrains diagnosis/verify | lite | — | ✅ merged | #39 | 0.1.7 | 344→369 (+25), 0 reg |
 | 2 | #27 | live-orchestration seam (the assembler) | full WF2 | #26, #17–#20 | ✅ merged | #41 | 0.1.8 | 369→410 (+41), 0 reg |
 | 3 | #23 | suggest → deterministic verifier wiring | full WF2 | — | ✅ merged | #44 | 0.1.9 | 415→423 (+8), 0 reg |
-| 3 | #21 | apply write-strategy hardening | full WF2 | — | queued | — | — | — |
+| 3 | #21 | apply write-strategy hardening | full WF2 | — | ✅ merged | #45 | 0.1.10 | 423→434 (+11), 0 reg |
 | 3 | #29 | apply-command enablement | lite | #21, #27 | queued | — | — | — |
 | 3 | #24 | manual voice sample (one-shot) | lite | — | queued | — | — | — |
 | 4 | #28 | live e2e validation golden (safety verdicts) | lite | #27, #23, #17–#20, #30 | queued | — | — | — |

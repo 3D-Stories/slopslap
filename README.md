@@ -26,7 +26,7 @@ It's a standard Claude Code plugin — clone/point Claude Code at this repo. The
 |---|---|
 | `/slopslap:audit <target>` | read-only diagnosis — one typed record per demonstrated harm (category · evidence · harm+impact · two ratings · permitted remedy). No edits. |
 | `/slopslap:suggest <target>` | **(default)** diagnosis + a focused diff per authorized repair + the invariant-check result. Non-mutating. |
-| `/slopslap:apply <file>` | in-place repair, **gated by a mandatory pre-mutation backup**. Disabled in this MVP (fails closed with `status: mutation_unavailable`) until the backup gate is wired to the command. |
+| `/slopslap:apply <file>` | repair via **backup-first, staged, verified, atomic pathname replacement** (never live-byte editing; hardlinks refused, symlinks followed+reported). Disabled in this MVP (fails closed with `status: mutation_unavailable`) until the engine is wired to the command (#29). |
 | `/slopslap:voiceprint show\|reset\|export\|delete` | v2 (deferred) — reserved; returns `status: not_implemented_mvp` and stores/reads nothing. |
 
 Every command carries the keystone sentence verbatim and treats the target text as **data, not
@@ -92,7 +92,7 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Status
 
-- **Version:** 0.1.9 (v0.2 epic #16 in progress — live model-in-the-loop).
+- **Version:** 0.1.10 (v0.2 epic #16 in progress — live model-in-the-loop).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; wiring the
@@ -100,6 +100,19 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Changelog
 
+- **0.1.10** — apply write-strategy hardening (#21, WF5 F4). The backup-gated apply engine's model-C
+  edge cases are closed with failure-injection tests: **hardlinked** sources are refused fail-closed
+  (before the backup, and re-checked at the pre-replace boundary — a link created mid-flight can't
+  slip through); the file **mode is preserved exactly** via `os.fchmod` (umask-independent; a platform
+  without `os.fchmod` degrades to owner-only 0o600 + a warning rather than crashing); **symlinks** are
+  followed to their target and reported; **extended attributes** (xattr/ACL/security labels), lost
+  across the inode replacement, are detected and warned; **EXDEV** and any `os.replace` failure abort
+  cleanly and never copy over the live source. The misleading "in-place" spec prose is rewritten to
+  "backup-first, staged, verified, atomic pathname replacement" (SKILL.md, commands/apply.md,
+  backup.py metadata policy). No `os.chown` (ownership-change scope creep / partial-chown hazard,
+  dropped). Durability still requires `SLOPSLAP_FSYNC=1` in production (opt-in default is a sandbox
+  workaround; read-back is the correctness net). The apply COMMAND remains disabled pending enablement
+  (#29). Strategy peer-settled model C; design adversarially reviewed (4 High + 3 Med folded).
 - **0.1.9** — suggest's invariant-check is now the **deterministic verifier**, not a model claim (#23,
   WF5 F2 deterministic half). The suggest command routes its proposed diff through the #27 seam and
   presents `slopslap_verification`'s real `verify` verdict (Layers 1+2 — numbers, units, modality,

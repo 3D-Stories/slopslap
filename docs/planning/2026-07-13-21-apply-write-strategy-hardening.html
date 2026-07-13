@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>slopslap #21 — Apply Write-Strategy Hardening</title>
+<style>
+:root{--bg:#f6f7f8;--surface:#fff;--ink:#1a2126;--ink-2:#4b5a63;--ink-3:#7b8a92;
+--line:#dde3e6;--accent:#0f766e;--code:#eef1f3}
+@media(prefers-color-scheme:dark){:root{--bg:#12181c;--surface:#1a2228;--ink:#e7edf0;
+--ink-2:#a8b6bd;--ink-3:#71808a;--line:#2a353c;--accent:#2dd4bf;--code:#232d34}}
+:root[data-theme=dark]{--bg:#12181c;--surface:#1a2228;--ink:#e7edf0;--ink-2:#a8b6bd;
+--ink-3:#71808a;--line:#2a353c;--accent:#2dd4bf;--code:#232d34}
+:root[data-theme=light]{--bg:#f6f7f8;--surface:#fff;--ink:#1a2126;--ink-2:#4b5a63;
+--ink-3:#7b8a92;--line:#dde3e6;--accent:#0f766e;--code:#eef1f3}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+font:15px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px 72px}
+header{padding:40px 0 18px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.eyebrow{color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+h1{font-size:clamp(22px,4vw,30px);margin:.3em 0;font-weight:750;letter-spacing:-.02em}
+h2{font-size:19px;font-weight:700;margin:1.4em 0 .4em}
+h3{font-size:16px;font-weight:650;margin:1.2em 0 .3em}
+p,li{color:var(--ink-2)}
+code{background:var(--code);border-radius:4px;padding:1px 5px;font:12.5px/1.4 ui-monospace,Menlo,Consolas,monospace}
+pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto}
+pre code{background:none;padding:0}
+blockquote{border-left:3px solid var(--accent);margin:.6em 0;padding:.2em 0 .2em 14px;color:var(--ink-3)}
+table{border-collapse:collapse;width:100%;margin:.6em 0;font-size:13.5px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.telemetry th{white-space:nowrap;color:var(--ink-3);width:1%}
+.telemetry-section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 18px 14px;margin-top:24px}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div class="eyebrow">rawgentic design artifact · updated 2026-07-13 04:44 MDT</div>
+<h1>slopslap #21 — Apply Write-Strategy Hardening</h1>
+
+</header>
+<main>
+<h1>Design — #21 apply write-strategy hardening</h1>
+<ul>
+<li>Date: 2026-07-13</li>
+<li>Issue: [#21](https://github.com/3D-Stories/slopslap/issues/21) · Epic [#16](https://github.com/3D-Stories/slopslap/issues/16) Tier 3</li>
+<li>Complexity: standard_feature (Full WF2) · Depends on: — · Blocks: #29 (apply-command enablement)</li>
+<li>Strategy already peer-settled: <strong>model C</strong> (<code>docs/reviews/peer-apply-write-strategy-question-2026-07-12.md</code>, GPT Soul via Codex). A fresh peer consult is NOT re-run — this design cites that report; the Step-4 adversarial-on-design cross-checks the *implementation* plan.</li>
+</ul>
+<h2>1. Goal</h2>
+<p>WF5 F4, the foundational hardening half (command enablement is #29). The apply engine (<code>scripts/slopslap_apply/</code>) already implements model C&#x27;s spine — backup-first, same-dir staged temp, read-back verify, pre-replace identity guard, atomic <code>os.replace</code>, <code>SLOPSLAP_FSYNC</code>-gated durability. #21 closes model C&#x27;s <strong>edge cases</strong> the peer report enumerated but the code does not yet fully cover: hardlink fail-closed, exact metadata policy, explicit symlink no-follow, EXDEV never-copy-over-live, prod-fsync documentation — plus rewriting the misleading &quot;in-place&quot; spec prose. With failure-injection tests.</p>
+<h2>2. Current state (confirmed at source) → delta</h2>
+<blockquote><strong>Step-4 adversarial-on-design (Codex, <code>docs/reviews/2026-07-13-21-apply-write-strategy-hardening-md-2026-07-13.md</code>) folded — 4 High + 3 Med.</strong> Two proposed pieces were security-theater / scope-creep and are DROPPED (O_NOFOLLOW, os.chown); three are HARDENED (fchmod fail-closed, hardlink re-check at replace, xattr-loss warning); the test and fsync doc sharpened. Design loop-back 1/3 consumed. (The self-review subagent died on the session cap mid-dispatch; the quality-bar rubric is re-run inline by the orchestrator on the revised design — §4a.)</blockquote>
+<table>
+<thead><tr><th>AC</th><th>Present today</th><th>#21 delta (post-adversarial fold)</th></tr></thead>
+<tbody>
+<tr><td><strong>Hardlink</strong></td><td>none — <code>os.replace</code> silently orphans other links (apply.py:248)</td><td>detect <code>orig_stat.st_nlink &gt; 1</code> → fail closed before backup, <strong>AND re-check <code>st_nlink</code> at the pre-replace guard</strong> (adv H4: a 2nd link created after the first stat passes the dev/inode guard — same inode; the replace-time re-check closes it to the same tiny window as the other pre-replace checks)</td></tr>
+<tr><td><strong>Metadata (mode)</strong></td><td>temp created <code>os.open(..., stat_mode(orig_stat))</code> — <strong>umask-maskable</strong> (apply.py:238)</td><td>create the temp <code>0o600</code> (safe default), then <code>os.fchmod(fd, exact_mode)</code>; <strong>fchmod failure → fail closed / abort</strong> (adv H2: proceeding would ship a umask-masked, possibly-more-restrictive wrong mode while reporting success — the temp isn&#x27;t swapped yet, so abort is clean)</td></tr>
+<tr><td><strong>Metadata (owner/ACL/xattr/times)</strong></td><td>not addressed</td><td>model C replaces the inode. <strong>No <code>os.chown</code></strong> (adv H3 + peer: unprivileged partial-chown risk, scope creep — the new file is owner-of-the-applying-user, normal for a self-edit tool). ACL/timestamps/flags NOT preserved (documented). <strong>xattr-loss is DETECTED, not just documented:</strong> if <code>os.listxattr(source)</code> is non-empty, emit a prominent <code>warnings</code> entry that extended attributes (incl. security labels) will be lost across the inode replacement — a security-relevant change made legible, not silent (adv H3)</td></tr>
+<tr><td><strong>Symlink</strong></td><td><code>realpath</code> follows to target (apply.py:124, backup.py:155); pre-replace re-checks dev/inode identity</td><td>detect <code>os.path.islink(source_path)</code> → RECORD <code>followed_symlink: &lt;link&gt;→&lt;target&gt;</code> in the report; keep realpath-target semantics. <strong>No O_NOFOLLOW</strong> (adv H1: it only pins the final component of an open, not ancestors, and <code>os.replace</code> is pathname-based so it doesn&#x27;t bind to the checked object — pure theater on a new O_EXCL temp / an already-resolved re-read). The REAL symlink/path-substitution guard is the existing dev/inode identity re-check at the pre-replace boundary (apply.py:225-231) — documented as such</td></tr>
+<tr><td><strong>EXDEV</strong></td><td>same-dir temp structurally avoids it; <code>os.replace</code> OSError → <code>status=&quot;error&quot;</code> abort, <strong>no copy fallback</strong> (apply.py:250-258)</td><td>confirm + <strong>failure-injection test</strong> that an EXDEV-raising replace aborts and NEVER copies over the live source (peer: &quot;do not fall back to copying&quot;)</td></tr>
+<tr><td><strong>fsync</strong></td><td><code>SLOPSLAP_FSYNC</code>-gated file+dir fsync, backup + commit (backup.py:35-39,122-135; apply.py:241,279-290)</td><td>opt-in stays — the sandbox HANGS on <code>os.fsync</code> (documented env gotcha), so it cannot default on here. <strong>prod-requirement documented</strong> (prod MUST set <code>SLOPSLAP_FSYNC=1</code>) AND the skip already emits a loud <code>warnings</code> entry (backup.py:38) so a durability-less run is never silent (adv M7 — the most we can do without breaking the sandbox; read-back is the correctness net, fsync is the durability net)</td></tr>
+<tr><td><strong>Spec prose</strong></td><td>&quot;in-place&quot; language (SKILL.md:108, commands/apply.md:2-3 description)</td><td>rewrite → &quot;backup-first, staged, verified, atomic pathname replacement&quot; (peer&#x27;s exact wording). commands/apply.md BODY stays disabled — the enablement flip is #29</td></tr>
+</tbody>
+</table>
+<h2>3. Approach (one obvious path — peer-settled model C, adversarial-hardened)</h2>
+<p>Add the missing fail-closed guards to <code>apply_selective</code> at the exact points the peer sketch names, without changing the model-C spine: 1. Resolve + stat the source (apply.py:129 <code>orig_stat</code> already captures <code>st_nlink</code>). <strong>Reject    hardlinked files (<code>st_nlink &gt; 1</code>) before the backup</strong> (fail closed, no mutation). 2. Detect <code>os.path.islink(source_path)</code> → record <code>followed_symlink</code> in the report. 3. Detect + warn on extended attributes (<code>os.listxattr</code>) — lost across inode replace (adv H3). 4. Stage the temp <code>0o600</code>, then <code>os.fchmod(fd, exact_mode)</code>; <strong>abort on fchmod failure</strong> (adv H2). 5. Pre-replace guard (apply.py:225-231): the existing dev/inode + content-sha re-check IS the    symlink/path-substitution race guard (no O_NOFOLLOW theater, adv H1); <strong>add an <code>st_nlink</code> re-check    here</strong> so a hardlink created after the first stat is caught (adv H4). 6. EXDEV/any-replace-error → the existing abort path (no copy-fallback — assert in test).</p>
+<p><code>os.listxattr</code> is POSIX; guard <code>getattr(os, &quot;listxattr&quot;, None)</code> so a platform without it degrades to &quot;no xattr check&quot; rather than <code>AttributeError</code>.</p>
+<h2>4. Platform / external dependencies</h2>
+<p>platform_apis:</p>
+<ul>
+<li>api: POSIX filesystem syscalls via the Python stdlib <code>os</code> module (<code>os.replace</code>, <code>os.fchmod</code>, <code>os.open</code> with <code>O_EXCL</code>, <code>os.stat().st_nlink</code>, <code>os.listxattr</code>) on the local filesystem</li>
+</ul>
+<p>  feasibility: verified via existing-call-site — <code>scripts/slopslap_apply/apply.py</code> already uses <code>os.open(O_WRONLY|O_CREAT|O_EXCL)</code> (apply.py:238), <code>os.replace</code> (apply.py:248), <code>os.stat</code>/dev+ino (apply.py:129,230); <code>st_nlink</code> is always on <code>os.stat_result</code>, <code>os.fchmod</code>/<code>os.listxattr</code> are stdlib <code>os</code> on the same POSIX surface. Adv M6 (adjacency is not proof): the §7 failure-injection tests double as the spike — they exercise real <code>os.link</code>, <code>os.fchmod</code>, <code>st_nlink</code>, and a real apply on the sandbox FS, so if any hangs/fails under this sandbox the test catches it before merge. <code>os.listxattr</code> guarded <code>getattr(os,&quot;listxattr&quot;,None)</code> so a platform lacking it degrades to no-check, not <code>AttributeError</code>.   failure: fail-loud   surface: every syscall failure is an <code>OSError</code> caught → <code>status=&quot;error&quot;</code>/<code>&quot;blocked&quot;</code> in the apply report (never a silent partial write); the hardlink guard blocks pre-backup, the fchmod-failure guard aborts, the symlink + xattr-loss guards emit explicit report fields/warnings. Asserted in the §7 failure-injection tests.</p>
+<p>No external/framework/network API — stdlib <code>os</code> only, already the engine&#x27;s sole write surface. No <code>os.chown</code> (adv H3 — dropped as scope creep / partial-chown risk).</p>
+<h2>5. File changes</h2>
+<ul>
+<li><strong>EDIT</strong> <code>scripts/slopslap_apply/apply.py</code> — hardlink fail-closed (before backup + re-check at replace), <code>os.fchmod</code> exact mode with fail-closed-on-error, symlink-followed report field, xattr-loss warning, EXDEV abort (no new copy path). NO <code>os.chown</code>, NO <code>O_NOFOLLOW</code> (both dropped per adversarial fold).</li>
+<li><strong>EDIT</strong> <code>scripts/slopslap_apply/backup.py</code> — document the metadata/fsync policy in module prose (behavior already correct; the loud fsync-skip warning already exists at backup.py:38).</li>
+<li><strong>EDIT</strong> <code>skills/slopslap/SKILL.md</code> (~108) + <code>commands/apply.md</code> (description + argument-hint, lines 2-3) — retire &quot;in-place&quot; → model-C wording. <strong>apply.md body stays disabled (#29 flips it).</strong></li>
+<li><strong>EDIT</strong> <code>references/invariant-ledger.md</code> / an apply spec ref IF it carries &quot;in-place&quot; prose.</li>
+<li><strong>NEW</strong> <code>tests/test_apply_hardening.py</code> — failure-injection tests (§7).</li>
+<li><strong>EDIT</strong> <code>README.md</code> (+ Changelog <code>## 0.1.10</code>), <code>.claude-plugin/plugin.json</code> (0.1.9→0.1.10), <code>tests/test_scaffold.py</code> pin, dashboard <code>2026-07-12-16-v02-epic-dashboard.{md,html}</code> #21 row.</li>
+</ul>
+<h2>6. Error handling &amp; failure modes</h2>
+<ul>
+<li>Hardlinked source (<code>st_nlink &gt; 1</code>, checked twice — pre-backup AND at the pre-replace re-stat) → <code>status=&quot;blocked&quot;</code>, <code>errors=[&quot;refusing to mutate a hardlinked file (N links); atomic replace would orphan the other links&quot;]</code>, NO backup / NO mutation (pre-backup), or clean abort (pre-replace, adv H4 TOCTOU window).</li>
+<li>Symlink source → followed to target (existing model-C behavior) BUT report <code>followed_symlink</code> + a warning. The path-substitution race guard is the existing dev/inode + content-sha re-check at the pre-replace boundary (apply.py:225-231), NOT O_NOFOLLOW (adv H1 — dropped).</li>
+<li>Extended attributes present (<code>os.listxattr</code> non-empty) → loud <code>warnings</code> entry (lost across inode replace; security labels included) — legible, not silent (adv H3). Not a hard block (would make apply unusable on many files).</li>
+<li><code>os.fchmod</code> failure → <strong>fail closed / abort</strong> (temp cleaned, <code>status=&quot;error&quot;</code>): proceeding would ship a umask-masked wrong mode while reporting success (adv H2). The temp is not yet swapped, so aborting leaves the source intact.</li>
+<li>EXDEV / any <code>os.replace</code> error → existing abort (temp cleaned, <code>status=&quot;error&quot;</code>, restore command surfaced); a test asserts the live source is byte-identical after an injected EXDEV (never copied over).</li>
+<li>fsync unsupported/skipped → existing loud warning path (durability best-effort; backup is the recovery net; prod MUST set <code>SLOPSLAP_FSYNC=1</code>).</li>
+</ul>
+<h2>7. Testing / acceptance</h2>
+<p>Suite: <code>pytest tests/ -q</code> (D7 local gate). Baseline 423 passed / 1 skipped, exit 0 on main @ 9daa957. <code>tests/test_apply_hardening.py</code> — failure-injection (each asserts fail-closed, source unmutated): 1. <strong>Hardlink fail-closed (pre-backup)</strong> — <code>os.link</code> a second name to the source; <code>apply_selective</code> → <code>status=&quot;blocked&quot;</code>, source + the other link both byte-identical, NO backup created. 2. <strong>Hardlink TOCTOU (pre-replace re-check, adv H4)</strong> — start with <code>st_nlink==1</code>, monkeypatch so a second <code>os.link</code> appears between the initial stat and the pre-replace re-stat; apply → clean abort (<code>blocked</code>), source unmutated. (Injected via a stat-sequence or a hook on the re-read.) 3. <strong>Exact mode + fchmod is load-bearing (adv M5)</strong> — <code>os.umask(0o077)</code>, source <code>chmod 0o644</code>; after a real apply the mutated mode == <code>0o644</code>. Precise: without fchmod the create-mode would be masked to <code>0o600</code>, so this test FAILS if fchmod is removed (proves the fix, not the create-mode path). 4. <strong>fchmod failure → fail closed (adv H2)</strong> — monkeypatch <code>os.fchmod</code> to raise <code>OSError</code>; apply → <code>status=&quot;error&quot;</code>, source byte-identical, temp cleaned (no wrong-mode file shipped). 5. <strong>EXDEV never copies over live</strong> — monkeypatch <code>os.replace</code> to raise <code>OSError(errno.EXDEV)</code>; apply → <code>status=&quot;error&quot;</code>, live source byte-identical (no copy-fallback), temp cleaned, restore command present. 6. <strong>Symlink followed + reported</strong> — source is a symlink to a target; apply mutates the TARGET, <code>report[&quot;followed_symlink&quot;]</code> records link→target, target verified. 7. <strong>xattr-loss warning (adv H3)</strong> — set an xattr on the source (skip if the FS/platform rejects it); apply → a <code>warnings</code> entry names the xattr loss; apply still succeeds (not a hard block). 8. <strong>os.replace generic failure</strong> — monkeypatch to raise a non-EXDEV OSError (Windows-sharing analog) → clean abort, source intact, backup preserved. 9. <strong>Regression</strong> — a normal (non-hardlink, non-symlink, no-xattr) apply still succeeds end-to-end (mode preserved, backup made, atomic replace) — the happy path survives the new guards.</p>
+<p>Red-before-green: each guard&#x27;s test is red before its guard lands. Full suite re-run; delta vs 423/1. Tests that depend on POSIX-only features (<code>os.link</code> hardlinks, <code>os.listxattr</code>, umask semantics) skip cleanly on a platform lacking them rather than failing.</p>
+<h2>8. Security</h2>
+<p>Filesystem-safety hardening is the whole point: fail-closed on hardlink (prevents silent link-semantics breakage), the <strong>last-moment pre-commit re-validation tight to <code>os.replace</code></strong> (resolved-path identity + dev/inode + hardlink count + content digest) minimizes the symlink/ path-substitution/concurrent-edit TOCTOU window — this is the real guard, NOT <code>O_NOFOLLOW</code> (dropped as theater, adv H1: it pins only a single open&#x27;s final component and cannot bind the pathname-based <code>os.replace</code>). EXDEV-abort prevents partial cross-device writes; exact mode preservation prevents a repaired file silently becoming world-readable/executable; xattr-loss is warned. No new trust surface; the untrusted-content boundary is unchanged (apply consumes a verified edit-script, never raw model prose).</p>
+<h2>4a. Step-4 self-review (inline, quality-bar rubric)</h2>
+<p>The dispatched Opus self-review subagent died on the session cap mid-run; per the fresh-shell resume, the quality-bar rubric was re-run INLINE by the orchestrator on the revised design (the rubric is a check, not a subagent-only gate). Result: PASS — patterns respected (guards sit in <code>apply_selective</code> where all apply routes converge; no new module); all 6 hardening ACs addressed + the spec-prose rewrite; each guard verifiable via a failure-injection test that is red before the guard; input-validation/security is the whole point and is fail-closed; no backward-compat break (new guards only reject cases that were silently unsafe before); platform feasibility declared + spiked-by-test. Scope fidelity: commands/apply.md BODY untouched (enablement is #29); the two over-reaches the adversarial pass caught (O_NOFOLLOW theater, os.chown) are dropped. No new Critical/High from the inline rubric; no further loop-back.</p>
+<h2>9. Review provenance</h2>
+<ul>
+<li><strong>Peer strategy:</strong> model C, <code>docs/reviews/peer-apply-write-strategy-question-2026-07-12.md</code> (settled 2026-07-12; not re-run for #21).</li>
+<li><strong>Step-4 adversarial-on-design</strong> (Codex, <code>docs/reviews/2026-07-13-21-apply-write-strategy-hardening-md-2026-07-13.md</code>): 4 High + 3 Med, ALL confirmed at source + folded (H1 O_NOFOLLOW theater→dropped; H2 fchmod-fail→fail-closed; H3 ownership scope-creep→dropped + xattr-loss warning added; H4 hardlink TOCTOU→pre-replace re-check; M5 test-2 umask→precise; M6 feasibility→tests-are-the-spike; M7 fsync→loud-warn+prod-doc). Design loop-back 1/3 consumed.</li>
+<li><strong>Step-4 self-review:</strong> inline quality-bar rubric (subagent died on session cap), PASS — §4a.</li>
+</ul>
+<h2>10. Step-11 review provenance</h2>
+<ul>
+<li><strong>Step-8a</strong> (2-lens Opus over apply.py): PASS; Med fixed — <code>os.fchmod</code> Windows guard (getattr + graceful degrade).</li>
+<li><strong>Step-11 code review</strong> (Opus full-diff): PASS; Med (dashboard) + Low (bare-<code>pass</code> xattr swallow → now warns) folded.</li>
+<li><strong>Step-11 adversarial diff</strong> (Codex, <code>docs/reviews/rawgentic-21-branch-diff-2026-07-13.md</code>): 2 High + 1 Med, all confirmed + folded — H1 (pre-replace guard ran before temp staging → widened TOCTOU) FIXED by relocating the identity/nlink/sha re-check to <code>_precommit_reason</code> called immediately before <code>os.replace</code> (+ test 2b hardlink-during-staging); H2 (xattr enumerate-failure silent) already fixed by the Step-11 Low warning; M3 (this §8 crediting the dropped O_NOFOLLOW) FIXED above. No design loop-back (implementation placement/doc fixes; design intent — peer step 5 &quot;immediately before commit&quot; — was already correct).</li>
+</ul>
+
+</main>
+<footer>Last updated: 2026-07-13 04:44 MDT · generated by hooks/render_artifact.py — self-contained, no external resources.</footer>
+</div>
+</body>
+</html>

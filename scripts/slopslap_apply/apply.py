@@ -126,10 +126,40 @@ def apply_selective(
     try:
         with open(source, "rb") as fh:
             original = fh.read()
-        orig_stat = os.stat(source)  # capture identity (dev/ino) for the pre-replace guard (H5)
+        orig_stat = os.stat(source)  # capture identity (dev/ino/nlink) for the pre-replace guard (H5)
     except OSError as err:
         report.update(status="error", errors=[f"cannot read source: {err}"])
         return report
+
+    # --- #21 hardening: fail-closed edge-case guards BEFORE any mutation (incl. the backup) ---
+    # Hardlink: os.replace creates a NEW inode, so mutating a hardlinked file leaves the OTHER links
+    # on the old bytes. Refuse, fail closed. (adv H4: re-checked at the pre-replace guard too, since
+    # a second link can appear after this stat.)
+    if orig_stat.st_nlink > 1:
+        report.update(status="blocked",
+                      errors=[f"refusing to mutate a hardlinked file ({orig_stat.st_nlink} links); "
+                              f"atomic replace would orphan the other link(s)"])
+        return report
+    # Symlink: model C follows the link and replaces its TARGET (`source` is already realpath'd).
+    # Record which concrete file was mutated so the caller sees it. The path-substitution race guard
+    # is the dev/inode + content-sha re-check at the pre-replace boundary below — NOT O_NOFOLLOW,
+    # which only pins the final open's last component and cannot bind the pathname-based os.replace.
+    if os.path.islink(source_path):
+        report["followed_symlink"] = f"{source_path} -> {source}"
+    # Extended attributes (xattr/ACL/security labels) are NOT carried across the inode replacement.
+    # Detect + warn loudly (not a hard block) so the loss is legible, never silent. (adv H3)
+    _listxattr = getattr(os, "listxattr", None)
+    if _listxattr is not None:
+        try:
+            if _listxattr(source):
+                report["warnings"].append(
+                    "extended attributes (xattr/ACL/security labels) will NOT be preserved across "
+                    "the atomic replacement")
+        except OSError as err:
+            # a probe failure never blocks apply (warn-only, best-effort), but surface it rather
+            # than swallow — a silent skip could hide a real xattr loss (Step-11 Low).
+            report["warnings"].append(f"could not check extended attributes ({err}); "
+                                      f"any xattr/ACL will NOT be preserved across the replacement")
 
     # sort into the SAME order ledger-verify labels hunks (by start,end), so h0..hN align.
     all_edits = sorted(_edits(edits_input), key=lambda e: (e.start_byte, e.end_byte))
@@ -217,27 +247,33 @@ def apply_selective(
                       note="write=False (dry run)")
         return report
 
-    # --- pre-replace guard: content AND resolved-path identity (R2 + H5) ---
-    live_path = os.path.realpath(source)
-    if live_path != source:
-        return _block(report, "source symlink/path changed since read; not clobbering")
-    try:
-        live_stat = os.stat(live_path)
-        with open(live_path, "rb") as fh:
-            live = fh.read()
-    except OSError as err:
-        return _block(report, f"re-read failed: {err}")
-    if (live_stat.st_dev, live_stat.st_ino) != (orig_stat.st_dev, orig_stat.st_ino):
-        return _block(report, "source identity (dev/inode) changed since read; not clobbering")
-    if _sha256(live) != report["original_digest"]:
-        return _block(report, "source changed since read (concurrent edit); not clobbering")
-
-    # --- atomic replace with a complete-write + read-back guard (H2) ---
+    # --- atomic replace with a complete-write + read-back guard (H2). The live-source
+    #     re-validation (identity/hardlink/content) runs IMMEDIATELY before os.replace — after the
+    #     temp is fully staged — so the TOCTOU window to the atomic swap is minimal (adv-diff H1 /
+    #     peer step 5), not widened across the whole write+fsync+read-back. ---
     tmp = source + f".slopslap.tmp.{os.getpid()}"
     try:
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, stat_mode(orig_stat))
+        # create with a SAFE default (0o600), write, then fchmod to the EXACT source mode just before
+        # commit — the create-mode arg is umask-masked, so relying on it could ship a wrong (often
+        # more-restrictive) mode while reporting success (adv H2). Setting the mode after the write
+        # keeps the predictably-named temp at owner-only 0o600 while its bytes land. fchmod failure
+        # fails closed: the temp is not yet swapped, so the outer except cleans it and aborts with the
+        # source intact. os.fchmod is POSIX-only — a platform lacking it (Windows, which backup.py
+        # DOES support) keeps the 0o600 default and warns, rather than raising an uncaught
+        # AttributeError the OSError handlers would miss (Step-8a Medium).
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         try:
             _write_all(fd, candidate)  # loop until every byte lands (no short-write corruption)
+            _fchmod = getattr(os, "fchmod", None)
+            if _fchmod is not None:
+                try:
+                    _fchmod(fd, stat_mode(orig_stat))  # EXACT mode, not umask-masked
+                except OSError as err:
+                    raise OSError(f"fchmod (exact-mode preservation) failed: {err}") from err
+            else:
+                report["warnings"].append(
+                    "exact-mode preservation unavailable on this platform (os.fchmod absent); "
+                    "applied file has owner-only (0o600) mode")
             if os.environ.get("SLOPSLAP_FSYNC") == "1":
                 os.fsync(fd)
         finally:
@@ -245,6 +281,17 @@ def apply_selective(
         with open(tmp, "rb") as fh:  # read-back before committing
             if fh.read() != candidate:
                 raise OSError("temp file content mismatch after write")
+        # LAST-moment re-validation of the live source, tight to the atomic swap (adv-diff H1):
+        # resolved-path identity, dev/inode, hardlink count, content digest must still match the
+        # audited snapshot. A hardlink or concurrent edit that appeared during temp staging is caught
+        # here rather than orphaning a link / clobbering a concurrent write.
+        reason = _precommit_reason(source, orig_stat, report["original_digest"])
+        if reason is not None:
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+            return _block(report, reason)
         os.replace(tmp, source)
         _fsync_parent(source, report["warnings"])
     except OSError as err:
@@ -259,6 +306,30 @@ def apply_selective(
 
     report.update(status="applied", mutated=True, final_digest=_sha256(candidate))
     return report
+
+
+def _precommit_reason(source: str, orig_stat, original_digest: str) -> Optional[str]:
+    """Re-validate the live source IMMEDIATELY before os.replace (peer sketch step 5): resolved-path
+    identity, dev/inode, hardlink count, and content digest must still match the audited snapshot.
+    Returns a block reason, or None if safe to commit. Called as tight to the atomic rename as
+    possible so the TOCTOU window is minimal (adv-diff H1)."""
+    live_path = os.path.realpath(source)
+    if live_path != source:
+        return "source symlink/path changed since read; not clobbering"
+    try:
+        live_stat = os.stat(live_path)
+        with open(live_path, "rb") as fh:
+            live = fh.read()
+    except OSError as err:
+        return f"re-read failed: {err}"
+    if (live_stat.st_dev, live_stat.st_ino) != (orig_stat.st_dev, orig_stat.st_ino):
+        return "source identity (dev/inode) changed since read; not clobbering"
+    if live_stat.st_nlink > 1:  # adv H4: a hardlink created after the initial pre-backup stat
+        return (f"source became hardlinked ({live_stat.st_nlink} links) since read; "
+                f"not clobbering (would orphan the other link(s))")
+    if _sha256(live) != original_digest:
+        return "source changed since read (concurrent edit); not clobbering"
+    return None
 
 
 def _write_all(fd: int, data: bytes) -> None:
