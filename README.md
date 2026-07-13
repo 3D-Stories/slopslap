@@ -92,7 +92,7 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Status
 
-- **Version:** 0.1.13 (v0.2 epic #16 in progress — live model-in-the-loop).
+- **Version:** 0.2.0 (v0.2 epic #16 in progress — live model-in-the-loop).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; wiring the
@@ -100,6 +100,18 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Changelog
 
+- **0.2.0** — scanner threshold calibration + the v0.2 epic close (#25, final Tier-4 child). Ships
+  `scripts/slopslap_corpus/calibrate.py`, the calibration harness: it fits per-metric thresholds on the
+  #30 corpus CALIBRATION partition only, reports precision/recall/abstention per stratum
+  (tell/genre/length) on the HELD-OUT partition, and **never tunes against held-out** (structural). It
+  **never auto-promotes** — the scanner stays measure-only until an explicit validation bar is met AND
+  a human signs off. Honest current verdict (`docs/reviews/2026-07-13-25-scanner-calibration-report.md`):
+  the reference corpus tunable items carry no verbatim text (metadata/inspiration-only under their
+  licensing) → 0 usable calibration points → **measure-only**; the harness fires when the corpus gains
+  licensed text. The plugin manifest description is rewritten off the stale "invariant checks are
+  model-reported ... until ... land" hedge — the scanner, byte-exact 3-layer verifier, and apply are
+  all wired as of v0.2. **v0.2 epic #16 complete:** live model-in-the-loop audit → verify → suggest →
+  apply for arbitrary documents.
 - **0.1.13** — live audit/suggest end-to-end validation golden (#28). A `tests/test_e2e_validation_golden.py`
   drives the real command surface (`assemble.py audit` + `run`) on a fixture and asserts the full
   **safety** contract, not just output shape: a safe in-range invariant-preserving repair is ACCEPTed,

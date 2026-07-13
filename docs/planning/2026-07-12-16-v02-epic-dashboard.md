@@ -10,7 +10,7 @@ source of truth; the hosted Artifact is a copy).
 
 ## Progress
 
-**13 / 14 children merged** · Tier 0-3 + #28 done · next: Tier 4 — #25 (FINAL, sets 0.2.0)
+**14 / 14 children merged** · ALL TIERS COMPLETE · v0.2.0 · epic #16 ready to close
 
 | Tier | Child | Title | Depth | Deps | Status | PR | Version | Gate delta |
 |---|---|---|---|---|---|---|---|---|
@@ -27,7 +27,7 @@ source of truth; the hosted Artifact is a copy).
 | 3 | #29 | apply-command enablement | lite | #21, #27 | ✅ merged | #48 | 0.1.11 | 434→440 (+6), 0 reg |
 | 3 | #24 | manual voice sample (one-shot) | lite | — | ✅ merged | #49 | 0.1.12 | 440→448 (+8), 0 reg |
 | 4 | #28 | live e2e validation golden (safety verdicts) | lite | #27, #23, #17–#20, #30 | ✅ merged | #50 | 0.1.13 | 448→454 (+6), 0 reg |
-| 4 | #25 | scanner threshold calibration (held-out split) | lite | #30 | queued | — | — | — |
+| 4 | #25 | scanner threshold calibration (held-out split) | lite | #30 | ✅ merged | #51 | 0.2.0 | 454→462 (+8), 0 reg |
 
 ## Dependency spine
 

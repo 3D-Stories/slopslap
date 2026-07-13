@@ -66,7 +66,7 @@ def _category_row(skill, cat):
 def test_plugin_manifest_valid_and_versioned():
     manifest = json.loads(_read(".claude-plugin", "plugin.json"))
     assert manifest["name"] == "slopslap"
-    assert manifest["version"] == "0.1.13"
+    assert manifest["version"] == "0.2.0"
     assert manifest["description"]
     assert manifest["author"]["name"]
 
@@ -166,11 +166,13 @@ def test_all_frontmatter_parses_as_valid_yaml():
         _frontmatter(_read("commands", f"{name}.md"))
 
 
-def test_manifest_description_does_not_overclaim_v0():
+def test_manifest_description_matches_v0_2_reality():
+    """v0.2.0 WIRED the scanner + verifier + apply, so the old 'model-reported ... until' hedge is
+    RETIRED (it would now be false). The description must reflect the shipped reality without the
+    stale not-yet-wired clause."""
     desc = json.loads(_read(".claude-plugin", "plugin.json"))["description"].lower()
-    # v0.1.0 does NOT ship the wired scanner/verifier — the description must say so, not claim it
-    assert "model-reported" in desc
-    assert "until" in desc
+    assert "model-reported" not in desc          # retired at 0.2.0 (#25) — the verifier is wired
+    assert "verifier" in desc and "0.2.0" in desc
 
 
 def test_commands_guard_untrusted_input():
