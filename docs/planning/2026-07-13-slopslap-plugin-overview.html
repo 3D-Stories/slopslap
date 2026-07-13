@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>slopslap — plugin overview</title>
+</head>
+<body>
+<style>
+  :root{
+    --paper:#F6F1E7; --card:#FCF9F2; --card2:#FFFDF8; --ink:#1E1B16; --soft:#5C554A; --faint:#8A8377;
+    --hair:#E0D6C2; --hair2:#CDBFA6; --grid:rgba(51,85,110,.06);
+    --red:#C0362C; --red-soft:rgba(192,54,44,.08); --blue:#33556E; --blue-soft:rgba(51,85,110,.09);
+    --green:#3E7A52; --green-soft:rgba(62,122,82,.12); --amber:#9A6B12; --amber-soft:rgba(154,107,18,.13);
+    --disp:Georgia,'Iowan Old Style Text','Times New Roman',serif;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,'SF Mono','IBM Plex Mono',Menlo,Consolas,monospace;
+    --shadow:0 1px 0 rgba(30,27,22,.04),0 10px 30px -14px rgba(51,85,110,.30);
+    --maxw:1120px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#15130F; --card:#1E1A15; --card2:#241F18; --ink:#EEE7D8; --soft:#A79E8C; --faint:#6E665A;
+      --hair:#332C22; --hair2:#463C2E; --grid:rgba(143,178,203,.06);
+      --red:#E27567; --red-soft:rgba(226,117,103,.13); --blue:#8FB2CB; --blue-soft:rgba(143,178,203,.12);
+      --green:#77B58C; --green-soft:rgba(119,181,140,.14); --amber:#D6A24E; --amber-soft:rgba(214,162,78,.15);
+      --shadow:0 1px 0 rgba(0,0,0,.3),0 14px 34px -14px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#F6F1E7; --card:#FCF9F2; --card2:#FFFDF8; --ink:#1E1B16; --soft:#5C554A; --faint:#8A8377;
+    --hair:#E0D6C2; --hair2:#CDBFA6; --grid:rgba(51,85,110,.06);
+    --red:#C0362C; --red-soft:rgba(192,54,44,.08); --blue:#33556E; --blue-soft:rgba(51,85,110,.09);
+    --green:#3E7A52; --green-soft:rgba(62,122,82,.12); --amber:#9A6B12; --amber-soft:rgba(154,107,18,.13);
+    --shadow:0 1px 0 rgba(30,27,22,.04),0 10px 30px -14px rgba(51,85,110,.30);
+  }
+  :root[data-theme="dark"]{
+    --paper:#15130F; --card:#1E1A15; --card2:#241F18; --ink:#EEE7D8; --soft:#A79E8C; --faint:#6E665A;
+    --hair:#332C22; --hair2:#463C2E; --grid:rgba(143,178,203,.06);
+    --red:#E27567; --red-soft:rgba(226,117,103,.13); --blue:#8FB2CB; --blue-soft:rgba(143,178,203,.12);
+    --green:#77B58C; --green-soft:rgba(119,181,140,.14); --amber:#D6A24E; --amber-soft:rgba(214,162,78,.15);
+    --shadow:0 1px 0 rgba(0,0,0,.3),0 14px 34px -14px rgba(0,0,0,.7);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans);
+    font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:26px 26px;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px}
+  a{color:var(--blue); text-underline-offset:3px; text-decoration-thickness:1px}
+
+  /* ---- theme toggle ---- */
+  .toggle{position:fixed; top:14px; right:14px; z-index:20; font-family:var(--mono); font-size:11px;
+    letter-spacing:.08em; text-transform:uppercase; background:var(--card); color:var(--soft);
+    border:1px solid var(--hair2); border-radius:2px; padding:7px 11px; cursor:pointer}
+  .toggle:hover{color:var(--ink); border-color:var(--red)}
+  .toggle:focus-visible{outline:2px solid var(--red); outline-offset:2px}
+
+  /* ---- masthead ---- */
+  header.mast{border-bottom:2px solid var(--ink); background:
+    radial-gradient(120% 100% at 50% -20%, var(--blue-soft), transparent 60%);}
+  .rule-top{border-bottom:1px solid var(--hair2)}
+  .kicker{font-family:var(--mono); font-size:11.5px; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--red); display:flex; gap:14px; align-items:center; padding:14px 0; flex-wrap:wrap}
+  .kicker .dot{width:5px;height:5px;background:var(--red);border-radius:50%;display:inline-block}
+  .kicker .muted{color:var(--faint)}
+  .hero{padding:34px 0 46px}
+  h1.title{font-family:var(--disp); font-weight:700; letter-spacing:-.02em; line-height:.92;
+    font-size:clamp(52px,11vw,140px); margin:0; text-wrap:balance}
+  h1.title .slap{color:var(--red); font-style:italic}
+  .tagline{font-family:var(--disp); font-size:clamp(19px,2.5vw,27px); line-height:1.34; color:var(--ink);
+    max-width:30ch; margin:20px 0 0; text-wrap:balance}
+  .tagline em{color:var(--red); font-style:italic}
+  .sub{color:var(--soft); max-width:60ch; margin:16px 0 0; font-size:15.5px}
+
+  /* ---- the proof panel (hero demo) ---- */
+  .proof{margin:34px 0 0; background:var(--card2); border:1px solid var(--hair2); border-left:3px solid var(--red);
+    border-radius:3px; box-shadow:var(--shadow); overflow:hidden}
+  .proof .bar{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 16px;
+    border-bottom:1px solid var(--hair); font-family:var(--mono); font-size:11px; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--faint)}
+  .proof .bar b{color:var(--red); font-weight:600}
+  .proof .body{display:grid; grid-template-columns:1fr; gap:0}
+  .proof .row{padding:18px 20px}
+  .proof .row + .row{border-top:1px dashed var(--hair2)}
+  .proof .lbl{font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--faint); margin:0 0 9px; display:flex; gap:8px; align-items:center}
+  .proof .manuscript{font-family:var(--disp); font-size:18px; line-height:1.85}
+  .strike{text-decoration:line-through; text-decoration-color:var(--red); text-decoration-thickness:2px;
+    color:var(--faint)}
+  .caret{color:var(--red); font-weight:700}
+  .flag{border-bottom:2px dotted var(--amber); color:var(--ink)}
+  mark.mk{background:var(--red-soft); color:var(--ink); padding:0 2px; border-radius:2px}
+  .kept{border-bottom:1.5px solid var(--green)}
+  .stet{font-family:var(--mono); font-size:10.5px; color:var(--green); letter-spacing:.06em}
+  .ok{color:var(--green); font-weight:700}
+  @media (min-width:760px){ .proof .body{grid-template-columns:1fr 1fr}
+    .proof .row + .row{border-top:none} .proof .row:nth-child(2){border-left:1px dashed var(--hair2)} }
+
+  /* ---- generic section ---- */
+  section{padding:64px 0; border-bottom:1px solid var(--hair)}
+  .eyebrow{font-family:var(--mono); font-size:11.5px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--red); margin:0 0 14px; display:flex; gap:12px; align-items:baseline}
+  .eyebrow .n{color:var(--faint)}
+  h2{font-family:var(--disp); font-weight:700; letter-spacing:-.015em; font-size:clamp(28px,4.4vw,44px);
+    margin:0 0 8px; line-height:1.04; text-wrap:balance}
+  .lead{color:var(--soft); max-width:66ch; font-size:16.5px; margin:0 0 30px}
+
+  /* ---- keystone pull-quote ---- */
+  .keystone{background:var(--ink); color:var(--paper); border-radius:4px; padding:44px; position:relative;
+    box-shadow:var(--shadow)}
+  .keystone .stamp{position:absolute; top:20px; right:22px; font-family:var(--mono); font-size:10px;
+    letter-spacing:.18em; text-transform:uppercase; color:var(--red); border:1.5px solid var(--red);
+    padding:5px 9px; border-radius:2px; transform:rotate(4deg)}
+  .keystone p{font-family:var(--disp); font-size:clamp(21px,3vw,32px); line-height:1.34; margin:0; max-width:24ch}
+  .keystone p .hl{color:var(--red); font-style:italic}
+  .keystone .foot{margin-top:22px; color:var(--paper); opacity:.66; font-size:14.5px; max-width:62ch; font-family:var(--sans)}
+
+  /* ---- pipeline ---- */
+  .pipe{display:grid; grid-template-columns:1fr; gap:14px}
+  @media (min-width:720px){ .pipe{grid-template-columns:repeat(5,1fr); gap:0} }
+  .stage{background:var(--card); border:1px solid var(--hair2); border-radius:3px; padding:18px 16px 20px;
+    position:relative}
+  @media (min-width:720px){ .stage{border-radius:0; border-right:none}
+    .stage:first-child{border-radius:3px 0 0 3px} .stage:last-child{border-right:1px solid var(--hair2); border-radius:0 3px 3px 0} }
+  .stage .num{font-family:var(--mono); font-size:11px; color:var(--faint); letter-spacing:.1em}
+  .stage h3{font-family:var(--disp); font-size:20px; margin:6px 0 7px; letter-spacing:-.01em}
+  .stage p{margin:0; font-size:13.5px; color:var(--soft); line-height:1.5}
+  .stage .arrow{display:none}
+  @media (min-width:720px){ .stage .arrow{display:block; position:absolute; right:-9px; top:22px; z-index:3;
+    color:var(--red); font-weight:700; font-family:var(--mono)} .stage:last-child .arrow{display:none} }
+  .stage.gate{border-top:3px solid var(--green)}
+  .stage.gate .num{color:var(--green)}
+  .stage.protect{border-top:3px solid var(--blue)} .stage.protect .num{color:var(--blue)}
+
+  /* ---- command cards ---- */
+  .grid{display:grid; gap:18px; grid-template-columns:1fr}
+  @media (min-width:640px){ .grid.two{grid-template-columns:1fr 1fr} }
+  @media (min-width:900px){ .grid.four{grid-template-columns:1fr 1fr} }
+  .cmd{background:var(--card); border:1px solid var(--hair2); border-radius:4px; padding:24px;
+    box-shadow:var(--shadow); transition:transform .18s ease,border-color .18s ease}
+  .cmd:hover{transform:translateY(-3px); border-color:var(--red)}
+  .cmd .slash{font-family:var(--mono); font-size:13px; color:var(--red); margin:0 0 4px; font-weight:600}
+  .cmd h3{font-family:var(--disp); font-size:23px; margin:0 0 4px; letter-spacing:-.01em; display:flex;
+    align-items:center; gap:10px; flex-wrap:wrap}
+  .cmd p{margin:10px 0 0; font-size:14.5px; color:var(--soft); line-height:1.55}
+  .badge{font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
+    padding:3px 7px; border-radius:2px; font-weight:600; white-space:nowrap}
+  .b-live{background:var(--green-soft); color:var(--green)} .b-def{background:var(--card2); color:var(--faint); border:1px solid var(--hair2)}
+  .cmd ul{margin:14px 0 0; padding:0; list-style:none; font-family:var(--mono); font-size:12px; color:var(--faint)}
+  .cmd ul li{padding:3px 0 3px 16px; position:relative}
+  .cmd ul li::before{content:"›"; position:absolute; left:0; color:var(--red)}
+
+  /* ---- categories table ---- */
+  .tablewrap{overflow-x:auto; border:1px solid var(--hair2); border-radius:4px; box-shadow:var(--shadow)}
+  table{border-collapse:collapse; width:100%; min-width:640px; background:var(--card); font-size:14px}
+  thead th{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--faint); text-align:left; padding:13px 16px; border-bottom:2px solid var(--ink); background:var(--card2)}
+  tbody td{padding:13px 16px; border-bottom:1px solid var(--hair); vertical-align:top; color:var(--soft)}
+  tbody tr:last-child td{border-bottom:none}
+  td .cat{font-family:var(--mono); font-size:12.5px; color:var(--ink); font-weight:600}
+  .rx-del{color:var(--red); font-weight:600} .rx-q{color:var(--amber); font-weight:600} .rx-flag{color:var(--blue); font-weight:600}
+  .note{margin:16px 0 0; font-size:13.5px; color:var(--faint); font-style:italic}
+
+  /* ---- engine architecture ---- */
+  .arch{display:grid; gap:12px; grid-template-columns:1fr}
+  @media (min-width:600px){ .arch{grid-template-columns:1fr 1fr} }
+  @media (min-width:960px){ .arch{grid-template-columns:1fr 1fr 1fr} }
+  .pkg{background:var(--card); border:1px solid var(--hair); border-left:3px solid var(--blue); border-radius:3px;
+    padding:15px 17px}
+  .pkg code{font-family:var(--mono); font-size:12.5px; color:var(--red); font-weight:600}
+  .pkg p{margin:6px 0 0; font-size:13px; color:var(--soft); line-height:1.5}
+
+  /* ---- stats strip ---- */
+  .stats{display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--hair2);
+    border:1px solid var(--hair2); border-radius:4px; overflow:hidden}
+  @media (min-width:720px){ .stats{grid-template-columns:repeat(4,1fr)} }
+  .stat{background:var(--card); padding:26px 20px; text-align:center}
+  .stat .big{font-family:var(--disp); font-size:clamp(34px,5vw,50px); font-weight:700; color:var(--ink);
+    line-height:1; font-variant-numeric:tabular-nums}
+  .stat .big .u{color:var(--red); font-size:.5em; vertical-align:super}
+  .stat .cap{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--faint); margin-top:10px}
+
+  /* ---- what's live ---- */
+  .live{display:grid; gap:14px; grid-template-columns:1fr}
+  @media (min-width:760px){ .live{grid-template-columns:1fr 1fr} }
+  .liverow{display:flex; gap:14px; align-items:flex-start; background:var(--card); border:1px solid var(--hair);
+    border-radius:3px; padding:16px 18px}
+  .liverow .ck{color:var(--green); font-weight:700; font-family:var(--mono); flex:none; margin-top:1px}
+  .liverow b{font-family:var(--disp); font-size:16.5px; font-weight:700}
+  .liverow p{margin:3px 0 0; font-size:13.5px; color:var(--soft); line-height:1.5}
+
+  footer{padding:50px 0 70px; color:var(--faint); font-family:var(--mono); font-size:12px; letter-spacing:.03em}
+  footer .frule{border-top:2px solid var(--ink); margin-bottom:22px}
+  footer a{color:var(--soft)}
+
+  @media (prefers-reduced-motion:no-preference){
+    .reveal{animation:rise .6s cubic-bezier(.2,.7,.2,1) both}
+    @keyframes rise{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+  }
+</style>
+
+<button class="toggle" onclick="var r=document.documentElement,d=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',d==='dark'?'light':'dark');this.blur();">◐ theme</button>
+
+<header class="mast">
+  <div class="wrap rule-top">
+    <div class="kicker">
+      <span><span class="dot"></span> 3D-Stories</span>
+      <span class="muted">Claude Code plugin</span>
+      <span class="muted">v0.2.0 · live model-in-the-loop</span>
+    </div>
+  </div>
+  <div class="wrap hero">
+    <h1 class="title reveal">slop<span class="slap">slap</span></h1>
+    <p class="tagline reveal">Repairs prose that carries real editorial cost — <em>without</em> flattening your voice.</p>
+    <p class="sub reveal">A copyeditor that only touches <strong>demonstrated harm</strong>: prose that does less than it claims, hides who is responsible, asserts what it hasn't shown, or buries its own meaning. Not an AI-authorship detector — it never strips a stylistic tell just because it looks AI-written. When in doubt, it changes nothing.</p>
+
+    <div class="proof reveal" aria-label="Before and after: a slop sentence, proof-marked and repaired">
+      <div class="bar"><span>manuscript · marked</span><span><b>demonstrated harm only</b></span></div>
+      <div class="body">
+        <div class="row">
+          <p class="lbl">◦ before — flagged, not judged</p>
+          <p class="manuscript"><span class="strike">In today's fast-paced world, it is important to note that</span> our <span class="strike">robust, scalable, and innovative</span> parser <span class="flag">delivers best-in-class results</span><sup class="caret">‸</sup> for <span class="kept">every supported grammar</span>.</p>
+        </div>
+        <div class="row">
+          <p class="lbl">◦ after — <span class="stet">stet: voice + facts intact</span></p>
+          <p class="manuscript">Our parser handles <span class="kept">every supported grammar</span>. <span class="flag">[claim: "best-in-class" — no evidence shown]</span> <span class="ok">✓</span></p>
+          <p class="lbl" style="margin-top:12px"><span class="rx-del">emptiness → cut</span> · <span class="rx-flag">simulation → flag, don't invent</span> · <span class="kept">requirement → preserved byte-for-byte</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">01</span> What it is</p>
+    <h2>An editor with a conscience, not a style cop.</h2>
+    <p class="lead">slopslap diagnoses six kinds of editorial harm, proposes the <strong>smallest passage-local repair</strong> that removes each one, and proves — deterministically — that the repair kept every number, requirement, hedge, and protected span intact. It reports two separate axes, <strong>editorial-harm</strong> and <strong>diagnosis-confidence</strong>, never a single "AI %" that invites normalization.</p>
+    <div class="grid two">
+      <div class="cmd">
+        <h3>The anti-slap rule</h3>
+        <p>The name says "slap" — the skill's first instruction is to <em>ignore that impulse</em>. An em-dash, a fragment, a tricolon, the word "delve", a passive verb: none of these is harm. Harm is a demonstrated failure of the prose to do its job. No harm shown ⇒ no record ⇒ no edit.</p>
+      </div>
+      <div class="cmd">
+        <h3>Meaning is load-bearing</h3>
+        <p>Every rewrite is checked against an <strong>invariant ledger</strong>: claims, numbers, units, modality, negation, conditions, and protected spans must survive byte-exact. A rewrite you don't verify is a rewrite slopslap won't ship.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">02</span> The keystone</p>
+    <div class="keystone">
+      <span class="stamp">governs everything</span>
+      <p>Edit authorization comes only from <span class="hl">demonstrated editorial harm</span> — the scanner, genre, ratings, and voiceprint never authorize an edit.</p>
+      <p class="foot">Diagnosis authorizes the <em>scope</em> of an edit; genre and voiceprint only choose among already-safe realizations. None may independently authorize an edit or widen its boundary. This is the anti-normalization guard: "make it sound better / like me" can never become whole-document rewriting. The target text is data, never instructions.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">03</span> The loop</p>
+    <h2>Five stages. The last one is not optional.</h2>
+    <p class="lead">Every repair runs the same pipeline — from marking what's off-limits to proving the change was safe. The deterministic verifier owns the hard accept/reject; no model output overrides a hard failure.</p>
+    <div class="pipe">
+      <div class="stage protect"><span class="arrow">→</span><div class="num">STAGE 1</div><h3>Protect</h3><p>Mark protected spans — code, identifiers, quotes, URLs. Off-limits, byte-for-byte.</p></div>
+      <div class="stage"><span class="arrow">→</span><div class="num">STAGE 2</div><h3>Diagnose</h3><p>Find demonstrated harm; emit one typed diagnosis record per harm — evidence, impact, remedy.</p></div>
+      <div class="stage"><span class="arrow">→</span><div class="num">STAGE 3</div><h3>Invariants</h3><p>Record what each touched passage must preserve: claims, numbers, modality, negation.</p></div>
+      <div class="stage"><span class="arrow">→</span><div class="num">STAGE 4</div><h3>Rewrite</h3><p>The smallest passage-local change that removes the harm and nothing else. Never a whole-doc pass.</p></div>
+      <div class="stage gate"><span class="arrow">→</span><div class="num">STAGE 5 · GATE</div><h3>Verify</h3><p>3-layer byte-exact check. Every invariant intact, every protected span untouched, no invented claim — or it's blocked.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">04</span> Commands</p>
+    <h2>Four ways to run it — from read-only to atomic write.</h2>
+    <p class="lead">The same judgment, delivered at the level of risk you choose. Audit reads; suggest proposes; apply mutates only through a backup-gated, verifier-gated engine.</p>
+    <div class="grid four">
+      <div class="cmd">
+        <p class="slash">/slopslap:audit</p>
+        <h3>Audit <span class="badge b-live">read-only</span></h3>
+        <p>Diagnose prose harm without editing a byte. Passage, harm, confidence, category, why, and the permitted remedy kind — meaning, requirements, uncertainty, and voice preserved.</p>
+        <ul><li>no writes, no diffs</li><li>two-axis rating</li></ul>
+      </div>
+      <div class="cmd">
+        <p class="slash">/slopslap:suggest</p>
+        <h3>Suggest <span class="badge b-live">default</span></h3>
+        <p>Diagnosis + a minimal passage-local diff for each authorized repair, each cleared by the real deterministic verifier — not a model's say-so. Proposes changes; never touches the file.</p>
+        <ul><li>focused diff per harm</li><li>invariant-check verdict</li></ul>
+      </div>
+      <div class="cmd">
+        <p class="slash">/slopslap:apply</p>
+        <h3>Apply <span class="badge b-live">backup-gated</span></h3>
+        <p>Mutates the file via backup-first, staged, verified, atomic pathname replacement. Hardlinks refused, symlinks reported, EXDEV/xattr-hardened — fails closed without a verified backup and a passing verifier.</p>
+        <ul><li>mandatory pre-mutation backup</li><li>exit-code contract 0 / 2 / 3 / 4</li></ul>
+      </div>
+      <div class="cmd">
+        <p class="slash">/slopslap:voiceprint</p>
+        <h3>Voiceprint <span class="badge b-def">v2 · reserved</span></h3>
+        <p>The per-author whitelist of genuine habits that keeps slopslap from stripping real voice. Persistent capture is deferred; today a one-shot voice sample can be pasted inline to bias diction among already-safe phrasings only.</p>
+        <ul><li>stores / reads nothing yet</li><li>never authorizes an edit</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">05</span> The six harms</p>
+    <h2>Six categories. Three remedies that must never be swapped.</h2>
+    <p class="lead">Classification happens <em>after</em> harm is shown, never as a detection shortcut. The remedies differ on purpose — applying the wrong one is the top failure mode.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Category</th><th>What it is</th><th>Permitted response</th></tr></thead>
+        <tbody>
+          <tr><td><span class="cat">emptiness</span></td><td>words add nothing / restate context</td><td><span class="rx-del">delete or compress</span> — only if no intent is lost</td></tr>
+          <tr><td><span class="cat">laundering</span></td><td>evaluative language posing as a requirement</td><td><span class="rx-q">convert to a question</span> or label non-testable — <strong>never delete</strong> (load-bearing intent)</td></tr>
+          <tr><td><span class="cat">simulation</span></td><td>implies absent evidence, experience, or completed work</td><td><span class="rx-flag">flag the missing support</span> — do not repair it or invent it</td></tr>
+          <tr><td><span class="cat">lexical_structural</span></td><td>a lexical / structural / formatting tell</td><td>candidate only; act only when redundant <em>and</em> the genre permits</td></tr>
+          <tr><td><span class="cat">voice_discontinuity</span></td><td>a break in a doc expected to have one voice</td><td>evidence only where one voice is expected — not interviews, RFCs, quotes, changelogs</td></tr>
+          <tr><td><span class="cat">epistemic_distortion</span></td><td>false confidence, hedge-piles, passive hiding the actor</td><td>repair without inventing an actor or deleting necessary hedging</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">emptiness deletes · laundering questions (never deletes) · simulation only flags — different on purpose.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">06</span> The engine</p>
+    <h2>A deterministic core the model is checked against.</h2>
+    <p class="lead">Seven Python packages carry the mechanics so judgment stays honest: the scanner measures but never verdicts, the verifier owns the hard accept/reject, and a live-orchestration seam wires it all end-to-end for arbitrary documents.</p>
+    <div class="arch">
+      <div class="pkg"><code>slopslap_scan</code><p>Measure-only scanner — 11 prose metrics, genre classifier, protected-span extractor, diagnosis locality. Measures; never authorizes an edit.</p></div>
+      <div class="pkg"><code>slopslap_verification</code><p>The invariant ledger + 3-layer byte-exact verifier + auto-built invariant regions. Owns the hard accept / reject.</p></div>
+      <div class="pkg"><code>slopslap_apply</code><p>Backup-first, staged, verified, atomic pathname replacement with per-hunk selective rollback. Fails closed.</p></div>
+      <div class="pkg"><code>slopslap_assemble</code><p>The live-orchestration seam — assembles audit → verify → suggest → apply for any document, with a uniform stage envelope.</p></div>
+      <div class="pkg"><code>slopslap_invoke</code><p>Fresh-context <code>claude -p</code> semantic seam — fail-closed to "ambiguous" on any transport, timeout, or parse failure.</p></div>
+      <div class="pkg"><code>slopslap_corpus</code><p>Provenance manifest + leak-proof calibration / held-out split + the threshold-calibration harness (measure-only until validated).</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow"><span class="n">07</span> v0.2 — what's live</p>
+    <h2>The model-in-the-loop path, shipped.</h2>
+    <p class="lead">v0.1 shipped the deterministic mechanics and a frozen demonstration. v0.2 wires the live audit → verify → suggest → apply path for arbitrary documents — every stage gated, every claim checked.</p>
+    <div class="live">
+      <div class="liverow"><span class="ck">✓</span><div><b>Deterministic verifier wired into suggest</b><p>The invariant-check is the real byte-exact verifier now, not a model's report.</p></div></div>
+      <div class="liverow"><span class="ck">✓</span><div><b>Apply enabled &amp; hardened</b><p>Backup-first atomic replacement; hardlink / symlink / EXDEV / xattr fail-closed.</p></div></div>
+      <div class="liverow"><span class="ck">✓</span><div><b>Live-orchestration seam</b><p>One end-to-end path for any doc, with a machine-readable exit-code contract.</p></div></div>
+      <div class="liverow"><span class="ck">✓</span><div><b>Safety validation golden</b><p>An e2e golden proves unsafe edits are blocked, not just that the output shape is right.</p></div></div>
+    </div>
+    <div class="stats" style="margin-top:28px">
+      <div class="stat"><div class="big">14</div><div class="cap">v0.2 children shipped</div></div>
+      <div class="stat"><div class="big">462</div><div class="cap">tests passing</div></div>
+      <div class="stat"><div class="big">6</div><div class="cap">harm categories</div></div>
+      <div class="stat"><div class="big">0.2<span class="u">.0</span></div><div class="cap">version at rest</div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="frule"></div>
+    <div>slopslap · a 3D-Stories Claude Code plugin · <a href="https://github.com/3D-Stories/slopslap">github.com/3D-Stories/slopslap</a></div>
+    <div style="margin-top:8px; color:var(--faint)">Repairs high-editorial-cost prose while preserving meaning, technical accuracy, requirements, uncertainty, and intentional voice. When in doubt, it changes nothing.</div>
+  </div>
+</footer>
+
+</body>
+</html>
