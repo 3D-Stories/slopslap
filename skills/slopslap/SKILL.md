@@ -109,8 +109,10 @@ axes. Never a single "AI %" or "sloppiness score" — those invite normalization
   pathname replacement** (never live-byte editing): a mandatory verified backup is written first, the
   revision is staged in a same-directory temp, verified, then `os.replace` atomically swaps the source
   pathname. Hardlinked sources are refused fail-closed; symlinks are followed to their target and
-  reported. The apply COMMAND stays disabled (`status: mutation_unavailable`) until it is wired to the
-  engine (a later increment) — it never silently falls back to editing or to an implicit audit.
+  reported. The apply command is wired to the engine (the mutating `apply` subcommand of
+  `scripts/slopslap_assemble/`); it mutates ONLY after the mandatory verified backup and the 3-layer
+  verifier both pass, fails closed on a backup failure, and never silently falls back to editing or an
+  implicit audit.
 
 <!-- anchor:cap -->
 ## Behavioral limits

@@ -434,28 +434,29 @@ def test_apply_raising_is_caught_as_failed_stage(tmp_path, monkeypatch):
     assert ap.status == "failed" and ap.code == "apply_error" and exit_code(run) == 4
 
 
-# ---- Adversarial-diff Critical: v0.1.8 is DRY-RUN ONLY — no exposed API may mutate (write=True
-#      is refused, not forwarded to apply_selective). Mutation lands in #29. ----
-def test_write_true_is_refused_no_mutation(tmp_path):
+# ---- #29 enablement: write=True now performs the real backup-first atomic replacement (the v0.1.8
+#      dry-run fence is removed). The mutating command surface lives in test_apply_enablement.py; these
+#      two confirm the seam API itself mutates on ACCEPT + backs up. ----
+def test_write_true_mutates_on_accept(tmp_path):
     src = _write(tmp_path, "doc.md", GOLDEN_DOC)
     edit = Edit(28, 32, b"quick")  # otherwise-shippable, in-range
     run = assemble(src, [edit], declared_genre="general", semantic_fn=CLEAN_STUB,
                    write=True, apply_config=_bconf(tmp_path))
     ap = _stage(run, "apply")
-    assert ap.status == "blocked" and ap.code == "apply_not_enabled"
-    assert exit_code(run) == 2
-    # the source is byte-identical AND apply_selective was never reached (no backup dir created)
+    assert ap.status == "ok" and ap.data["mutated"] is True and exit_code(run) == 0
     with open(src, "rb") as fh:
-        assert fh.read() == GOLDEN_DOC
-    assert not os.path.exists(str(tmp_path / "backups"))
+        assert fh.read() == GOLDEN_DOC.replace(b"fast", b"quick")   # a REAL write
+    assert os.path.exists(ap.data["backup"]["path"])                # backup made
 
 
-def test_run_candidate_write_true_also_refused(tmp_path):
+def test_run_candidate_write_true_mutates(tmp_path):
     src = _write(tmp_path, "doc.md", GOLDEN_DOC)
     audit = audit_document(src, declared_genre="general").data
     run = run_candidate(audit, [Edit(28, 32, b"quick")], semantic_fn=CLEAN_STUB, write=True,
                         apply_config=_bconf(tmp_path))
-    assert _stage(run, "apply").code == "apply_not_enabled" and exit_code(run) == 2
+    assert _stage(run, "apply").status == "ok" and exit_code(run) == 0
+    with open(src, "rb") as fh:
+        assert fh.read() == GOLDEN_DOC.replace(b"fast", b"quick")
 
 
 # ---- Adversarial-diff High: semantic_mode is machine-distinguishable (live vs stub vs injected) ----

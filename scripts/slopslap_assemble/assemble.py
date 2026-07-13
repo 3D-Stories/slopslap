@@ -53,7 +53,6 @@ _EXIT_CLASS = {
     "verify_not_shippable": 2,
     "candidate_empty": 2,
     "apply_blocked": 2,
-    "apply_not_enabled": 2,
     # invalid input / contract (3)
     "invalid_edits": 3,
     "path_mismatch": 3,
@@ -443,25 +442,17 @@ def run_candidate(audit: AuditResult, edits, *, semantic_fn=None, write: bool = 
                           + _aborted(["apply"], "verify"), mode)
     verify_stage = StageResult("verify", "ok", "ok", "proposal is shippable", data=verify_result)
 
-    # --- v0.1.8 no-mutation release boundary (adversarial-diff Critical): the seam is DRY-RUN ONLY
-    #     until #29 (apply-command enablement). No exposed API — run_candidate/assemble/CLI — may
-    #     mutate the source in this version. write=True is refused as a policy block here rather than
-    #     forwarded to apply_selective(write=True). #29 removes this fence and flips commands/apply.md.
-    if write:
-        apply_stage = StageResult(
-            "apply", "blocked", "apply_not_enabled",
-            "live apply (write=True) is disabled until #29 (apply-command enablement); "
-            "v0.1.8 is dry-run only", data=None,
-            errors=[{"code": "apply_not_enabled"}])
-        return _build_run(audit.run_id, [audit_stage, candidate_stage, verify_stage, apply_stage], mode)
-
-    # --- apply: backup-gated, re-verifying against the untouched original each attempt (write=False) ---
+    # --- apply: backup-gated, re-verifying against the untouched original each attempt. `write`
+    #     flows through to the engine (#29 enablement): write=False stages a dry-run (verify + report,
+    #     no mutation); write=True performs the real backup-first atomic replacement. Every mutation
+    #     stays gated by the mandatory verified backup + the 3-layer verifier (#21/#27 machinery) —
+    #     apply_selective fails closed on a backup failure, so enablement never bypasses the gate. ---
     def _bound_verify(orig_bytes, es):
         return verify(orig_bytes, es, audit.ledger,
                       authorized_ranges=authorized, semantic_fn=semantic_fn)
 
     try:
-        report = apply_selective(src, parsed, _bound_verify, config=apply_config, write=False)
+        report = apply_selective(src, parsed, _bound_verify, config=apply_config, write=write)
     except Exception as err:  # noqa: BLE001 - the seam never raises past a stage (§4.3)
         apply_stage = StageResult("apply", "failed", "apply_error",
                                   f"apply raised {type(err).__name__}", data=None,
@@ -569,20 +560,28 @@ def _build_argparser() -> argparse.ArgumentParser:
     pa.add_argument("--declared-genre", default=None)
     pa.add_argument("--format", default="markdown", choices=("markdown", "text"))
 
-    pr = sub.add_parser("run", help="dry-run a candidate edit-script end-to-end")
+    pr = sub.add_parser("run", help="dry-run a candidate edit-script end-to-end (never mutates)")
     pr.add_argument("--path", required=True)
     pr.add_argument("--edits", required=True, help="path to a JSON edit-script (list of edits, or {\"edits\": [...]})")
     pr.add_argument("--declared-genre", default=None)
     pr.add_argument("--format", default="markdown", choices=("markdown", "text"))
-    # #27 is dry-run only (write is disabled until the apply-flip in #29); --dry-run is the default
-    # and accepting it explicitly keeps the invocation forward-compatible.
+    # `run` is DRY-RUN ONLY — the safe default preview. --dry-run is always on; kept for explicitness.
     pr.add_argument("--dry-run", action="store_true", default=True)
+
+    # #29 enablement: `apply` is the explicit MUTATING path (write=True) — a separate subcommand, not a
+    # flag on `run`, so a real file mutation can never be triggered by omitting/mistyping a flag. Every
+    # apply stays backup-gated + verifier-gated (apply_selective fails closed on backup failure).
+    pap = sub.add_parser("apply", help="APPLY a candidate edit-script to the file (mutates, backup-gated)")
+    pap.add_argument("--path", required=True)
+    pap.add_argument("--edits", required=True, help="path to a JSON edit-script (list of edits, or {\"edits\": [...]})")
+    pap.add_argument("--declared-genre", default=None)
+    pap.add_argument("--format", default="markdown", choices=("markdown", "text"))
     return parser
 
 
 def main(argv=None) -> int:
-    """CLI entry: ``audit`` / ``run`` subcommands, exactly one JSON RunResult to stdout,
-    diagnostics to stderr, exit code via the static ``_EXIT_CLASS`` map (0/2/3/4)."""
+    """CLI entry: ``audit`` / ``run`` (dry-run) / ``apply`` (mutating) subcommands, exactly one JSON
+    RunResult to stdout, diagnostics to stderr, exit code via the static ``_EXIT_CLASS`` map (0/2/3/4)."""
     parser = _build_argparser()
     try:
         args = parser.parse_args(argv)
@@ -596,13 +595,14 @@ def main(argv=None) -> int:
         sys.stdout.write(json.dumps(_run_to_json(run)) + "\n")
         return exit_code(run)
 
-    # cmd == "run" — dry-run only in #27 (write=False); the offline stub needs no SLOPSLAP_LIVE.
+    # cmd in ("run", "apply") — `apply` is the ONLY mutating path (write=True); `run` is dry-run only.
+    write = args.cmd == "apply"
     try:
         with open(args.edits, "r", encoding="utf-8") as fh:
             edits_input = json.load(fh)
     except (OSError, ValueError) as err:
-        # Honor §4.4: every `run` invocation emits exactly one JSON RunResult to stdout
-        # (diagnostic to stderr), so a machine consumer never has to special-case bad --edits.
+        # Honor §4.4: every invocation emits exactly one JSON RunResult to stdout (diagnostic to
+        # stderr), so a machine consumer never has to special-case bad --edits.
         sys.stderr.write(f"slopslap-assemble: cannot read --edits {args.edits!r}: {err}\n")
         bad = _build_run("", [StageResult("candidate", "failed", "invalid_edits",
                                           f"cannot read --edits: {err}", data=None,
@@ -613,7 +613,7 @@ def main(argv=None) -> int:
         edits_input = edits_input["edits"]
 
     run = assemble(args.path, edits_input, fmt=args.format, declared_genre=args.declared_genre,
-                   semantic_fn=live_semantic_fn(), write=False)
+                   semantic_fn=live_semantic_fn(), write=write)
     sys.stdout.write(json.dumps(_run_to_json(run)) + "\n")
     return exit_code(run)
 

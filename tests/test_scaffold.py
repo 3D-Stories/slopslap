@@ -108,7 +108,9 @@ def test_skill_has_keystone_and_antislap_and_apply_gate():
     skill = _read("skills", "slopslap", "SKILL.md")
     assert KEYSTONE in _norm(skill)
     assert "do not punish prose for matching a stylistic tell" in _norm(skill)
-    assert "mutation_unavailable" in skill  # apply is backup-gated in SKILL too
+    # apply is now ENABLED (#29) but still backup-gated: SKILL must describe the mandatory
+    # pre-mutation backup, not the old disabled sentinel.
+    assert "backup" in skill.lower() and "atomic" in skill.lower()
 
 
 # ---- commands ----
@@ -125,12 +127,15 @@ def test_commands_invoke_the_skill_and_carry_keystone():
         assert KEYSTONE in _norm(body), f"{name}.md must carry the canonical keystone sentence verbatim"
 
 
-def test_apply_command_fails_closed_with_sentinel():
+def test_apply_command_enabled_and_backup_gated():
+    """#29: apply is wired to the engine (the mutating `apply` subcommand), but stays backup-gated
+    and fail-closed — it never mutates without a verified backup + a passing verifier."""
     body = _read("commands", "apply.md")
-    assert "status: mutation_unavailable" in body
-    assert "no write" in body.lower()
-    # must not silently fall back to an implicit audit
-    assert "implicit audit" in body.lower()
+    assert "assemble.py apply" in body                      # wired to the mutating engine path
+    assert "backup" in body.lower() and "atomic" in body.lower()
+    assert "fails closed" in body.lower() or "fail closed" in body.lower()
+    # must not claim an unconfirmed mutation or silently fall back
+    assert "never claim a mutation" in body.lower() or "exit code" in body.lower()
 
 
 def test_voiceprint_command_declares_deferred_no_data_op():
@@ -173,6 +178,8 @@ def test_commands_guard_untrusted_input():
         assert "untrusted data" in _read("commands", f"{name}.md").lower(), f"{name}.md lacks data guard"
 
 
-def test_apply_sentinel_is_first_line_contract():
+def test_apply_completion_signal_contract():
+    """#29: the disabled first-line sentinel is retired — apply now emits a machine-observable JSON
+    RunResult + exit code (0 applied / 2 blocked / 3-4 failure) as the completion signal."""
     body = _read("commands", "apply.md").lower()
-    assert "first line" in body  # the sentinel must be positioned so automation can parse it
+    assert "runresult" in body and "exit code" in body
