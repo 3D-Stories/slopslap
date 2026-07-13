@@ -265,17 +265,27 @@ def apply_selective(
     # --- atomic replace with a complete-write + read-back guard (H2) ---
     tmp = source + f".slopslap.tmp.{os.getpid()}"
     try:
-        # create with a SAFE default (0o600), then fchmod to the EXACT source mode — the create-mode
-        # arg is umask-masked, so relying on it could ship a wrong (often more-restrictive) mode
-        # while reporting success (adv H2). fchmod failure fails closed: the temp is not yet swapped,
-        # so the outer except cleans it and aborts with the source intact.
+        # create with a SAFE default (0o600), write, then fchmod to the EXACT source mode just before
+        # commit — the create-mode arg is umask-masked, so relying on it could ship a wrong (often
+        # more-restrictive) mode while reporting success (adv H2). Setting the mode after the write
+        # keeps the predictably-named temp at owner-only 0o600 while its bytes land. fchmod failure
+        # fails closed: the temp is not yet swapped, so the outer except cleans it and aborts with the
+        # source intact. os.fchmod is POSIX-only — a platform lacking it (Windows, which backup.py
+        # DOES support) keeps the 0o600 default and warns, rather than raising an uncaught
+        # AttributeError the OSError handlers would miss (Step-8a Medium).
         fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         try:
-            try:
-                os.fchmod(fd, stat_mode(orig_stat))  # EXACT mode, not umask-masked
-            except OSError as err:
-                raise OSError(f"fchmod (exact-mode preservation) failed: {err}") from err
             _write_all(fd, candidate)  # loop until every byte lands (no short-write corruption)
+            _fchmod = getattr(os, "fchmod", None)
+            if _fchmod is not None:
+                try:
+                    _fchmod(fd, stat_mode(orig_stat))  # EXACT mode, not umask-masked
+                except OSError as err:
+                    raise OSError(f"fchmod (exact-mode preservation) failed: {err}") from err
+            else:
+                report["warnings"].append(
+                    "exact-mode preservation unavailable on this platform (os.fchmod absent); "
+                    "applied file has owner-only (0o600) mode")
             if os.environ.get("SLOPSLAP_FSYNC") == "1":
                 os.fsync(fd)
         finally:

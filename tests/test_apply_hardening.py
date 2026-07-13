@@ -110,6 +110,18 @@ def test_fchmod_failure_aborts(tmp_path, monkeypatch):
     assert src.read_bytes() == b"one two three\n"
 
 
+# ---- test 4b: os.fchmod ABSENT (Windows analog) -> graceful degrade, not an uncaught AttributeError ----
+def test_fchmod_absent_degrades_gracefully(tmp_path, monkeypatch):
+    src = _src(tmp_path)
+    monkeypatch.delattr(apply_mod.os, "fchmod", raising=False)  # simulate a platform without fchmod
+    r = apply_selective(str(src), [_e(0, 3, b"ONE")], ACCEPT, _bk(tmp_path))
+    assert r["status"] == "applied" and r["mutated"] is True     # not a crash / uncaught AttributeError
+    assert src.read_bytes() == b"ONE two three\n"
+    assert any("os.fchmod absent" in w for w in r["warnings"]), r["warnings"]
+    # no orphaned temp left behind
+    assert not any(f.startswith("d.md.slopslap.tmp") for f in os.listdir(tmp_path))
+
+
 # ---- test 5: EXDEV never copies over the live source ----
 def test_exdev_replace_never_copies_over_live(tmp_path, monkeypatch):
     src = _src(tmp_path)
