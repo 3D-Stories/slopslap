@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "genre": "technical",
+  "control": true,
+  "provenance": "Real-world QA of ./input/'Winnipeg Base - SMS year in reveiw.pptx' (slide 9). Label supplied by the document owner 2026-07-13: FALSE POSITIVE. Embedded span is a minimal excerpt.",
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [],
+  "protected_spans": [],
+  "invariant_regions": [],
+  "expected_invariants": [
+    {
+      "kind": "normative_statement",
+      "text": "the 'has/could occur' hedge marks the name-pairs as hypothetical illustrations; the modality must be preserved",
+      "preservation": "semantic_exact",
+      "region": null
+    }
+  ],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [],
+  "control_reason": "The 'has/could occur' name-pairs (Brochet / Lac Brochet, etc.) are honest illustrative examples of the SAME similar-name confusion hazard as the Grand Rapids / Little Grand Rapids incident, explicitly hedged. An explicit could/may hedge on an example is honest marking, NOT simulation. slopslap must ABSTAIN. Lesson: never score an honest could/may hedge on an example as simulation — the first-pass model diagnosis inverted the signal, counting the hedge that makes the prose clean AGAINST it."
+}

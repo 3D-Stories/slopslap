@@ -1,0 +1,1 @@
+Aircraft was towed into the hangar, resulting in lengthy delay to thaw the engines. Aircraft was restarted, patient was brought back to the airport a second time, loaded, and flown to Winnipeg. The delay to care was approximated to be 5 hours (actual landing was 9:30 p.m., time to HSC 10:00 p.m.).

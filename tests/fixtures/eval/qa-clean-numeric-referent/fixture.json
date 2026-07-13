@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "genre": "technical",
+  "control": true,
+  "provenance": "Real-world QA of ./input/'Winnipeg Base - SMS year in reveiw.pptx' (slide 10). Label supplied by the document owner 2026-07-13: FALSE POSITIVE. Embedded span is a minimal excerpt.",
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [],
+  "protected_spans": [],
+  "invariant_regions": [],
+  "expected_invariants": [
+    {
+      "kind": "number_or_quantity",
+      "text": "'5 hours' (total delay-to-care) and '9:30 p.m.' / '10:00 p.m.' (final-leg times) must both survive; they have different referents",
+      "preservation": "lexically_exact",
+      "region": null
+    }
+  ],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [],
+  "control_reason": "'5 hours' is the total patient delay-to-destination caused by the weather/engine-thaw delay; the parenthetical (landing 9:30 p.m., HSC 10:00 p.m.) is the final ~30-minute leg AFTER that delay. The two figures have DIFFERENT referents and do not contradict. slopslap must ABSTAIN. Lesson: a numeric 'contradiction' that only appears once you ASSUME the two figures share a referent is a pass, not epistemic_distortion. The first-pass model diagnosis wrongly rated this MED harm; correct disposition is abstain, both quantities byte-exact."
+}

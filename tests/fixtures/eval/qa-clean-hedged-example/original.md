@@ -1,0 +1,1 @@
+The Flight Crew failed to identify the existence of 2 different similarly titled communities in Manitoba (Grand Rapids and Little Grand Rapids). This has occurred several times at Keewatin with the FC piece as a root cause. (Examples of communities where this error has/could occur: Brochet and Lac Brochet, Kugarruk and Kuguluktuk, Gods Lake and Gods Lake Narrows)

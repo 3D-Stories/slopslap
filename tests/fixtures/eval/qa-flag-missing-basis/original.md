@@ -1,0 +1,1 @@
+Over the past 13 months we have seen 367 reports entered in the system. You can see that 22% of those reports were proactive - Again this is a good news story for the organization as we only typically see less than 10% proactive reporting rates in an Aviation organization.
