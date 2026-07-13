@@ -9,17 +9,21 @@ injected clean stub, never a real model call (``SLOPSLAP_LIVE`` is never set).
 Design: docs/planning/2026-07-12-27-live-orchestration-seam.md (§4 contracts, §10 cases).
 """
 
+import base64
 import dataclasses
+import json
 import os
 
 from slopslap_assemble.assemble import (
     AuditResult,
     RunResult,
+    _EXIT_CLASS,
     assemble,
     audit_document,
     build_manifest,
     exit_code,
     live_semantic_fn,
+    main,
     run_candidate,
 )
 from slopslap_apply.backup import BackupConfig
@@ -350,3 +354,95 @@ def test_live_semantic_fn_offline_is_clean_stub():
     assert fn(b"orig", b"rev", {}) == {"verdict": "clean", "concerns": []}
     assert hasattr(fn, "status_sink")  # exposes the sink the seam reads
     assert fn.status_sink.get("invocation_status", "ok") == "ok"
+
+
+# =====================================================================================
+# Task 4 — JSON CLI (audit/run) + exit-code contract
+# =====================================================================================
+
+# ---- case 12: _EXIT_CLASS completeness (every exit-determining slug -> exactly one class) ----
+def test_exit_class_table_completeness():
+    # upstream_not_ok tags only aborted stages and is NEVER exit-determining -> must be absent
+    assert "upstream_not_ok" not in _EXIT_CLASS
+    assert set(_EXIT_CLASS.values()) <= {0, 2, 3, 4}
+    assert _EXIT_CLASS["ok"] == 0
+    for c in ("verify_not_shippable", "candidate_empty", "apply_blocked"):
+        assert _EXIT_CLASS[c] == 2
+    for c in ("invalid_edits", "path_mismatch", "digest_mismatch", "genre_error"):
+        assert _EXIT_CLASS[c] == 3
+    for c in ("protected_span_error", "diagnosis_error", "ledger_build_error",
+              "semantic_invocation_failed", "apply_error"):
+        assert _EXIT_CLASS[c] == 4
+
+
+def _edits_file(tmp_path, edits):
+    ef = tmp_path / "edits.json"
+    ef.write_text(json.dumps(edits))
+    return str(ef)
+
+
+def _b64edit(start, end, repl: bytes):
+    return {"start_byte": start, "end_byte": end,
+            "replacement_b64": base64.b64encode(repl).decode("ascii")}
+
+
+# ---- CLI: audit emits exactly one JSON RunResult, ledger as {canonical,sha256}, no source bytes ----
+def test_cli_audit_emits_one_json_runresult(tmp_path, capsys):
+    src = _write(tmp_path, "doc.md", GOLDEN_DOC)
+    rc = main(["audit", "--path", src, "--declared-genre", "general"])
+    out = capsys.readouterr().out
+    obj = json.loads(out)  # parses as exactly ONE JSON object
+    assert obj["schema_version"] == 1 and obj["status"] == "ok" and "stages" in obj
+    audit_stage = [s for s in obj["stages"] if s["stage"] == "audit"][0]
+    assert audit_stage["status"] == "ok"
+    # the ledger is serialized as {canonical, sha256}, never a raw pickled Ledger
+    assert set(audit_stage["data"]["ledger"].keys()) == {"canonical", "sha256"}
+    # content identity is exposed as sha256 + byte_length, NOT the raw doc (oversized/content-leak
+    # guard); scanner metric-evidence snippets are legitimate structured evidence, not raw bytes.
+    assert audit_stage["data"]["source_sha256"] and audit_stage["data"]["byte_length"] == len(GOLDEN_DOC)
+    assert GOLDEN_DOC.decode() not in out  # the whole document is never embedded
+    assert rc == 0
+
+
+def test_cli_run_dry_run_accept_exit_0(tmp_path, capsys, monkeypatch):
+    # keep the mandatory backup hermetic in tmp (default root would be ~/.local/state)
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
+    src = _write(tmp_path, "doc.md", GOLDEN_DOC)
+    ef = _edits_file(tmp_path, [_b64edit(28, 32, b"quick")])
+    rc = main(["run", "--path", src, "--edits", ef, "--declared-genre", "general", "--dry-run"])
+    obj = json.loads(capsys.readouterr().out)
+    assert obj["status"] == "ok" and rc == 0
+    with open(src, "rb") as fh:
+        assert fh.read() == GOLDEN_DOC  # dry-run never mutates the source
+
+
+def test_cli_run_dry_run_reject_exit_2(tmp_path, capsys, monkeypatch):
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
+    src = _write(tmp_path, "doc.md", GOLDEN_DOC)
+    ef = _edits_file(tmp_path, [_b64edit(2, 10, b"Summary!")])  # out-of-range heading edit
+    rc = main(["run", "--path", src, "--edits", ef, "--declared-genre", "general", "--dry-run"])
+    obj = json.loads(capsys.readouterr().out)
+    assert obj["status"] == "blocked" and rc == 2
+
+
+def test_cli_run_invalid_edits_exit_3(tmp_path, capsys, monkeypatch):
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
+    src = _write(tmp_path, "doc.md", GOLDEN_DOC)
+    ef = _edits_file(tmp_path, [_b64edit(0, len(GOLDEN_DOC) + 999, b"x")])  # out of bounds
+    rc = main(["run", "--path", src, "--edits", ef, "--declared-genre", "general"])
+    assert rc == 3
+
+
+def test_cli_run_non_utf8_exit_3(tmp_path, capsys, monkeypatch):
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
+    src = _write(tmp_path, "bad.md", b"\xff\xfe not utf-8")
+    ef = _edits_file(tmp_path, [_b64edit(0, 1, b"x")])
+    rc = main(["run", "--path", src, "--edits", ef])
+    assert rc == 3
+
+
+def test_cli_audit_non_utf8_exit_3(tmp_path, capsys):
+    src = _write(tmp_path, "bad.md", b"\xff\xfe")
+    rc = main(["audit", "--path", src])
+    obj = json.loads(capsys.readouterr().out)
+    assert obj["stages"][0]["code"] == "genre_error" and rc == 3

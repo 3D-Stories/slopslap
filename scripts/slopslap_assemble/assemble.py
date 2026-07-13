@@ -13,7 +13,10 @@ resolves genre ONCE, threading it to both the metrics run and the range deriver.
 
 from __future__ import annotations
 
+import argparse
+import base64
 import hashlib
+import json
 import os
 import sys
 from dataclasses import dataclass, field
@@ -451,3 +454,107 @@ def assemble(path: str, edits, *, fmt: str = "markdown", declared_genre: Optiona
         return _build_run(run_id, [audit_stage] + _aborted(["candidate", "verify", "apply"], "audit"))
     return run_candidate(audit_stage.data, edits, semantic_fn=semantic_fn, write=write,
                          apply_config=apply_config)
+
+
+# --------------------------------------------------------------------------- JSON CLI (§4.4)
+def _edit_json(e: Edit) -> dict:
+    return {"start_byte": e.start_byte, "end_byte": e.end_byte,
+            "replacement_b64": base64.b64encode(e.replacement).decode("ascii")}
+
+
+def _audit_json(a: AuditResult) -> dict:
+    """Serialize an AuditResult with NO source bytes: the ledger becomes
+    ``{"canonical": ..., "sha256": ...}`` (never a raw pickled Ledger), and only the sha256 +
+    byte_length identify the content (§4.4 CLI hygiene)."""
+    return {
+        "schema_version": a.schema_version, "run_id": a.run_id,
+        "source_path": a.source_path, "source_sha256": a.source_sha256,
+        "byte_length": a.byte_length, "fmt": a.fmt,
+        "genre": a.genre, "genre_confidence": a.genre_confidence, "genre_reason": a.genre_reason,
+        "audit_status": a.audit_status, "metrics": a.metrics,
+        "authorization": a.authorization, "protected_spans": a.protected_spans,
+        "invariant_regions": a.invariant_regions,
+        "ledger": {"canonical": a.ledger.canonical_obj(), "sha256": a.ledger.ledger_sha256()},
+    }
+
+
+def _data_json(data: Any) -> Any:
+    if isinstance(data, AuditResult):
+        return _audit_json(data)
+    if isinstance(data, list) and data and isinstance(data[0], Edit):
+        return [_edit_json(e) for e in data]
+    return data  # verify_result / apply report dicts are already JSON-safe (no bytes); None/[] pass
+
+
+def _run_to_json(run: RunResult) -> dict:
+    """The wire form: schema_version, run_id, overall status, and each stage's envelope. Source
+    bytes never appear; the in-process ``RunResult.audit``/``verification``/``apply`` summaries are
+    NOT duplicated at top level (the stage ``data`` already carries them)."""
+    return {
+        "schema_version": run.schema_version,
+        "run_id": run.run_id,
+        "status": run.status,
+        "stages": [
+            {"stage": s.stage, "status": s.status, "code": s.code, "message": s.message,
+             "data": _data_json(s.data), "errors": s.errors, "warnings": s.warnings}
+            for s in run.stages
+        ],
+    }
+
+
+def _build_argparser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="slopslap-assemble",
+        description="Live-orchestration seam (#27): audit / dry-run a candidate against any doc.")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    pa = sub.add_parser("audit", help="audit a document; emit one JSON RunResult")
+    pa.add_argument("--path", required=True)
+    pa.add_argument("--declared-genre", default=None)
+    pa.add_argument("--format", default="markdown", choices=("markdown", "text"))
+
+    pr = sub.add_parser("run", help="dry-run a candidate edit-script end-to-end")
+    pr.add_argument("--path", required=True)
+    pr.add_argument("--edits", required=True, help="path to a JSON edit-script (list of edits, or {\"edits\": [...]})")
+    pr.add_argument("--declared-genre", default=None)
+    pr.add_argument("--format", default="markdown", choices=("markdown", "text"))
+    # #27 is dry-run only (write is disabled until the apply-flip in #29); --dry-run is the default
+    # and accepting it explicitly keeps the invocation forward-compatible.
+    pr.add_argument("--dry-run", action="store_true", default=True)
+    return parser
+
+
+def main(argv=None) -> int:
+    """CLI entry: ``audit`` / ``run`` subcommands, exactly one JSON RunResult to stdout,
+    diagnostics to stderr, exit code via the static ``_EXIT_CLASS`` map (0/2/3/4)."""
+    parser = _build_argparser()
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit as exc:  # argparse: 0 for --help, 2 for bad args -> map bad args to exit 3
+        return 0 if exc.code in (0, None) else 3
+
+    if args.cmd == "audit":
+        stage = audit_document(args.path, fmt=args.format, declared_genre=args.declared_genre)
+        run_id = stage.data.run_id if isinstance(stage.data, AuditResult) else ""
+        run = _build_run(run_id, [stage])
+        sys.stdout.write(json.dumps(_run_to_json(run)) + "\n")
+        return exit_code(run)
+
+    # cmd == "run" — dry-run only in #27 (write=False); the offline stub needs no SLOPSLAP_LIVE.
+    try:
+        with open(args.edits, "r", encoding="utf-8") as fh:
+            edits_input = json.load(fh)
+    except (OSError, ValueError) as err:
+        sys.stderr.write(f"slopslap-assemble: cannot read --edits {args.edits!r}: {err}\n")
+        return 3  # invalid input / contract
+    if isinstance(edits_input, dict) and "edits" in edits_input:
+        edits_input = edits_input["edits"]
+
+    run = assemble(args.path, edits_input, fmt=args.format, declared_genre=args.declared_genre,
+                   semantic_fn=live_semantic_fn(), write=False)
+    sys.stdout.write(json.dumps(_run_to_json(run)) + "\n")
+    return exit_code(run)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
