@@ -107,8 +107,8 @@ a{color:var(--lagoon)}
   </header>
 
   <!-- PROGRESS: update width% + caption on each merge -->
-  <div class="bar"><i style="width:86%"></i></div>
-  <p class="barcap">12 / 14 children merged · Tier 0+1+2+3 COMPLETE (… #29 #24 ✅) · next Tier 4 #28 #25 · version 0.1.12</p>
+  <div class="bar"><i style="width:93%"></i></div>
+  <p class="barcap">13 / 14 children merged · Tier 0-3 + #28 (… #24 #28 ✅) · next Tier 4 #25 (FINAL, sets 0.2.0) · version 0.1.13</p>
 
   <div class="legend">
     <span class="chip merged"><span class="dot" style="background:var(--lagoon)"></span>merged + closed</span>
@@ -290,13 +290,17 @@ T4  #28 e2e golden (dep #27 #23 #17–#20 #30) · #25 calibration (dep #30)</div
   <h2>Tier 4 — live validation + calibration</h2>
   <p class="sec-sub">lite both · the final child sets 0.2.0</p>
   <div class="grid">
-    <div class="card queued" id="c28">
+    <div class="card merged" id="c28">
       <div class="id">T4 · #28</div>
       <h3>Live e2e validation golden</h3>
       <div class="dep">depends on #27, #23, #17–#20, #30</div>
-      <span class="st">queued</span>
-      <ul><li class="pending">Asserts SAFETY verdicts + blocked unsafe edits (not just shape)</li></ul>
-      <div class="kv">PR — · version — · gate —</div>
+      <span class="st">merged + closed</span>
+      <ul>
+        <li>real CLI (audit+run) on a fixture; asserts SAFETY, not just shape</li>
+        <li>safe edit ACCEPTed; number/modality/protected/locality unsafe edits BLOCKED (code-pinned)</li>
+        <li>SLOPSLAP_LIVE-gated semantic meaning-change block (skipped offline)</li>
+      </ul>
+      <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/50">#50</a> · v0.1.13 · gate 448→454 (+6, 0 reg)</div>
     </div>
     <div class="card queued" id="c25">
       <div class="id">T4 · #25</div>

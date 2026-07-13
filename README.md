@@ -92,7 +92,7 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Status
 
-- **Version:** 0.1.12 (v0.2 epic #16 in progress — live model-in-the-loop).
+- **Version:** 0.1.13 (v0.2 epic #16 in progress — live model-in-the-loop).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; wiring the
@@ -100,6 +100,13 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
 
 ## Changelog
 
+- **0.1.13** — live audit/suggest end-to-end validation golden (#28). A `tests/test_e2e_validation_golden.py`
+  drives the real command surface (`assemble.py audit` + `run`) on a fixture and asserts the full
+  **safety** contract, not just output shape: a safe in-range invariant-preserving repair is ACCEPTed,
+  and every unsafe-edit class is BLOCKED — number/modality invariant weakening (`entry_weakened`),
+  protected-span violation, and locality violation (`edit_locality`) — via the real deterministic
+  verifier. A `SLOPSLAP_LIVE`-gated case asserts the live semantic layer blocks a meaning-change
+  (skipped without a model). Test-only; no production change (the seam + verifier already exist).
 - **0.1.12** — one-shot manual voice sample (#24). A user can paste a short voice sample inline with a
   suggest/apply request; `scripts/slopslap_scan/voiceprint.py::extract_voice_features` returns
   **measure-only** diction signals (register / contraction rate / punctuation profile /
