@@ -18,6 +18,7 @@ from slopslap_assemble.assemble import (
     AuditResult,
     RunResult,
     _EXIT_CLASS,
+    _run_to_json,
     assemble,
     audit_document,
     build_manifest,
@@ -431,6 +432,53 @@ def test_apply_raising_is_caught_as_failed_stage(tmp_path, monkeypatch):
         raise OSError("disk gone")
     run, ap = _apply_stage_for(tmp_path, monkeypatch, _raise)
     assert ap.status == "failed" and ap.code == "apply_error" and exit_code(run) == 4
+
+
+# ---- Adversarial-diff Critical: v0.1.8 is DRY-RUN ONLY — no exposed API may mutate (write=True
+#      is refused, not forwarded to apply_selective). Mutation lands in #29. ----
+def test_write_true_is_refused_no_mutation(tmp_path):
+    src = _write(tmp_path, "doc.md", GOLDEN_DOC)
+    edit = Edit(28, 32, b"quick")  # otherwise-shippable, in-range
+    run = assemble(src, [edit], declared_genre="general", semantic_fn=CLEAN_STUB,
+                   write=True, apply_config=_bconf(tmp_path))
+    ap = _stage(run, "apply")
+    assert ap.status == "blocked" and ap.code == "apply_not_enabled"
+    assert exit_code(run) == 2
+    # the source is byte-identical AND apply_selective was never reached (no backup dir created)
+    with open(src, "rb") as fh:
+        assert fh.read() == GOLDEN_DOC
+    assert not os.path.exists(str(tmp_path / "backups"))
+
+
+def test_run_candidate_write_true_also_refused(tmp_path):
+    src = _write(tmp_path, "doc.md", GOLDEN_DOC)
+    audit = audit_document(src, declared_genre="general").data
+    run = run_candidate(audit, [Edit(28, 32, b"quick")], semantic_fn=CLEAN_STUB, write=True,
+                        apply_config=_bconf(tmp_path))
+    assert _stage(run, "apply").code == "apply_not_enabled" and exit_code(run) == 2
+
+
+# ---- Adversarial-diff High: semantic_mode is machine-distinguishable (live vs stub vs injected) ----
+def test_semantic_mode_offline_stub_from_factory(tmp_path):
+    src = _write(tmp_path, "doc.md", GOLDEN_DOC)
+    run = assemble(src, [Edit(28, 32, b"quick")], declared_genre="general",
+                   semantic_fn=live_semantic_fn(), write=False, apply_config=_bconf(tmp_path))
+    assert run.semantic_mode == "offline_stub"  # SLOPSLAP_LIVE unset
+    assert _run_to_json(run)["semantic_mode"] == "offline_stub"
+
+
+def test_semantic_mode_injected_for_plain_stub(tmp_path):
+    src = _write(tmp_path, "doc.md", GOLDEN_DOC)
+    run = assemble(src, [Edit(28, 32, b"quick")], declared_genre="general",
+                   semantic_fn=CLEAN_STUB, write=False, apply_config=_bconf(tmp_path))
+    assert run.semantic_mode == "injected"  # a test stub with no marker
+
+
+def test_semantic_mode_na_when_verify_never_runs(tmp_path):
+    # a candidate-stage failure (bad bytes -> audit fails) never reaches verify -> mode n/a
+    src = _write(tmp_path, "bad.md", b"\xff\xfe")
+    run = assemble(src, [Edit(0, 1, b"x")], semantic_fn=CLEAN_STUB, write=False)
+    assert run.semantic_mode == "n/a"
 
 
 # ---- live_semantic_fn factory: offline default is the clean stub, no model call ----

@@ -53,6 +53,7 @@ _EXIT_CLASS = {
     "verify_not_shippable": 2,
     "candidate_empty": 2,
     "apply_blocked": 2,
+    "apply_not_enabled": 2,
     # invalid input / contract (3)
     "invalid_edits": 3,
     "path_mismatch": 3,
@@ -125,6 +126,10 @@ class RunResult:
     audit: Any = None            # AuditResult | None
     verification: Any = None     # verify_result dict | None
     apply: Any = None            # apply report dict | None
+    # "live" | "offline_stub" | "injected" | "n/a" — machine-distinguishable so a consumer can tell
+    # a real Layer-3 semantic pass from an offline/stubbed one (adversarial-diff High). "n/a" when
+    # the run never reached verify (semantic_fn never executed).
+    semantic_mode: str = "n/a"
 
 
 # --------------------------------------------------------------------------- manifest glue (§4.1)
@@ -265,7 +270,7 @@ def _overall_status(stages: List[StageResult]) -> str:
     return max((s.status for s in stages), key=lambda s: _STATUS_RANK[s])
 
 
-def _build_run(run_id: str, stages: List[StageResult]) -> RunResult:
+def _build_run(run_id: str, stages: List[StageResult], semantic_mode: str = "n/a") -> RunResult:
     audit = verification = apply_rep = None
     for s in stages:
         if s.stage == "audit" and s.status == "ok":
@@ -275,7 +280,15 @@ def _build_run(run_id: str, stages: List[StageResult]) -> RunResult:
         elif s.stage == "apply":
             apply_rep = s.data
     return RunResult(SCHEMA_VERSION, run_id, _overall_status(stages), stages,
-                     audit=audit, verification=verification, apply=apply_rep)
+                     audit=audit, verification=verification, apply=apply_rep,
+                     semantic_mode=semantic_mode)
+
+
+def _semantic_mode(semantic_fn) -> str:
+    """How the Layer-3 verdict was produced (adversarial-diff High): ``live_semantic_fn`` tags itself
+    ``live``/``offline_stub``; a test-injected callable with no marker reads ``injected`` — a
+    consumer can then tell a real semantic pass from a stubbed/deterministic-only one."""
+    return getattr(semantic_fn, "semantic_mode", "injected")
 
 
 def exit_code(run: RunResult) -> int:
@@ -322,9 +335,11 @@ def live_semantic_fn(model: str = "sonnet", timeout_s: float = 120.0):
 
         def fn(original, revision, ledger_canonical):
             return bound(original, revision, ledger_canonical)
+        fn.semantic_mode = "live"
     else:
         def fn(original, revision, ledger_canonical):
             return {"verdict": "clean", "concerns": []}
+        fn.semantic_mode = "offline_stub"
 
     fn.status_sink = sink
     return fn
@@ -346,6 +361,7 @@ def run_candidate(audit: AuditResult, edits, *, semantic_fn=None, write: bool = 
     """
     if semantic_fn is None:
         semantic_fn = live_semantic_fn()
+    mode = _semantic_mode(semantic_fn)  # surfaced in RunResult from the verify stage onward
     audit_stage = StageResult("audit", "ok", "ok", "audit complete", data=audit)
 
     def _abort_after_candidate(cand: StageResult) -> RunResult:
@@ -402,7 +418,7 @@ def run_candidate(audit: AuditResult, edits, *, semantic_fn=None, write: bool = 
                                    f"verify raised {type(err).__name__}", data=None,
                                    errors=[{"code": "verify_error", "detail": repr(err)}])
         return _build_run(audit.run_id, [audit_stage, candidate_stage, verify_stage]
-                          + _aborted(["apply"], "verify"))
+                          + _aborted(["apply"], "verify"), mode)
     shippable = (verify_result["decision"] == "ACCEPT"
                  and verify_result["proposal_status"] == "ACCEPT"
                  and verify_result["semantic_status"] == "clean")
@@ -416,7 +432,7 @@ def run_candidate(audit: AuditResult, edits, *, semantic_fn=None, write: bool = 
             f"verdict", data=verify_result,
             errors=[{"code": "semantic_invocation_failed", "invocation_status": sink_status}])
         return _build_run(audit.run_id, [audit_stage, candidate_stage, verify_stage]
-                          + _aborted(["apply"], "verify"))
+                          + _aborted(["apply"], "verify"), mode)
     if not shippable:
         verify_stage = StageResult(
             "verify", "blocked", "verify_not_shippable",
@@ -424,21 +440,33 @@ def run_candidate(audit: AuditResult, edits, *, semantic_fn=None, write: bool = 
             f"proposal_status={verify_result['proposal_status']}, "
             f"semantic_status={verify_result['semantic_status']})", data=verify_result)
         return _build_run(audit.run_id, [audit_stage, candidate_stage, verify_stage]
-                          + _aborted(["apply"], "verify"))
+                          + _aborted(["apply"], "verify"), mode)
     verify_stage = StageResult("verify", "ok", "ok", "proposal is shippable", data=verify_result)
 
-    # --- apply: backup-gated, re-verifying against the untouched original each attempt ---
+    # --- v0.1.8 no-mutation release boundary (adversarial-diff Critical): the seam is DRY-RUN ONLY
+    #     until #29 (apply-command enablement). No exposed API — run_candidate/assemble/CLI — may
+    #     mutate the source in this version. write=True is refused as a policy block here rather than
+    #     forwarded to apply_selective(write=True). #29 removes this fence and flips commands/apply.md.
+    if write:
+        apply_stage = StageResult(
+            "apply", "blocked", "apply_not_enabled",
+            "live apply (write=True) is disabled until #29 (apply-command enablement); "
+            "v0.1.8 is dry-run only", data=None,
+            errors=[{"code": "apply_not_enabled"}])
+        return _build_run(audit.run_id, [audit_stage, candidate_stage, verify_stage, apply_stage], mode)
+
+    # --- apply: backup-gated, re-verifying against the untouched original each attempt (write=False) ---
     def _bound_verify(orig_bytes, es):
         return verify(orig_bytes, es, audit.ledger,
                       authorized_ranges=authorized, semantic_fn=semantic_fn)
 
     try:
-        report = apply_selective(src, parsed, _bound_verify, config=apply_config, write=write)
+        report = apply_selective(src, parsed, _bound_verify, config=apply_config, write=False)
     except Exception as err:  # noqa: BLE001 - the seam never raises past a stage (§4.3)
         apply_stage = StageResult("apply", "failed", "apply_error",
                                   f"apply raised {type(err).__name__}", data=None,
                                   errors=[{"code": "apply_error", "detail": repr(err)}])
-        return _build_run(audit.run_id, [audit_stage, candidate_stage, verify_stage, apply_stage])
+        return _build_run(audit.run_id, [audit_stage, candidate_stage, verify_stage, apply_stage], mode)
 
     # apply's re-verify loop re-invokes semantic_fn against the SAME sticky sink (§7). Re-read it:
     # an ops failure that struck ONLY during apply (verify-stage call succeeded, a later re-verify
@@ -464,7 +492,7 @@ def run_candidate(audit: AuditResult, edits, *, semantic_fn=None, write: bool = 
         apply_stage = StageResult("apply", "failed", "apply_error",
                                   f"apply reported status={st!r}", data=report,
                                   errors=[{"code": "apply_error", "errors": report.get("errors", [])}])
-    return _build_run(audit.run_id, [audit_stage, candidate_stage, verify_stage, apply_stage])
+    return _build_run(audit.run_id, [audit_stage, candidate_stage, verify_stage, apply_stage], mode)
 
 
 def assemble(path: str, edits, *, fmt: str = "markdown", declared_genre: Optional[str] = None,
@@ -521,6 +549,7 @@ def _run_to_json(run: RunResult) -> dict:
         "schema_version": run.schema_version,
         "run_id": run.run_id,
         "status": run.status,
+        "semantic_mode": run.semantic_mode,  # live | offline_stub | injected | n/a (adversarial-diff High)
         "stages": [
             {"stage": s.stage, "status": s.status, "code": s.code, "message": s.message,
              "data": _data_json(s.data), "errors": s.errors, "warnings": s.warnings}

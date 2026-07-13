@@ -37,7 +37,7 @@ footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:v
 <body>
 <div class="wrap">
 <header>
-<div class="eyebrow">rawgentic design artifact · updated 2026-07-12 20:22 MDT</div>
+<div class="eyebrow">rawgentic design artifact · updated 2026-07-12 20:33 MDT</div>
 <h1>slopslap #27 — Live-Orchestration Seam</h1>
 
 </header>
@@ -249,10 +249,16 @@ RunResult(schema_version: int, run_id: str, status: str,   # overall = worst sta
 <h2>11. Review provenance</h2>
 <p><strong>Peer consult:</strong> <code>docs/reviews/peer-rawgentic-peer-problem-27-2026-07-12.md</code> (GPT Soul via Codex). Adopted: authorization-state encoding, <code>ok|blocked|failed|aborted</code> stage vocabulary + explicit <code>aborted</code> downstream results, source-digest boundary re-check, CLI hygiene (no source bytes in JSON, ledger <code>{canonical,sha256}</code>, exit codes 0/2/3/4), golden cases 6–9, library-API-not-CLI for metrics, genre-resolved-once threading, no timestamps in envelopes (golden stability). Deferred: 3-file package layout (single module until it outgrows), <code>started_at</code>/<code>duration_ms</code> fields, <code>retriable</code> error flag (no retry consumer exists yet — YAGNI).</p>
 <p><strong>Step-4 gate (design loop-back 1 of global 3, consumed 2026-07-13):</strong> self-review (Opus <code>rawgentic-reviewer</code>) + adversarial-on-design (Codex, <code>docs/reviews/2026-07-12-27-live-orchestration-seam-md-2026-07-13.md</code>). Folded fixes: F1 dry-run backup reality (§6, §10.3/10.4), A1 <code>audit_status</code> cleanliness (§4.1, §10.8), A2 typed semantic invocation outcome via <code>status_sink</code> (§7, §6, §10.11), A3+F2 status ordering + exit-code table (§4.3, §10.12), A4 vocabulary purge (§6), A5 candidate-stage edit validation (§4.3, §10.5), A6 path-identity binding (§4.1, §4.2, §10.9), F3 justified non-reuse of <code>eval_semantic_fn</code> (§5), F4 metrics consumer named + accepted double-run (§4.1), F5 baseline wording (§10).</p>
+<p><strong>Step-11 adversarial diff review (Codex cross-model, <code>docs/reviews/rawgentic-27-branch-diff-2026-07-13.md</code>) — 1 Critical + 2 High, all confirmed at source:</strong></p>
+<ul>
+<li><strong>Critical (write=True mutates now, contradicting &quot;dry-run until #29&quot;):</strong> CONFIRMED — the API forwarded <code>write=True</code> to <code>apply_selective</code>. FIXED: v0.1.8 is a hard no-mutation release boundary — <code>run_candidate</code>/<code>assemble</code> refuse <code>write=True</code> with an <code>apply_not_enabled</code> policy block (exit 2) and never forward it; <code>apply_selective</code> is only ever called <code>write=False</code>. #29 removes the fence + flips <code>commands/apply.md</code>. Test: <code>test_write_true_is_refused_no_mutation</code> (source byte-identical, no backup created).</li>
+<li><strong>High (offline stub indistinguishable from live):</strong> CONFIRMED — FIXED: added <code>semantic_mode</code> (<code>live</code>|<code>offline_stub</code>|<code>injected</code>|<code>n/a</code>) to <code>RunResult</code> + the CLI JSON, so a consumer can tell a real Layer-3 pass from a stubbed one. <code>live_semantic_fn</code> tags itself. Tests: <code>test_semantic_mode_*</code>.</li>
+<li><strong>High (run_candidate trusts caller-constructed AuditResult):</strong> assessed NOT a #27-threat-model vulnerability — a forged in-process <code>AuditResult</code> is strictly *easier* to bypass by calling <code>apply_selective</code>/<code>ledger.verify</code> directly (the caller already has full in-process access), so the seam adds no new attack surface; the untrusted-input surfaces (CLI, <code>assemble()</code>) self-derive the audit via <code>audit_document</code>. Documented as a trust boundary (<code>run_candidate</code>&#x27;s <code>AuditResult</code> is trusted-caller input); defense-in-depth (an authenticated/opaque audit handle) filed as follow-up for if/when the seam is exposed across a real boundary.</li>
+</ul>
 <p><strong>Step-4 round 2 (no loop-back consumed — no surviving Critical/High):</strong> self-review r2 PASS (all round-1 Crit/High confirmed resolved at source); fixes applied in place: bad-bytes ownership rule (<code>genre_error</code> owns decode, <code>diagnosis_error</code> = parser-unavailable-only, §4.3), sink completeness invariant + stickiness (§7), <code>upstream_not_ok</code> exit-class exclusion (§10.12), case-3 bytes-must-change authoring note (§10). Adversarial r2: R2-1 (verifier closure digest) <strong>refuted with evidence</strong> — <code>validate_ledger</code> digest-checks first (ledger.py:119-120), a drifted original is REJECT/BLOCKED fail-closed inside verify, so no unsafe-apply path exists; in-apply drift surfaces as REJECT (safe; the seam&#x27;s §4.2 pre-check catches earlier drift with the typed code). R2-2 stale (reviewed pre-fix text; already fixed). R2-3 folded as sink stickiness (§7). R2-4 folded as the case-4 aborted-stage assertion fix (§10.4).</p>
 
 </main>
-<footer>Last updated: 2026-07-12 20:22 MDT · generated by hooks/render_artifact.py — self-contained, no external resources.</footer>
+<footer>Last updated: 2026-07-12 20:33 MDT · generated by hooks/render_artifact.py — self-contained, no external resources.</footer>
 </div>
 </body>
 </html>

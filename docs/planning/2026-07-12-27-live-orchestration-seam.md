@@ -422,6 +422,11 @@ invocation outcome via `status_sink` (§7, §6, §10.11), A3+F2 status ordering 
 path-identity binding (§4.1, §4.2, §10.9), F3 justified non-reuse of `eval_semantic_fn` (§5), F4
 metrics consumer named + accepted double-run (§4.1), F5 baseline wording (§10).
 
+**Step-11 adversarial diff review (Codex cross-model, `docs/reviews/rawgentic-27-branch-diff-2026-07-13.md`) — 1 Critical + 2 High, all confirmed at source:**
+- **Critical (write=True mutates now, contradicting "dry-run until #29"):** CONFIRMED — the API forwarded `write=True` to `apply_selective`. FIXED: v0.1.8 is a hard no-mutation release boundary — `run_candidate`/`assemble` refuse `write=True` with an `apply_not_enabled` policy block (exit 2) and never forward it; `apply_selective` is only ever called `write=False`. #29 removes the fence + flips `commands/apply.md`. Test: `test_write_true_is_refused_no_mutation` (source byte-identical, no backup created).
+- **High (offline stub indistinguishable from live):** CONFIRMED — FIXED: added `semantic_mode` (`live`|`offline_stub`|`injected`|`n/a`) to `RunResult` + the CLI JSON, so a consumer can tell a real Layer-3 pass from a stubbed one. `live_semantic_fn` tags itself. Tests: `test_semantic_mode_*`.
+- **High (run_candidate trusts caller-constructed AuditResult):** assessed NOT a #27-threat-model vulnerability — a forged in-process `AuditResult` is strictly *easier* to bypass by calling `apply_selective`/`ledger.verify` directly (the caller already has full in-process access), so the seam adds no new attack surface; the untrusted-input surfaces (CLI, `assemble()`) self-derive the audit via `audit_document`. Documented as a trust boundary (`run_candidate`'s `AuditResult` is trusted-caller input); defense-in-depth (an authenticated/opaque audit handle) filed as follow-up for if/when the seam is exposed across a real boundary.
+
 **Step-4 round 2 (no loop-back consumed — no surviving Critical/High):** self-review r2 PASS (all
 round-1 Crit/High confirmed resolved at source); fixes applied in place: bad-bytes ownership rule
 (`genre_error` owns decode, `diagnosis_error` = parser-unavailable-only, §4.3), sink completeness
