@@ -155,8 +155,11 @@ def apply_selective(
                 report["warnings"].append(
                     "extended attributes (xattr/ACL/security labels) will NOT be preserved across "
                     "the atomic replacement")
-        except OSError:
-            pass
+        except OSError as err:
+            # a probe failure never blocks apply (warn-only, best-effort), but surface it rather
+            # than swallow — a silent skip could hide a real xattr loss (Step-11 Low).
+            report["warnings"].append(f"could not check extended attributes ({err}); "
+                                      f"any xattr/ACL will NOT be preserved across the replacement")
 
     # sort into the SAME order ledger-verify labels hunks (by start,end), so h0..hN align.
     all_edits = sorted(_edits(edits_input), key=lambda e: (e.start_byte, e.end_byte))
@@ -244,25 +247,10 @@ def apply_selective(
                       note="write=False (dry run)")
         return report
 
-    # --- pre-replace guard: content AND resolved-path identity (R2 + H5) ---
-    live_path = os.path.realpath(source)
-    if live_path != source:
-        return _block(report, "source symlink/path changed since read; not clobbering")
-    try:
-        live_stat = os.stat(live_path)
-        with open(live_path, "rb") as fh:
-            live = fh.read()
-    except OSError as err:
-        return _block(report, f"re-read failed: {err}")
-    if (live_stat.st_dev, live_stat.st_ino) != (orig_stat.st_dev, orig_stat.st_ino):
-        return _block(report, "source identity (dev/inode) changed since read; not clobbering")
-    if live_stat.st_nlink > 1:  # adv H4: a hardlink created AFTER the initial pre-backup stat
-        return _block(report, f"source became hardlinked ({live_stat.st_nlink} links) since read; "
-                              f"not clobbering (would orphan the other link(s))")
-    if _sha256(live) != report["original_digest"]:
-        return _block(report, "source changed since read (concurrent edit); not clobbering")
-
-    # --- atomic replace with a complete-write + read-back guard (H2) ---
+    # --- atomic replace with a complete-write + read-back guard (H2). The live-source
+    #     re-validation (identity/hardlink/content) runs IMMEDIATELY before os.replace — after the
+    #     temp is fully staged — so the TOCTOU window to the atomic swap is minimal (adv-diff H1 /
+    #     peer step 5), not widened across the whole write+fsync+read-back. ---
     tmp = source + f".slopslap.tmp.{os.getpid()}"
     try:
         # create with a SAFE default (0o600), write, then fchmod to the EXACT source mode just before
@@ -293,6 +281,17 @@ def apply_selective(
         with open(tmp, "rb") as fh:  # read-back before committing
             if fh.read() != candidate:
                 raise OSError("temp file content mismatch after write")
+        # LAST-moment re-validation of the live source, tight to the atomic swap (adv-diff H1):
+        # resolved-path identity, dev/inode, hardlink count, content digest must still match the
+        # audited snapshot. A hardlink or concurrent edit that appeared during temp staging is caught
+        # here rather than orphaning a link / clobbering a concurrent write.
+        reason = _precommit_reason(source, orig_stat, report["original_digest"])
+        if reason is not None:
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+            return _block(report, reason)
         os.replace(tmp, source)
         _fsync_parent(source, report["warnings"])
     except OSError as err:
@@ -307,6 +306,30 @@ def apply_selective(
 
     report.update(status="applied", mutated=True, final_digest=_sha256(candidate))
     return report
+
+
+def _precommit_reason(source: str, orig_stat, original_digest: str) -> Optional[str]:
+    """Re-validate the live source IMMEDIATELY before os.replace (peer sketch step 5): resolved-path
+    identity, dev/inode, hardlink count, and content digest must still match the audited snapshot.
+    Returns a block reason, or None if safe to commit. Called as tight to the atomic rename as
+    possible so the TOCTOU window is minimal (adv-diff H1)."""
+    live_path = os.path.realpath(source)
+    if live_path != source:
+        return "source symlink/path changed since read; not clobbering"
+    try:
+        live_stat = os.stat(live_path)
+        with open(live_path, "rb") as fh:
+            live = fh.read()
+    except OSError as err:
+        return f"re-read failed: {err}"
+    if (live_stat.st_dev, live_stat.st_ino) != (orig_stat.st_dev, orig_stat.st_ino):
+        return "source identity (dev/inode) changed since read; not clobbering"
+    if live_stat.st_nlink > 1:  # adv H4: a hardlink created after the initial pre-backup stat
+        return (f"source became hardlinked ({live_stat.st_nlink} links) since read; "
+                f"not clobbering (would orphan the other link(s))")
+    if _sha256(live) != original_digest:
+        return "source changed since read (concurrent edit); not clobbering"
+    return None
 
 
 def _write_all(fd: int, data: bytes) -> None:

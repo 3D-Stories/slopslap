@@ -94,10 +94,14 @@ Tests that depend on POSIX-only features (`os.link` hardlinks, `os.listxattr`, u
 ## 8. Security
 
 Filesystem-safety hardening is the whole point: fail-closed on hardlink (prevents silent
-link-semantics breakage), `O_NOFOLLOW` reduces symlink/path-substitution TOCTOU, EXDEV-abort prevents
-partial cross-device writes, exact mode preservation prevents a repaired file silently becoming
-world-readable/executable. No new trust surface; the untrusted-content boundary is unchanged (apply
-consumes a verified edit-script, never raw model prose).
+link-semantics breakage), the **last-moment pre-commit re-validation tight to `os.replace`**
+(resolved-path identity + dev/inode + hardlink count + content digest) minimizes the symlink/
+path-substitution/concurrent-edit TOCTOU window — this is the real guard, NOT `O_NOFOLLOW` (dropped
+as theater, adv H1: it pins only a single open's final component and cannot bind the pathname-based
+`os.replace`). EXDEV-abort prevents partial cross-device writes; exact mode preservation prevents a
+repaired file silently becoming world-readable/executable; xattr-loss is warned. No new trust
+surface; the untrusted-content boundary is unchanged (apply consumes a verified edit-script, never
+raw model prose).
 
 ## 4a. Step-4 self-review (inline, quality-bar rubric)
 
@@ -117,3 +121,9 @@ Critical/High from the inline rubric; no further loop-back.
 - **Peer strategy:** model C, `docs/reviews/peer-apply-write-strategy-question-2026-07-12.md` (settled 2026-07-12; not re-run for #21).
 - **Step-4 adversarial-on-design** (Codex, `docs/reviews/2026-07-13-21-apply-write-strategy-hardening-md-2026-07-13.md`): 4 High + 3 Med, ALL confirmed at source + folded (H1 O_NOFOLLOW theater→dropped; H2 fchmod-fail→fail-closed; H3 ownership scope-creep→dropped + xattr-loss warning added; H4 hardlink TOCTOU→pre-replace re-check; M5 test-2 umask→precise; M6 feasibility→tests-are-the-spike; M7 fsync→loud-warn+prod-doc). Design loop-back 1/3 consumed.
 - **Step-4 self-review:** inline quality-bar rubric (subagent died on session cap), PASS — §4a.
+
+## 10. Step-11 review provenance
+
+- **Step-8a** (2-lens Opus over apply.py): PASS; Med fixed — `os.fchmod` Windows guard (getattr + graceful degrade).
+- **Step-11 code review** (Opus full-diff): PASS; Med (dashboard) + Low (bare-`pass` xattr swallow → now warns) folded.
+- **Step-11 adversarial diff** (Codex, `docs/reviews/rawgentic-21-branch-diff-2026-07-13.md`): 2 High + 1 Med, all confirmed + folded — H1 (pre-replace guard ran before temp staging → widened TOCTOU) FIXED by relocating the identity/nlink/sha re-check to `_precommit_reason` called immediately before `os.replace` (+ test 2b hardlink-during-staging); H2 (xattr enumerate-failure silent) already fixed by the Step-11 Low warning; M3 (this §8 crediting the dropped O_NOFOLLOW) FIXED above. No design loop-back (implementation placement/doc fixes; design intent — peer step 5 "immediately before commit" — was already correct).

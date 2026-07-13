@@ -81,6 +81,28 @@ def test_hardlink_created_after_stat_caught_at_prereplace(tmp_path, monkeypatch)
     assert src.read_bytes() == b"one two three\n"
 
 
+# ---- test 2b: hardlink created DURING temp staging (adv-diff H1) — caught by the last-moment
+#      pre-commit re-check that now runs tight to os.replace, not before the temp write ----
+@posix_only
+def test_hardlink_during_temp_staging_caught(tmp_path, monkeypatch):
+    src = _src(tmp_path)
+    link = tmp_path / "staging_link.md"
+    real_write_all = apply_mod._write_all
+
+    def hook(fd, data):
+        real_write_all(fd, data)
+        if not link.exists():
+            os.link(str(src), str(link))  # link appears while the temp is being staged
+
+    monkeypatch.setattr(apply_mod, "_write_all", hook)
+    r = apply_selective(str(src), [_e(0, 3, b"ONE")], ACCEPT, _bk(tmp_path))
+    assert r["status"] == "blocked" and r["mutated"] is False
+    assert "hardlink" in " ".join(r["errors"]).lower()
+    assert src.read_bytes() == b"one two three\n"          # not clobbered
+    assert link.read_bytes() == b"one two three\n"          # the other link not orphaned
+    assert not any(f.startswith("d.md.slopslap.tmp") for f in os.listdir(tmp_path))  # temp cleaned
+
+
 # ---- test 3: exact mode via fchmod is load-bearing (umask would otherwise mask it) ----
 @posix_only
 def test_exact_mode_preserved_via_fchmod(tmp_path):
