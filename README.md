@@ -105,7 +105,7 @@ real semantic judgement. Run it: `pytest -q` (the gate) or `python3 scripts/eval
   **measure-only** diction signals (register / contraction rate / punctuation profile /
   first-second-third-person lean) used ONLY to bias the choice among ALREADY-SAFE phrasings. No
   persistence, no learning, no hook (that's the deferred v2 capture). The voiceprint's fixed place in
-  the authority order — `protected > invariants + no-fabrication > genre > instruction > voiceprint >
+  the authority order — `protected > invariants + no-fabrication > genre > current instruction > voiceprint >
   default` — means it never authorizes an edit, never widens a boundary, and never adds
   fragments/profanity to long-form to match a sample; the keystone holds. SKILL.md + suggest.md carry
   the contract; voiceprint.md already pointed here.

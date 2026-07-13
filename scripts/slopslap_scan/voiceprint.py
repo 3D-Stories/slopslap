@@ -1,8 +1,10 @@
 """One-shot manual voice sample — measure-only diction signals (#24).
 
 `extract_voice_features(sample)` is a PURE function over a SINGLE inline sample the user pastes with a
-suggest request. It returns diction signals (register / contraction rate / punctuation / directness)
-the model MAY use to BIAS its choice among ALREADY-SAFE phrasings — it NEVER authorizes an edit,
+suggest request. It returns measure-only diction signals — contraction rate, mean sentence length,
+punctuation profile, and person-lean — from which the model may INFER higher-level traits like
+register and directness. The model MAY use them to BIAS its choice among ALREADY-SAFE phrasings — it
+NEVER authorizes an edit,
 never widens an edit boundary, never persists, and never learns (that is the deferred v2 hook). Per
 the authority order (protected > invariants + no-fabrication > genre > current instruction >
 voiceprint > default), these signals sit second-from-last: the keystone holds unchanged.
@@ -13,12 +15,7 @@ edit authorization.
 """
 from __future__ import annotations
 
-import os
-import sys
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from slopslap_scan.extract import split_sentences, words  # noqa: E402
+from .extract import split_sentences, words
 
 # contraction apostrophe (straight or curly); a word containing one is a contraction ("can't", "we'll")
 _APOS = ("'", "’")

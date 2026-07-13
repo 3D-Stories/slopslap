@@ -118,9 +118,10 @@ axes. Never a single "AI %" or "sloppiness score" — those invite normalization
 ## One-shot manual voice sample (no learning)
 A user may paste a short **voice sample** inline with a suggest/apply request. It is a ONE-SHOT bias,
 never stored, read back, or learned (persistent capture is the deferred v2 hook). Extract measure-only
-diction signals with `scripts/slopslap_scan/voiceprint.py::extract_voice_features` (register,
-contraction rate, punctuation profile, first/second/third-person lean) and use them ONLY to **bias the
-choice among ALREADY-SAFE phrasings** — the ones that already cleared protected spans, invariants, and
+diction signals with `scripts/slopslap_scan/voiceprint.py::extract_voice_features` (contraction rate,
+mean sentence length, punctuation profile, first/second/third-person lean — from which you may infer
+register and directness) and use them ONLY to **bias the choice among ALREADY-SAFE phrasings** — the
+ones that already cleared protected spans, invariants, and
 genre. The voiceprint's place in the **authority order** is fixed and low:
 `protected > invariants + no-fabrication > genre > current instruction > voiceprint > default`.
 So the voiceprint **never authorizes an edit, never widens an edit boundary**, and never overrides a
