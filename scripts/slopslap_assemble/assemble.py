@@ -29,9 +29,42 @@ from slopslap_scan.diagnoses import DiagnosisError, authorized_ranges_from_diagn
 from slopslap_scan.genre import GenreError, classify_genre  # noqa: E402
 from slopslap_scan.protected import ProtectedSpanError, extract_protected_spans  # noqa: E402
 from slopslap_verification.autoledger import build_invariant_regions  # noqa: E402
-from slopslap_verification.ledger import Ledger, LedgerBuildError, build_ledger  # noqa: E402
+from slopslap_verification.editscript import Edit, apply_edits, parse_edits  # noqa: E402
+from slopslap_verification.ledger import (  # noqa: E402
+    Ledger,
+    LedgerBuildError,
+    build_ledger,
+    verify,
+)
+from slopslap_apply.apply import apply_selective  # noqa: E402
 
 SCHEMA_VERSION = 1
+
+# Static code-slug -> CLI exit class (§4.3 table). NO runtime judgment, no message sniffing.
+#   0 ok · 2 policy-blocked · 3 invalid input/contract · 4 stage execution failure.
+# ``upstream_not_ok`` is DELIBERATELY absent — it tags only ``aborted`` stages and never drives
+# the exit code (an aborted stage always sits downstream of the exit-determining failure/block).
+_EXIT_CLASS = {
+    "ok": 0,
+    # policy-blocked (2)
+    "verify_not_shippable": 2,
+    "candidate_empty": 2,
+    "apply_blocked": 2,
+    # invalid input / contract (3)
+    "invalid_edits": 3,
+    "path_mismatch": 3,
+    "digest_mismatch": 3,
+    "genre_error": 3,
+    # stage execution failure (4)
+    "protected_span_error": 4,
+    "diagnosis_error": 4,
+    "ledger_build_error": 4,
+    "semantic_invocation_failed": 4,
+    "apply_error": 4,
+}
+
+# worst-of total order for the overall RunResult status: failed > blocked > aborted > ok.
+_STATUS_RANK = {"failed": 3, "blocked": 2, "aborted": 1, "ok": 0}
 
 
 # --------------------------------------------------------------------------- data contracts (§4)
@@ -73,6 +106,21 @@ class StageResult:
 def _stage_fail(stage: str, code: str, message: str) -> StageResult:
     return StageResult(stage, "failed", code, message, data=None,
                        errors=[{"code": code, "message": message}])
+
+
+@dataclass
+class RunResult:
+    """One end-to-end run. ``status`` is the worst stage status (``_STATUS_RANK``); ``audit`` /
+    ``verification`` / ``apply`` are convenience summaries (the stage ``data``), None when a stage
+    was not reached. ``run_id`` is the audit's deterministic id ("" if audit never produced one)."""
+
+    schema_version: int
+    run_id: str
+    status: str
+    stages: List[StageResult]
+    audit: Any = None            # AuditResult | None
+    verification: Any = None     # verify_result dict | None
+    apply: Any = None            # apply report dict | None
 
 
 # --------------------------------------------------------------------------- manifest glue (§4.1)
@@ -198,3 +246,208 @@ def audit_document(path: str, *, fmt: str = "markdown",
         ledger=ledger,
     )
     return StageResult("audit", "ok", "ok", "audit complete", data=audit)
+
+
+# --------------------------------------------------------------------------- run machinery (§4.3)
+def _aborted(stage_names: List[str], cause_stage: str) -> List[StageResult]:
+    """Explicit ``aborted`` results for every stage that did not run because ``cause_stage`` was
+    not ``ok`` (peer key-decision: never a silent partial run). Never exit-determining."""
+    return [StageResult(name, "aborted", "upstream_not_ok",
+                        f"not run: upstream stage {cause_stage!r} was not ok", data=None)
+            for name in stage_names]
+
+
+def _overall_status(stages: List[StageResult]) -> str:
+    return max((s.status for s in stages), key=lambda s: _STATUS_RANK[s])
+
+
+def _build_run(run_id: str, stages: List[StageResult]) -> RunResult:
+    audit = verification = apply_rep = None
+    for s in stages:
+        if s.stage == "audit" and s.status == "ok":
+            audit = s.data
+        elif s.stage == "verify":
+            verification = s.data      # preserved even when blocked (full verify_result)
+        elif s.stage == "apply":
+            apply_rep = s.data
+    return RunResult(SCHEMA_VERSION, run_id, _overall_status(stages), stages,
+                     audit=audit, verification=verification, apply=apply_rep)
+
+
+def exit_code(run: RunResult) -> int:
+    """CLI exit code, derived mechanically from the FIRST non-ok (blocked/failed) stage's code via
+    the static ``_EXIT_CLASS`` map. ``aborted`` stages are skipped (they carry ``upstream_not_ok``,
+    which is never exit-determining). All-ok -> 0."""
+    for st in run.stages:
+        if st.status in ("blocked", "failed"):
+            return _EXIT_CLASS[st.code]
+    return 0
+
+
+def _coerce_edits(edits_input) -> List[Edit]:
+    """Accept either a list of ``Edit`` objects or the envelope dict form (parse_edits)."""
+    if edits_input and isinstance(edits_input[0], Edit):
+        return list(edits_input)
+    return parse_edits(edits_input or [])
+
+
+def _sink_status(semantic_fn) -> str:
+    """The typed invocation outcome the seam's semantic_fn recorded (#27 §7). A plain injected
+    callable with no ``status_sink`` reads ``ok`` (no false ops-failure)."""
+    sink = getattr(semantic_fn, "status_sink", None)
+    if not isinstance(sink, dict):
+        return "ok"
+    return sink.get("invocation_status", "ok")
+
+
+def live_semantic_fn(model: str = "sonnet", timeout_s: float = 120.0):
+    """The seam's Layer-3 ``semantic_fn`` factory (§5, §7). LIVE (``SLOPSLAP_LIVE=="1"``): the real
+    ``invoke_semantic`` bound to ``model``/``timeout_s`` with a FRESH sticky ``status_sink`` — a
+    genuine fresh-context ``claude -p`` pass. OFFLINE (default): a hardcoded ``clean`` stub, no
+    model call, no import of the live transport. Either way the returned callable exposes
+    ``.status_sink`` so ``run_candidate`` can reclassify an ops failure to
+    ``semantic_invocation_failed``. Deliberately NOT a reuse of ``eval.semantic`` (self-review F3):
+    the seam owns its own sink-injecting factory; the eval package stays a frozen proof."""
+    sink: dict = {}
+    if os.environ.get("SLOPSLAP_LIVE") == "1":
+        import functools
+
+        from slopslap_invoke.invoke import invoke_semantic
+        bound = functools.partial(invoke_semantic, model=model, timeout_s=timeout_s,
+                                  status_sink=sink)
+
+        def fn(original, revision, ledger_canonical):
+            return bound(original, revision, ledger_canonical)
+    else:
+        def fn(original, revision, ledger_canonical):
+            return {"verdict": "clean", "concerns": []}
+
+    fn.status_sink = sink
+    return fn
+
+
+def run_candidate(audit: AuditResult, edits, *, semantic_fn=None, write: bool = False,
+                  apply_config=None) -> RunResult:
+    """CANDIDATE -> VERIFY -> APPLY against an already-audited snapshot. Returns one ``RunResult``
+    with the full 4-stage story (a synthesized ``audit`` ok stage first, then the three it runs).
+
+    - candidate: source-identity re-check (path + digest, adv A6) + edit-script validation
+      (parse + bounds/overlap, BEFORE verify, adv A5) + empty-candidate policy (keyed on
+      ``audit_status``, adv A1).
+    - verify: ``ledger.verify`` with the authorization ranges + semantic_fn; non-shippable is a
+      policy ``blocked`` (full verify_result preserved), UNLESS the ``status_sink`` reports an ops
+      failure, which is ``failed``/``semantic_invocation_failed`` (adv A2).
+    - apply: only when verify is shippable; routes through the backup-gated ``apply_selective`` with
+      a verify_fn CLOSED over this run's ledger/ranges/semantic_fn. Aborted when verify is not ok.
+    """
+    if semantic_fn is None:
+        semantic_fn = live_semantic_fn()
+    audit_stage = StageResult("audit", "ok", "ok", "audit complete", data=audit)
+
+    def _abort_after_candidate(cand: StageResult) -> RunResult:
+        return _build_run(audit.run_id, [audit_stage, cand] + _aborted(["verify", "apply"], "candidate"))
+
+    # --- candidate: source-identity boundary re-check (path BEFORE digest so identical bytes at a
+    #     different path still fail as path_mismatch, adv A6) ---
+    src = audit.source_path
+    if os.path.realpath(src) != src:
+        return _abort_after_candidate(_stage_fail(
+            "candidate", "path_mismatch",
+            "source path no longer resolves to the audited file (symlink/identity changed since audit)"))
+    try:
+        with open(src, "rb") as fh:
+            original = fh.read()
+    except OSError as err:
+        return _abort_after_candidate(_stage_fail(
+            "candidate", "digest_mismatch", f"cannot re-read audited source: {err}"))
+    if hashlib.sha256(original).hexdigest() != audit.source_sha256:
+        return _abort_after_candidate(_stage_fail(
+            "candidate", "digest_mismatch", "source changed since audit (sha256 mismatch)"))
+
+    # --- candidate: parse + validate the edit-script BEFORE verify (adv A5) ---
+    try:
+        parsed = _coerce_edits(edits)
+        apply_edits(original, parsed)  # public validator: raises EditError on bounds/overlap
+    except (ValueError, TypeError, KeyError) as err:  # EditError/binascii.Error subclass ValueError
+        return _abort_after_candidate(_stage_fail("candidate", "invalid_edits", str(err)))
+
+    # --- candidate: empty-candidate policy, keyed on audit_status NOT authorization (adv A1) ---
+    if not parsed:
+        if audit.audit_status == "flagged":
+            return _build_run(audit.run_id, [
+                audit_stage,
+                StageResult("candidate", "blocked", "candidate_empty",
+                            "empty candidate on a flagged audit: a missing model output is never a "
+                            "silent pass", data=[]),
+            ] + _aborted(["verify", "apply"], "candidate"))
+        # clean audit + empty candidate: a legitimate no-op — nothing to verify or apply
+        return _build_run(audit.run_id, [
+            audit_stage,
+            StageResult("candidate", "ok", "ok", "empty candidate on a clean audit: no-op", data=[]),
+        ])
+    candidate_stage = StageResult("candidate", "ok", "ok", "candidate validated", data=parsed)
+
+    # --- verify: one audit, one policy. authorization state chooses the ranges arg ---
+    authorized = None if audit.authorization["state"] == "locality_unverified" \
+        else audit.authorization["ranges"]
+    verify_result = verify(original, parsed, audit.ledger,
+                           authorized_ranges=authorized, semantic_fn=semantic_fn)
+    shippable = (verify_result["decision"] == "ACCEPT"
+                 and verify_result["proposal_status"] == "ACCEPT"
+                 and verify_result["semantic_status"] == "clean")
+    sink_status = _sink_status(semantic_fn)
+
+    if not shippable and sink_status != "ok":
+        # an OPS failure (transport/timeout/parse), not a policy verdict (adv A2) — exit 4, not 2.
+        verify_stage = StageResult(
+            "verify", "failed", "semantic_invocation_failed",
+            f"semantic invocation failed (status={sink_status}); an ops failure is not a policy "
+            f"verdict", data=verify_result,
+            errors=[{"code": "semantic_invocation_failed", "invocation_status": sink_status}])
+        return _build_run(audit.run_id, [audit_stage, candidate_stage, verify_stage]
+                          + _aborted(["apply"], "verify"))
+    if not shippable:
+        verify_stage = StageResult(
+            "verify", "blocked", "verify_not_shippable",
+            f"proposal not shippable (decision={verify_result['decision']}, "
+            f"proposal_status={verify_result['proposal_status']}, "
+            f"semantic_status={verify_result['semantic_status']})", data=verify_result)
+        return _build_run(audit.run_id, [audit_stage, candidate_stage, verify_stage]
+                          + _aborted(["apply"], "verify"))
+    verify_stage = StageResult("verify", "ok", "ok", "proposal is shippable", data=verify_result)
+
+    # --- apply: backup-gated, re-verifying against the untouched original each attempt ---
+    def _bound_verify(orig_bytes, es):
+        return verify(orig_bytes, es, audit.ledger,
+                      authorized_ranges=authorized, semantic_fn=semantic_fn)
+
+    report = apply_selective(src, parsed, _bound_verify, config=apply_config, write=write)
+    st = report.get("status")
+    if st in ("applied", "no_op"):
+        apply_stage = StageResult("apply", "ok", "ok", f"apply {st}", data=report,
+                                  warnings=report.get("warnings", []))
+    elif st == "blocked":
+        apply_stage = StageResult("apply", "blocked", "apply_blocked",
+                                  "apply blocked (backup/attribution/convergence)", data=report,
+                                  errors=[{"code": "apply_blocked", "errors": report.get("errors", [])}])
+    else:  # "error" or any unexpected relayed status -> execution failure (exit 4)
+        apply_stage = StageResult("apply", "failed", "apply_error",
+                                  f"apply reported status={st!r}", data=report,
+                                  errors=[{"code": "apply_error", "errors": report.get("errors", [])}])
+    return _build_run(audit.run_id, [audit_stage, candidate_stage, verify_stage, apply_stage])
+
+
+def assemble(path: str, edits, *, fmt: str = "markdown", declared_genre: Optional[str] = None,
+             semantic_fn=None, write: bool = False, apply_config=None) -> RunResult:
+    """Audit ``path`` then run the candidate ``edits`` end-to-end (audit + run in one call).
+
+    If the audit stage fails, candidate/verify/apply are explicitly ``aborted`` and the failed audit
+    drives the exit code. (``apply_config`` threads a ``BackupConfig`` through to ``apply_selective``
+    — needed so the dry-run golden can point the mandatory backup at a test-owned dir.)
+    """
+    audit_stage = audit_document(path, fmt=fmt, declared_genre=declared_genre)
+    if audit_stage.status != "ok":
+        run_id = audit_stage.data.run_id if isinstance(audit_stage.data, AuditResult) else ""
+        return _build_run(run_id, [audit_stage] + _aborted(["candidate", "verify", "apply"], "audit"))
+    return run_candidate(audit_stage.data, edits, semantic_fn=semantic_fn, write=write,
+                         apply_config=apply_config)
