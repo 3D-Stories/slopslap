@@ -20,17 +20,29 @@ SLOPSLAP_TARGET
 For each demonstrated harm: show the typed diagnosis record, then a **focused diff** whose remedy
 matches the category (`emptiness` → delete/compress only if no intent lost; `laundering` → convert to
 a question, never delete; `simulation` → flag the missing support, do not fabricate it), then the
-**invariant-check result** (numbers, units, modality, negation, conditions, protected spans — all
-intact). Ask a question ONLY for a fact that blocks a specific proposed repair. Propose placeholders
+**invariant-check result** — which is the **deterministic verifier's verdict**, not a self-narrated
+"all intact": run the diff through the seam (below) and present its `verify`-stage result (numbers,
+units, modality, negation, conditions, protected spans are checked by `slopslap_verification`, not by
+your say-so). A diff the verifier does not clear is NOT a suggestion — surface the block, do not
+present it as safe. Ask a question ONLY for a fact that blocks a specific proposed repair. Propose placeholders
 (`[DEFINE X]`) OUTSIDE the document unless the user approves inserting them. Do **not** write to the
 file — suggest is non-mutating. When a passage is clean, leave it alone.
 
 ## Seam contract (deterministic verify — #27)
 
-A proposed diff is only trustworthy once the byte-exact verifier clears it. The live-orchestration
-seam (`scripts/slopslap_assemble/assemble.py`) is that check. Serialize the candidate as a JSON
-edit-script — a list of `{start_byte, end_byte, replacement_b64}` (base64) in ORIGINAL byte
-coordinates — then **dry-run** it end-to-end:
+A proposed diff is only trustworthy once the byte-exact verifier clears it — this seam IS the
+invariant-check the main flow presents, not an optional appendix. The live-orchestration seam
+(`scripts/slopslap_assemble/assemble.py`) is that check.
+
+**Entry-path precondition (inline text).** The seam verifies a *file* (`run --path FILE`) and byte
+offsets are computed against that file's exact bytes. When the target is inline pasted prose (not a
+path), FIRST materialize it to a temp file at its **exact UTF-8 bytes** (no reflow, no trailing-newline
+munging) and compute the edit-script offsets against those bytes, then run the seam against that temp
+file. A mismatch between the offsets and the file's bytes fails closed (`digest_mismatch`/`invalid_edits`),
+never a silent wrong edit.
+
+Serialize the candidate as a JSON edit-script — a list of `{start_byte, end_byte, replacement_b64}`
+(base64) in ORIGINAL byte coordinates — then **dry-run** it end-to-end:
 
 ```
 python3 scripts/slopslap_assemble/assemble.py run --path PATH --edits EDITS.json [--dry-run] [--format markdown|text] [--declared-genre GENRE]

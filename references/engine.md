@@ -22,6 +22,6 @@ a specific engine ran.
 
 ## Effort
 Prefer high reasoning effort for the diagnosis and the verification passes; the rewrite is only as
-trustworthy as the verify that follows it. The verifier (see `references/invariant-ledger.md`, arriving
-with the ledger increment) is deterministic and owns the hard accept/reject — no model output overrides
-a deterministic hard failure, whatever the engine.
+trustworthy as the verify that follows it. The verifier (see `references/invariant-ledger.md`, wired into
+the suggest flow via the `scripts/slopslap_assemble/` seam as of #27) is deterministic and owns the hard
+accept/reject — no model output overrides a deterministic hard failure, whatever the engine.
