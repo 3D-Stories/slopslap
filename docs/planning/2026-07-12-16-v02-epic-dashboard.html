@@ -107,8 +107,8 @@ a{color:var(--lagoon)}
   </header>
 
   <!-- PROGRESS: update width% + caption on each merge -->
-  <div class="bar"><i style="width:71%"></i></div>
-  <p class="barcap">10 / 14 children merged · Tier 0+1+2 done + #23 #21 (… #27 #23 #21 ✅) · next Tier 3 #29 · version 0.1.10</p>
+  <div class="bar"><i style="width:79%"></i></div>
+  <p class="barcap">11 / 14 children merged · Tier 0+1+2 done + #23 #21 #29 (… #21 #29 ✅) · next Tier 3 #24 · version 0.1.11</p>
 
   <div class="legend">
     <span class="chip merged"><span class="dot" style="background:var(--lagoon)"></span>merged + closed</span>
@@ -261,13 +261,17 @@ T4  #28 e2e golden (dep #27 #23 #17–#20 #30) · #25 calibration (dep #30)</div
       </ul>
       <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/45">#45</a> · v0.1.10 · gate 423→434 (+11, 0 reg)</div>
     </div>
-    <div class="card queued" id="c29">
+    <div class="card merged" id="c29">
       <div class="id">T3 · #29</div>
       <h3>Apply-command enablement</h3>
       <div class="dep">depends on #21, #27</div>
-      <span class="st">queued</span>
-      <ul><li class="pending">Enable the user-facing apply command after hardening + orchestration</li></ul>
-      <div class="kv">PR — · version — · gate —</div>
+      <span class="st">merged + closed</span>
+      <ul>
+        <li>write-fence removed; explicit mutating `apply` CLI subcommand (run stays dry-run only)</li>
+        <li>commands/apply.md wired to the engine; backup+verifier gated, fails closed</li>
+        <li>offline apply warns "deterministic layers only" + semantic_mode; Codex 3H+1M folded</li>
+      </ul>
+      <div class="kv">PR <a href="https://github.com/3D-Stories/slopslap/pull/48">#48</a> · v0.1.11 · gate 434→440 (+6, 0 reg)</div>
     </div>
     <div class="card queued" id="c24">
       <div class="id">T3 · #24</div>
