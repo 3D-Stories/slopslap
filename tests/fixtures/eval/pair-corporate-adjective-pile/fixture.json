@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "genre": "marketing",
+  "control": false,
+  "pair": true,
+  "clean_file": "clean.md",
+  "provenance": "Authored slop→clean pair (#58, P0). original.md is a corporate adjective pile ('robust, scalable, and innovative', 'best-in-class', 'leverages', 'empower', 'seamless, cutting-edge solutions'). clean.md drops the unverifiable superlatives and keeps only concrete, doc-supportable capability (distributed workloads; integrates with existing tools) — a de-claim rewrite, NOT a lateral swap to a new claim.",
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [],
+  "protected_spans": [],
+  "invariant_regions": [],
+  "expected_invariants": [],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "adjective_pile",
+      "region": "corporate-superlatives",
+      "note": "Adjective pile + laundered superlatives ('best-in-class', 'cutting-edge'). Genre=marketing → recommendation strip. clean.md scopes to the verifiable: no 'best'/'leading' claim survives, so Layer-1 no_new_claim_atoms would accept it (no new claim atoms). The pair encodes the target for a claim-carrying strip that stays verifier-safe."
+    }
+  ],
+  "control_reason": null
+}
