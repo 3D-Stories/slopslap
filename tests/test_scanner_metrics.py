@@ -126,3 +126,35 @@ def test_abbreviation_not_a_sentence_boundary():
     # "e.g." must not split the sentence
     d = _metrics("We support many formats e.g. json and yaml here.")["sentence_length_distribution"]
     assert d["count"] == 1  # one sentence, not split at 'e.g.'
+
+
+# --- generic-diction / filler detector (#60, pivot P2) ---
+def test_generic_diction_detects_corporate_adjective_pile():
+    m = _metrics("Our robust, scalable, best-in-class platform will empower every team.")
+    gd = m["generic_diction"]
+    words = {loc["word"] for loc in gd["locations"]}
+    assert {"robust", "scalable", "best-in-class", "empower"} <= words
+    assert gd["count"] >= 4
+    assert gd["soft_flag"] is True  # >= GENERIC_DICTION_FLAG_AT corporate-slop hits
+
+
+def test_generic_diction_detects_empty_intensifiers():
+    m = _metrics("It is incredibly powerful, extremely fast, and truly seamless.")
+    gd = m["generic_diction"]
+    kinds = {loc["kind"] for loc in gd["locations"]}
+    assert "intensifier" in kinds and "buzzword" in kinds  # 'seamless' is a buzzword
+    assert {loc["word"] for loc in gd["locations"]} >= {"incredibly", "extremely", "truly"}
+
+
+def test_generic_diction_clean_prose_does_not_flag():
+    m = _metrics("The cat sat on the mat and watched the rain fall outside for hours.")
+    assert m["generic_diction"]["count"] == 0
+    assert m["generic_diction"]["soft_flag"] is False
+
+
+def test_generic_diction_registered_and_classified():
+    from slopslap_scan.metrics import ALL_METRICS, METRIC_CLASS, recommend
+    assert "generic_diction" in dict(ALL_METRICS)
+    assert "generic_diction" in METRIC_CLASS
+    # a filler-class tell: stripped under general, never authorizing on its own.
+    assert recommend("general", "generic_diction") == "strip"

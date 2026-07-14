@@ -17,7 +17,10 @@ from typing import Dict, List
 
 from .extract import Unit, split_sentences, unit_sentences, words
 from .tables import (
+    CORPORATE_BUZZWORDS,
     DUALITY_TEMPLATES,
+    EMPTY_INTENSIFIERS,
+    GENERIC_DICTION_FLAG_AT,
     NEGATIVE_PARALLELISM_FLAG_AT,
     NEGATIVE_PARALLELISM_PATTERNS,
     PUNCT_FLAG_PER_1K,
@@ -256,6 +259,24 @@ def stock_lexical_clusters(units, sw) -> Dict:
     return _result(len(units), len(hits), None, hits, None, "low", "stock-" + TABLES_VERSION)
 
 
+def generic_diction(units, sw) -> Dict:
+    """Corporate-slop buzzwords + empty intensifiers — the generic-diction / filler payload (#60,
+    pivot P2; the "finds more" surface v0.2 missed). Measure-only: each match is a candidate for the
+    genre recommendation layer, never a verdict, and the user's review decision authorizes any strip.
+    Patterns are escaped word-boundary literals over lowercased unit text (no ReDoS)."""
+    hits = []
+    for u in units:
+        low = u.text.lower()
+        for word in CORPORATE_BUZZWORDS:
+            for _m in re.finditer(r"\b" + re.escape(word) + r"\b", low):
+                hits.append({"word": word, "kind": "buzzword", "line_start": u.line_start})
+        for word in EMPTY_INTENSIFIERS:
+            for _m in re.finditer(r"\b" + re.escape(word) + r"\b", low):
+                hits.append({"word": word, "kind": "intensifier", "line_start": u.line_start})
+    return _result(len(units), len(hits), None, hits, len(hits) >= GENERIC_DICTION_FLAG_AT,
+                   "medium", "generic-diction-" + TABLES_VERSION)
+
+
 ALL_METRICS = [
     ("sentence_length_distribution", sentence_length_distribution),
     ("sentence_length_dispersion", sentence_length_dispersion),
@@ -268,6 +289,7 @@ ALL_METRICS = [
     ("transition_clusters", transition_clusters),
     ("vague_attribution", vague_attribution),
     ("stock_lexical_clusters", stock_lexical_clusters),
+    ("generic_diction", generic_diction),
 ]
 
 
@@ -297,6 +319,7 @@ METRIC_CLASS = {
     "paragraph_sentence_count_runs": "distribution",
     "transition_clusters": "filler",
     "stock_lexical_clusters": "filler",
+    "generic_diction": "filler",
     "vague_attribution": "epistemic",
     "bold_label_density": "structural",
     "adjective_requirements": "laundering",  # prd-only; added dynamically by _apply_genre

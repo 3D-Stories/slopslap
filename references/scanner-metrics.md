@@ -67,6 +67,7 @@ extraction_profile, confidence, purpose}` (distribution/dispersion metrics add a
 | rule_of_three | low | `A, B, and C` tricolon heuristic (`tables.RULE_OF_THREE_PATTERN`); soft_flag null |
 | vague_attribution | low | phrase table `tables.VAGUE_ATTRIBUTION`; `soft_flag:null` |
 | stock_lexical_clusters | low | named phrase table `tables.STOCK_CLUSTERS` + 2 bounded duality templates; `soft_flag:null` |
+| generic_diction | medium | corporate-slop buzzwords + empty intensifiers (`tables.CORPORATE_BUZZWORDS` / `tables.EMPTY_INTENSIFIERS`) as escaped word-boundary literals (no ReDoS); soft_flag at ≥ `tables.GENERIC_DICTION_FLAG_AT` (3) (issue #60). Base-form literals only — inflections (leverages/empowered) are a known recall ceiling |
 
 **cadence-similarity is DEFERRED** (no stable parameterization; overlaps dispersion +
 paragraph-runs) — not shipped as a placeholder.

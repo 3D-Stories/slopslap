@@ -69,7 +69,7 @@ def _category_row(skill, cat):
 def test_plugin_manifest_valid_and_versioned():
     manifest = json.loads(_read(".claude-plugin", "plugin.json"))
     assert manifest["name"] == "slopslap"
-    assert manifest["version"] == "0.4.0"
+    assert manifest["version"] == "0.5.0"
     assert manifest["description"]
     assert manifest["author"]["name"]
 

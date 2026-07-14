@@ -80,3 +80,30 @@ RULE_OF_THREE_PATTERN = r"\b[\w-]+,\s+[\w-]+,\s+and\s+[\w-]+"
 
 # em-dash / semicolon appositive-density soft-flag thresholds (per 1k eligible words).
 PUNCT_FLAG_PER_1K = {"em_dash_per_1k": 12.0, "semicolon_per_1k": 8.0}
+
+# --- generic-diction / filler (issue #60, pivot P2) ---
+# corporate-slop buzzwords: the "finds more" payload. Matched as escaped word-boundary literals
+# (no ReDoS). Closed, versioned list — a match is a candidate for the recommendation layer, never a
+# verdict; the user's review decision (keystone v2) authorizes any strip.
+# Deliberately EXCLUDES dual-use technical terms that false-positive in the tool's own target genres
+# (issue #60 review): "paradigm" (OO/functional paradigm), "unlock" (unlock a mutex), "elevate"
+# (elevate privileges) are standard technical vocabulary, not corporate slop, so they are not listed.
+# ponytail: base-form literals only — inflections ("leverages", "empowered", "streamlined") are a
+# known recall ceiling (measure-only + user-authorized, so under-recall is the safe direction); add
+# light stemming or explicit inflected forms if P5 calibration shows the verb forms carry the tell.
+CORPORATE_BUZZWORDS = (
+    "robust", "scalable", "innovative", "best-in-class", "seamless", "leverage",
+    "empower", "cutting-edge", "world-class", "game-changing", "next-generation",
+    "state-of-the-art", "synergy", "holistic", "disruptive", "revolutionary", "turnkey",
+    "frictionless", "bespoke", "streamline", "supercharge",
+    "unparalleled", "best-of-breed", "mission-critical", "value-add",
+)
+# empty intensifiers: adverbs that inflate without adding a claim. Deliberately EXCLUDES the very
+# common "very"/"really"/"quite" (too load-bearing / high false-positive) — only the emptiest.
+EMPTY_INTENSIFIERS = (
+    "incredibly", "extremely", "truly", "remarkably", "immensely", "exceptionally",
+    "tremendously", "wildly", "insanely", "vastly",
+)
+# soft-flag when this many generic-diction hits accumulate in a doc (calibratable via calibrate.py;
+# candidate_selection_only, no cross-doc percentiles).
+GENERIC_DICTION_FLAG_AT = 3
