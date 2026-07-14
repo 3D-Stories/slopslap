@@ -128,6 +128,17 @@ axes. Never a single "AI %" or "sloppiness score" — those invite normalization
   the byte-exact verifier still hard-gates every applied edit. This is where keystone v2's "the user's
   review decision authorizes the edit" is operationalized.
 
+<!-- anchor:mode-feedback -->
+- **feedback** (`/slopslap:feedback {path|show|reset}` → `scripts/slopslap_review/feedback.py`) — the
+  **learn** arrow. Each review→apply decision appends one span-hashed, local, purgeable line to
+  `$XDG_STATE_HOME/slopslap/feedback.jsonl`; `slopslap_corpus.learn.learn_from_feedback` consumes it
+  into a **keep-only** recommendation overlay (repeated overrides of a `strip` rec flip that
+  metric-class to `keep` for that genre — the tool gets *more* conservative, never more aggressive).
+  The overlay tunes ONLY the recommendation the next review shows: it is applied solely in
+  `findings.build_findings`, never in `metrics.recommend` (kept pure), the authorization derivation, or
+  the verifier — so "recommendations may learn; authorization never does" holds structurally. `show`
+  prints the learned overlay; `reset` purges the ledger.
+
 <!-- anchor:voiceprint -->
 ## One-shot manual voice sample (no learning)
 A user may paste a short **voice sample** inline with a suggest/apply request. It is a ONE-SHOT bias,

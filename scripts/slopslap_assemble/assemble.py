@@ -585,7 +585,8 @@ def _run_to_json(run: RunResult) -> dict:
 
 def apply_from_decisions(path: str, decisions_path: str, *, fmt: str = "markdown",
                          declared_genre: Optional[str] = None, semantic_fn=None, write: bool = True,
-                         apply_config=None) -> RunResult:
+                         apply_config=None, log_feedback: bool = False,
+                         feedback_ledger_path=None) -> RunResult:
     """Apply ONLY the user-approved (apply/edit) hunks of a review ``decisions.json`` (#62/P4).
 
     The verifier + mandatory verified backup + atomic pathname replacement are the UNCHANGED engine
@@ -594,7 +595,12 @@ def apply_from_decisions(path: str, decisions_path: str, *, fmt: str = "markdown
     the genre strip-gate. ``decisions.json`` is UNTRUSTED: schema-validated, its finding-ids matched
     against the audit's own findings, and bound to ``source_sha256`` (a drifted file → digest_mismatch
     inside run_candidate). A user-approved hunk the verifier rejects is surfaced blocked, never applied;
-    an all-discard/undecided set is a clean no-op (the user's decision, not a missing model output)."""
+    an all-discard/undecided set is a clean no-op (the user's decision, not a missing model output).
+
+    ``log_feedback`` (#63/P5, OPT-IN — the ``apply`` CLI turns it on; OFF for library/test callers so
+    they never write the user's real ledger) appends every validated decision to the local feedback
+    ledger best-effort AFTER validation. This is pure OBSERVATION for later learning — it never changes
+    the authorization, the edits, or the verifier verdict (a ledger-write failure is swallowed)."""
     import dataclasses  # noqa: PLC0415
     from slopslap_review.findings import FindingsError, build_findings  # noqa: PLC0415 (review-layer; lazy avoids a load cycle)
     from slopslap_review.schema import validate_decisions_for_apply  # noqa: PLC0415
@@ -633,6 +639,16 @@ def apply_from_decisions(path: str, decisions_path: str, *, fmt: str = "markdown
     if problems:
         return _cand_fail("invalid_decisions", "; ".join(problems)[:400],
                           errors=[{"code": "invalid_decisions", "detail": problems}])
+
+    # #63/P5: OBSERVE the validated decisions for later learning (opt-in; best-effort). This records
+    # what the user decided — it NEVER feeds authorization or the verifier (those come from the user's
+    # accepted findings + the byte-exact gate below). A ledger-write failure must not fail the apply.
+    if log_feedback:
+        try:
+            from slopslap_review.feedback import append_feedback  # noqa: PLC0415 (review-layer; lazy)
+            append_feedback(decisions_obj, list(by_id.values()), audit.genre, path=feedback_ledger_path)
+        except Exception:  # noqa: BLE001 — observation only; never break the mutating path
+            pass
 
     edits, spans, seen = [], [], {}
     for d in decisions_obj["decisions"]:
@@ -690,6 +706,8 @@ def _build_argparser() -> argparse.ArgumentParser:
                      help="path to a review decisions.json — apply ONLY the approved (apply/edit) hunks (#62/P4)")
     pap.add_argument("--declared-genre", default=None)
     pap.add_argument("--format", default="markdown", choices=("markdown", "text"))
+    pap.add_argument("--no-feedback", action="store_true",
+                     help="do NOT append the applied decisions to the local learning ledger (#63/P5)")
     return parser
 
 
@@ -713,7 +731,7 @@ def main(argv=None) -> int:
     if args.cmd == "apply" and getattr(args, "decisions", None):
         run = apply_from_decisions(args.path, args.decisions, fmt=args.format,
                                    declared_genre=args.declared_genre, semantic_fn=live_semantic_fn(),
-                                   write=True)
+                                   write=True, log_feedback=not args.no_feedback)
         sys.stdout.write(json.dumps(_run_to_json(run)) + "\n")
         return exit_code(run)
 

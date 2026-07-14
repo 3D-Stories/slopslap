@@ -334,10 +334,22 @@ def serve_review(payload: dict, out_path: str, *, idle_timeout: float = 900.0) -
 
 
 # --------------------------------------------------------------------------- CLI
-def _build(target: str, fmt: str, genre):
+def _load_overlay():
+    """Build the keep-only learned overlay from the local feedback ledger (#63/P5). Best-effort: any
+    failure → None (no overlay), so a missing/corrupt ledger never breaks the review."""
+    try:
+        from slopslap_corpus.learn import learn_from_feedback
+        from slopslap_review.feedback import read_feedback
+        return learn_from_feedback(list(read_feedback()))
+    except Exception:  # noqa: BLE001 — learning is advisory; never block the review
+        return None
+
+
+def _build(target: str, fmt: str, genre, overlay=None):
     """Audit → findings → review payload for `target`. Imports the sibling engine packages lazily so
     the module stays importable (and unit-testable) without the whole engine on the path; the module
-    load already put `scripts/` on sys.path."""
+    load already put `scripts/` on sys.path. ``overlay`` (the learned keep-only overlay) tunes only the
+    recommendation each finding shows — authorization stays the user's, the verifier stays the gate."""
     from slopslap_assemble.assemble import audit_document
     from slopslap_review.findings import build_findings
     stage = audit_document(target, fmt=fmt, declared_genre=genre)
@@ -346,7 +358,7 @@ def _build(target: str, fmt: str, genre):
     audit = stage.data
     with open(target, "rb") as fh:
         doc = fh.read()
-    return build_review_payload(audit, doc, build_findings(audit, doc))
+    return build_review_payload(audit, doc, build_findings(audit, doc, overlay=overlay))
 
 
 def main(argv=None) -> int:
@@ -364,9 +376,12 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default="decisions.json", help="where the server writes decisions.json on Finish")
     ap.add_argument("--idle-timeout", type=float, default=900.0,
                     help="auto-shutdown deadline in seconds (total safety cap, not a per-keystroke idle timer; 0 disables)")
+    ap.add_argument("--no-learn", action="store_true",
+                    help="ignore the local feedback ledger — do NOT apply the learned recommendation overlay (#63/P5)")
     args = ap.parse_args(argv)
     try:
-        payload = _build(args.target, args.format, args.genre)
+        payload = _build(args.target, args.format, args.genre,
+                         overlay=None if args.no_learn else _load_overlay())
     except (RuntimeError, OSError) as err:
         print(f"error: {err}")
         return 1

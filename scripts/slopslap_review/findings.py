@@ -22,6 +22,7 @@ import hashlib
 from dataclasses import dataclass
 from typing import List, Optional
 
+from slopslap_corpus import learn as _learn  # keep-only learned overlay (#63); applied ONLY here
 from slopslap_scan import diagnoses
 from slopslap_scan import extract as ext
 from slopslap_scan import metrics as met
@@ -142,8 +143,14 @@ def _precheck(recommendation: str, doc: bytes, start: int, end: int, ledger):
     return proposed, precheck
 
 
-def build_findings(audit, doc: bytes) -> List[Finding]:
+def build_findings(audit, doc: bytes, *, overlay=None) -> List[Finding]:
     """Build the findings-with-recommendations envelope for ``audit`` over its source ``doc`` bytes.
+
+    ``overlay`` (optional, from ``slopslap_corpus.learn.learn_from_feedback``) is the learned,
+    KEEP-ONLY recommendation overlay: it can flip a ``strip`` recommendation to ``keep`` (learning
+    tunes the recommendation the user reviews), never the reverse, and it touches NOTHING downstream of
+    the recommendation — authorization stays the user's, the verifier stays the hard gate (keystone
+    v2). ``overlay=None`` is byte-identical to pre-#63.
 
     Raises ``FindingsError`` when ``doc`` does not hash to ``audit.source_sha256``.
     """
@@ -163,7 +170,8 @@ def build_findings(audit, doc: bytes) -> List[Finding]:
     groups: dict = {}   # (metric, start, end) -> {"rec","cls","conf","evidence":[...]}
     order: list = []    # first-seen order -> stable output
     for metric_name, res in audit.metrics.items():
-        recommendation = met.recommend(audit.genre, metric_name)
+        recommendation = _learn.apply_overlay(
+            met.recommend(audit.genre, metric_name), audit.genre, metric_name, overlay)
         cls = met.METRIC_CLASS.get(metric_name, "unclassified")
         confidence = res.get("confidence", "unknown")
         for loc in res.get("locations") or []:
