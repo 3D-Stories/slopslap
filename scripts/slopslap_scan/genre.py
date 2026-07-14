@@ -9,8 +9,9 @@ preservation-heavy applicable profile") it falls back to ``spec`` — the profil
 the widest edit-constraining set (normative modals, numbers, parallelism/repetition,
 enumerations), so an unsure call errs toward preserving MORE.
 
-Genre never decides prose is "bad" and never authorizes an edit (keystone rule); it only chooses
-which candidate flags the scanner treats as editing candidates (see ``metrics.GENRE_SUPPRESS``).
+Genre never decides prose is "bad" and never authorizes an edit (keystone rule); since keystone v2
+(issue #59) it only SETS each finding's advisory strip|keep recommendation (see
+``metrics.recommend``) — it no longer zeroes any metric's locations.
 
 Non-UTF-8 input fails loud (``GenreError``) — the same discipline as ``slopslap_scan.protected`` /
 ``diagnoses`` / ``autoledger`` (a classifier that silently swallows garbage bytes hides a real

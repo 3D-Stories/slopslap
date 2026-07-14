@@ -288,17 +288,34 @@ def test_empty_candidate_clean_is_ok_noop(tmp_path):
     assert run.apply is None  # nothing applied; no backup, no mutation
 
 
-def test_empty_candidate_flagged_blocks_even_when_reject_all(tmp_path):
-    src = _write(tmp_path, "clean.md", CLEAN_DOC)
-    audit = audit_document(src).data
-    assert audit.authorization["state"] == "reject_all"
-    # force the A1 edge: flagged audit_status while authorization stays reject_all (doc-level-only)
-    audit = dataclasses.replace(audit, audit_status="flagged")
+def test_empty_candidate_flagged_with_strip_tells_blocks(tmp_path):
+    # adv A1, now recommendation-aware (#59): a REAL doc-level-only-flagged doc — pervasive
+    # em-dash/semicolon punctuation flags punctuation_rates (soft_flag, NO per-passage location ->
+    # reject_all). Under general that tell is strip-recommended, so an empty candidate is a missing
+    # model output on actionable slop, never a silent pass.
+    voice = "one — two; three — four; five — six; seven — eight; nine — ten; eleven — twelve.\n"
+    src = _write(tmp_path, "voice.md", voice.encode("utf-8"))
+    audit = audit_document(src, declared_genre="general").data
+    assert audit.audit_status == "flagged" and audit.authorization["state"] == "reject_all"
     run = run_candidate(audit, [], semantic_fn=CLEAN_STUB, write=False)
     cand = _stage(run, "candidate")
     assert cand.status == "blocked" and cand.code == "candidate_empty"
     assert exit_code(run) == 2
     assert _stage(run, "verify").status == "aborted"
+
+
+def test_empty_candidate_genre_kept_only_is_noop(tmp_path):
+    # keystone v2 / #59 regression guard: a spec doc flagged ONLY by genre-KEPT cadence has nothing to
+    # strip (recommend->keep), so an empty candidate is a legitimate no-op, NOT a block — even though
+    # audit_status is "flagged" (locations now survive the genre flip). Pre-#59 this doc audited clean.
+    rep = ". ".join(f"choose {w} thing, not other thing" for w in "abcdef") + "."
+    doc = f"A short clean intro paragraph here.\n\n{rep}\n"
+    src = _write(tmp_path, "spec.md", doc.encode("utf-8"))
+    audit = audit_document(src, declared_genre="spec").data
+    assert audit.audit_status == "flagged" and audit.authorization["state"] == "reject_all"
+    run = run_candidate(audit, [], semantic_fn=CLEAN_STUB, write=False)
+    cand = _stage(run, "candidate")
+    assert cand.status == "ok" and run.status == "ok" and exit_code(run) == 0
 
 
 # ---- case 9: digest / path-mismatch guards (peer + adv A6) ----

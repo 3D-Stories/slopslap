@@ -87,11 +87,18 @@ def _line_starts(raw: bytes) -> List[int]:
     return starts
 
 
-def _diagnosed_line_ranges(metrics: dict) -> List[tuple]:
-    """(line_start, line_end) for every per-passage metric location (line_end defaults to
-    line_start). Doc-level metrics have empty ``locations`` and contribute nothing."""
+def _diagnosed_line_ranges(metrics: dict, genre=None) -> List[tuple]:
+    """(line_start, line_end) for every per-passage metric location whose genre RECOMMENDATION is
+    ``"strip"`` (issue #59, keystone v2). After the flip genre no longer zeroes locations, so a
+    genre-KEPT metric's locations survive in ``metrics``; gating range derivation on the strip
+    recommendation HERE is what keeps a genre-kept passage out of verify's authorized (editable)
+    ranges — genre still never authorizes an edit. ``genre=None`` threads as ``general`` (strip-all),
+    reproducing the pre-#59 no-genre behavior. Doc-level metrics have empty ``locations`` and
+    contribute nothing."""
     ranges: List[tuple] = []
-    for res in metrics.values():
+    for name, res in metrics.items():
+        if met.recommend(genre, name) != "strip":
+            continue
         for loc in res.get("locations") or []:
             ls = loc.get("line_start")
             if ls is None:
@@ -105,13 +112,14 @@ def authorized_ranges_from_diagnoses(doc: bytes, fmt: str = "markdown",
     """Return byte-exact ``[{start_byte, end_byte}]`` for the diagnosed passages of ``doc``.
 
     ``fmt`` is ``"markdown"`` (default) or ``"text"`` — matching the scanner's two pipelines;
-    there is no content sniffing (scanner keystone rule). ``genre`` (issue #22) is an optional
-    ``metrics.GENRE_SUPPRESS`` profile threaded into ``compute_all``: under a genre that
-    PRESERVES a flagged feature the suppressed metric emits no locations, so a passage diagnosed
-    ONLY by those flags is no longer authorized (genre genuinely constrains verify's locality);
-    ``genre=None`` (default) is the general behavior. Ranges are sorted by ``start_byte`` and
-    merged so they are pairwise disjoint, ready to drop straight into
-    ``verify(..., authorized_ranges=<result>)``.
+    there is no content sniffing (scanner keystone rule). ``genre`` (issue #22/#59) constrains
+    verify's locality via the RECOMMENDATION layer: since keystone v2 (issue #59) genre no longer
+    zeroes a metric's locations, so a range is derived ONLY for a location whose
+    ``metrics.recommend(genre, metric)`` is ``"strip"``. A passage diagnosed ONLY by metrics the
+    genre recommends KEEP therefore contributes no authorized range — genre genuinely constrains
+    locality WITHOUT ever authorizing an edit. ``genre=None`` (default) threads as ``general``
+    (strip-all), the pre-#59 no-genre behavior. Ranges are sorted by ``start_byte`` and merged so
+    they are pairwise disjoint, ready to drop straight into ``verify(..., authorized_ranges=<result>)``.
 
     Raises ``DiagnosisError`` on an unknown format, non-UTF-8 input, or (markdown) an
     unavailable pinned parser.
@@ -132,7 +140,7 @@ def authorized_ranges_from_diagnoses(doc: bytes, fmt: str = "markdown",
         units = ext.extract_text(text)
         metrics = met.compute_all(units, TEXT_PROFILE, source=text, genre=genre)
 
-    diag = _diagnosed_line_ranges(metrics)
+    diag = _diagnosed_line_ranges(metrics, genre)
     if not diag:
         return []
 

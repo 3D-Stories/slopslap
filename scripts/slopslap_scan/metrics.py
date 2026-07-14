@@ -271,23 +271,76 @@ ALL_METRICS = [
 ]
 
 
-# ---- genre mechanic (issue #22) ------------------------------------------
-# Genre is the diagnosis/candidate-selection seam (never a hard invariant / protected span):
-# per genre, the cadence/style metrics whose hits are NOT editing candidates because the genre
-# PRESERVES the flagged feature (references/genre-profiles.md). Suppressing = soft_flag False +
-# locations [] (so a genre-preserved passage is no longer a candidate and contributes no
-# authorized range), while count/rate stay AS MEASURED (the scanner never lies about what it
-# counted) and a ``suppressed_by_genre`` marker records why. ``general`` == the default (no
-# suppression, no added metric) so genre=None and genre="general" produce IDENTICAL output.
-GENRE_SUPPRESS = {
-    "general": (),
-    # spec: parallelism/repetition is correctness infrastructure — leave the cadence flags off.
-    "spec": ("negative_parallelism", "rule_of_three", "repeated_openers"),
-    # personal: voice weighted very high — fragments, em-dashes, pet words, cadence are the point.
-    "personal": ("negative_parallelism", "rule_of_three", "repeated_openers", "punctuation_rates"),
-    # prd: no cadence suppression; instead an adjective-as-requirement candidate is ADDED below.
-    "prd": (),
+# ---- genre recommendation layer (issue #59, keystone v2) ------------------
+# Keystone v2 FLIP: genre NEVER zeroes a metric's ``locations``/``soft_flag`` anymore. Detection is
+# universal — the scanner emits every tell as measured. Genre (and, later, learned feedback) only
+# SET each finding's advisory ``recommend``ation (strip|keep); the user's review decision authorizes
+# and the byte-exact verifier hard-gates. Genre never authorizes an edit. (This replaces the pre-#59
+# ``GENRE_SUPPRESS`` mechanic, which zeroed a genre-preserved metric's locations in place.)
+#
+# Option C (owner 2026-07-14): the recommendation is keyed by (genre, metric-CLASS) so a future
+# detector (#60 generic-diction/filler) plugs into a named class without a re-do. The keep-CLASS sets
+# are SEEDED from the prior per-metric suppress profiles — what a genre used to suppress (preserve) it
+# now recommends keep; everything else strips — so behavior is byte-identical to pre-#59 for the
+# 4 genres the classifier emits.
+
+# every scanner metric (+ the prd-only ``adjective_requirements``) maps to exactly one class. A drift
+# guard (test_genre) asserts full coverage; the runtime default for an unmapped metric is the
+# asymmetric-failure-safe ``keep``.
+METRIC_CLASS = {
+    "negative_parallelism": "cadence",
+    "rule_of_three": "cadence",
+    "repeated_openers": "cadence",
+    "punctuation_rates": "voice_punctuation",
+    "sentence_length_distribution": "distribution",
+    "sentence_length_dispersion": "distribution",
+    "paragraph_sentence_count_runs": "distribution",
+    "transition_clusters": "filler",
+    "stock_lexical_clusters": "filler",
+    "vague_attribution": "epistemic",
+    "bold_label_density": "structural",
+    "adjective_requirements": "laundering",  # prd-only; added dynamically by _apply_genre
 }
+
+# per-genre KEEP classes; a metric-class NOT listed for a genre strips. Keyed over the feedback
+# schema's VALID_GENRES (6). ``marketing``/``technical`` are forward-compat — the 4-genre classifier
+# (genre.GENRE_ENUM) cannot emit them yet; when a keep-identifier class exists, extend ``technical``.
+# ``spec`` keeps its correctness cadence; ``personal`` also keeps voice punctuation — seeded from the
+# old suppress sets, so the recommendation is byte-identical to pre-#59 for the classifier's 4 genres.
+_GENRE_KEEP_CLASSES = {
+    "general": frozenset(),
+    "prd": frozenset(),
+    "marketing": frozenset(),
+    "technical": frozenset(),
+    "spec": frozenset({"cadence"}),
+    "personal": frozenset({"cadence", "voice_punctuation"}),
+}
+
+# genres the SCANNER (compute_all/_apply_genre) accepts — exactly what classify_genre emits
+# (genre.GENRE_ENUM). An unknown scanner genre is a caller error (fail loud).
+_SCANNER_GENRES = ("general", "spec", "prd", "personal")
+
+
+def recommend(genre, metric_name: str) -> str:
+    """Advisory per-finding recommendation — ``"strip"`` or ``"keep"`` — for ``metric_name`` under
+    ``genre`` (issue #59, keystone v2). Genre NEVER authorizes an edit; this only SETS the
+    recommendation the user reviews, and the byte-exact verifier still hard-gates every applied edit.
+
+    ``genre`` None or empty threads as ``"general"`` (the scanner treats genre=None/"" == general, via
+    ``compute_all``'s ``if genre:`` guard — kept consistent here). A non-empty genre string outside the
+    forward-compat table is a caller error (``ValueError``): ``classify_genre`` only ever emits the
+    4-genre enum, so such a value is a bug, not untrusted input. An unmapped (new/unknown) metric
+    preserves (``"keep"``) — the asymmetric-failure-safe direction — until it is deliberately
+    classified in ``METRIC_CLASS``.
+    """
+    g = genre or "general"
+    keep_classes = _GENRE_KEEP_CLASSES.get(g)
+    if keep_classes is None:
+        raise ValueError(f"unknown genre {g!r}; expected one of {sorted(_GENRE_KEEP_CLASSES)}")
+    cls = METRIC_CLASS.get(metric_name)
+    if cls is None:
+        return "keep"
+    return "keep" if cls in keep_classes else "strip"
 
 # Evaluative adjectives that, asserted as a requirement ("the UI must be fast"), are laundering
 # candidates in a PRD (genre-profiles.md: "adjectives-as-requirements"). Closed list = precise;
@@ -320,17 +373,12 @@ def adjective_requirements(units, sw) -> Dict:
 
 
 def _apply_genre(out: Dict, genre: str, units, sw, extraction_profile: str) -> None:
-    """Mutate ``out`` in place per genre (candidate-selection seam only — never touches
-    invariants / protected spans). An unknown genre is a caller error (fail loud)."""
-    if genre not in GENRE_SUPPRESS:
-        raise ValueError(f"unknown genre {genre!r}; expected one of {tuple(GENRE_SUPPRESS)}")
-    for name in GENRE_SUPPRESS[genre]:
-        res = out.get(name)
-        if res is None:
-            continue
-        res["soft_flag"] = False
-        res["locations"] = []
-        res["suppressed_by_genre"] = genre
+    """Genre is the recommendation seam ONLY (issue #59, keystone v2): it NEVER zeroes a metric's
+    ``locations``/``soft_flag`` and never stamps ``suppressed_by_genre``. Suppression moved entirely
+    into the advisory ``recommend`` layer; the one in-place effect left is prd's ADDITIVE
+    adjective-as-requirement candidate. An unknown (non-classifier) genre is a caller error."""
+    if genre not in _SCANNER_GENRES:
+        raise ValueError(f"unknown genre {genre!r}; expected one of {_SCANNER_GENRES}")
     if genre == "prd":
         res = adjective_requirements(units, sw)
         res["extraction_profile"] = extraction_profile
