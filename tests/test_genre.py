@@ -20,7 +20,7 @@ from slopslap_scan.genre import (
     GenreError,
     classify_genre,
 )
-from slopslap_scan.metrics import GENRE_SUPPRESS, compute_all
+from slopslap_scan.metrics import ALL_METRICS, METRIC_CLASS, compute_all, recommend
 
 
 def _metrics(text, genre=None):
@@ -127,35 +127,44 @@ def test_general_is_byte_identical_to_no_genre():
     assert all("suppressed_by_genre" not in res for res in base.values())
 
 
-def test_spec_suppresses_repetition_flag_that_general_raises():
-    # THE PROOF part (b) is real: the same passage flags under general but NOT under spec.
-    assert _metrics(_REPETITION)["negative_parallelism"]["soft_flag"] is True
+def test_spec_keeps_repetition_flag_that_general_strips():
+    # keystone v2 (#59): detection is UNIVERSAL — the same passage flags under BOTH genres and
+    # genre NEVER zeroes a metric's locations. Suppression now lives ONLY in the recommendation.
+    gen = _metrics(_REPETITION)["negative_parallelism"]
     spec = _metrics(_REPETITION, genre="spec")["negative_parallelism"]
-    assert spec["soft_flag"] is False
-    assert spec["locations"] == []
-    assert spec["suppressed_by_genre"] == "spec"
-    # count is still MEASURED honestly (suppression is about candidacy, not lying about the count).
-    assert spec["count"] >= 5
+    assert gen["soft_flag"] is True
+    assert spec["soft_flag"] is True                 # measured identically; not zeroed
+    assert spec["locations"] == gen["locations"]     # byte-identical — genre never empties locations
+    assert "suppressed_by_genre" not in spec         # the old zeroing marker is gone
+    assert spec["count"] >= 5                          # count still measured honestly
+    # the whole difference is the advisory recommendation: spec KEEPS cadence, general STRIPS it.
+    assert recommend("spec", "negative_parallelism") == "keep"
+    assert recommend("general", "negative_parallelism") == "strip"
 
 
-def test_spec_suppresses_only_cadence_repetition_not_other_flags():
+def test_spec_keeps_only_cadence_not_other_flags():
     text = _REPETITION + " However, this is fine. Furthermore, it scales."
-    assert _metrics(text)["transition_clusters"]["soft_flag"] is True
     spec = _metrics(text, genre="spec")
-    assert spec["negative_parallelism"]["soft_flag"] is False  # suppressed
-    assert spec["transition_clusters"]["soft_flag"] is True    # untouched (not a repetition flag)
+    # metrics are measured identically to general (no zeroing); genre acts in the recommendation.
+    assert spec["negative_parallelism"]["soft_flag"] is True
+    assert spec["transition_clusters"]["soft_flag"] is True
+    assert recommend("spec", "negative_parallelism") == "keep"    # correctness cadence kept in spec
+    assert recommend("spec", "transition_clusters") == "strip"    # non-cadence fluff still stripped
 
 
-def test_personal_preserves_voice_punctuation_that_general_flags():
-    assert _metrics(_VOICE)["punctuation_rates"]["soft_flag"] is True
+def test_personal_keeps_voice_punctuation_that_general_strips():
+    gen = _metrics(_VOICE)["punctuation_rates"]
     personal = _metrics(_VOICE, genre="personal")["punctuation_rates"]
-    assert personal["soft_flag"] is False
-    assert personal["suppressed_by_genre"] == "personal"
+    assert gen["soft_flag"] is True
+    assert personal["soft_flag"] is True             # measured; not zeroed
+    assert "suppressed_by_genre" not in personal
+    assert recommend("personal", "punctuation_rates") == "keep"
+    assert recommend("general", "punctuation_rates") == "strip"
 
 
-def test_personal_also_suppresses_cadence_repetition():
-    assert _metrics(_REPETITION)["negative_parallelism"]["soft_flag"] is True
-    assert _metrics(_REPETITION, genre="personal")["negative_parallelism"]["soft_flag"] is False
+def test_personal_also_keeps_cadence_repetition():
+    assert _metrics(_REPETITION, genre="personal")["negative_parallelism"]["soft_flag"] is True
+    assert recommend("personal", "negative_parallelism") == "keep"
 
 
 def test_prd_adds_adjective_requirement_candidate():
@@ -182,8 +191,48 @@ def test_unknown_genre_is_a_caller_error():
         _metrics(_REPETITION, genre="bogus")
 
 
-def test_genre_enum_and_suppress_table_do_not_drift():
-    assert set(GENRE_ENUM) == set(GENRE_SUPPRESS)
+def test_every_metric_is_classified_no_drift():
+    # #59 Option C: the recommendation table is keyed by metric CLASS, so EVERY metric the scanner
+    # can emit must have a class — a new metric added without one would silently fall to the
+    # asymmetric-failure default (keep) instead of a deliberate polarity. Guard forces classification.
+    names = {name for name, _ in ALL_METRICS}
+    names.add("adjective_requirements")  # prd-only, added dynamically by _apply_genre
+    missing = names - set(METRIC_CLASS)
+    assert not missing, f"metrics missing a METRIC_CLASS entry: {sorted(missing)}"
+
+
+def test_recommend_reproduces_prior_suppress_keepsets_no_regression():
+    # zero-regression pin (D3): recommend() must KEEP exactly what the old GENRE_SUPPRESS kept for
+    # each classifier-emittable genre, and STRIP everything else. The polarity flip changes the
+    # MECHANISM (zeroing -> advisory recommendation), never which passages a genre treats as candidates.
+    old_keep = {
+        "general": (),
+        "spec": ("negative_parallelism", "rule_of_three", "repeated_openers"),
+        "personal": ("negative_parallelism", "rule_of_three", "repeated_openers", "punctuation_rates"),
+        "prd": (),
+    }
+    probe = ["negative_parallelism", "rule_of_three", "repeated_openers", "punctuation_rates",
+             "transition_clusters", "vague_attribution", "stock_lexical_clusters", "bold_label_density"]
+    for genre in GENRE_ENUM:
+        for m in probe:
+            expected = "keep" if m in old_keep[genre] else "strip"
+            assert recommend(genre, m) == expected, f"{genre}/{m}: got {recommend(genre, m)}, want {expected}"
+
+
+def test_recommend_genre_none_matches_general():
+    # None threads as "general" everywhere in the scanner; recommend must agree.
+    for m in ("negative_parallelism", "transition_clusters"):
+        assert recommend(None, m) == recommend("general", m) == "strip"
+
+
+def test_recommend_unknown_genre_is_a_caller_error():
+    with pytest.raises(ValueError):
+        recommend("bogus", "negative_parallelism")
+
+
+def test_recommend_unclassified_metric_preserves():
+    # asymmetric-failure: an unknown/new metric preserves (keep) until it is deliberately classified.
+    assert recommend("general", "some_future_metric_not_yet_classified") == "keep"
 
 
 # ================= part (b): reaches verify via authorized ranges =================
@@ -193,8 +242,9 @@ def test_genre_constrains_authorized_ranges_end_to_end():
     # a single repetition-heavy paragraph: diagnosed ONLY by cadence-repetition flags.
     doc = (". ".join(f"pick {w} one, not other" for w in "abcdef") + ".").encode("utf-8")
     general = authorized_ranges_from_diagnoses(doc, "text")
-    assert general != [], "general authorizes the diagnosed cadence passage"
-    # under spec the cadence flags are suppressed -> the passage is no longer a candidate.
+    assert general != [], "general recommends strip for the cadence passage -> it enters editable ranges"
+    # under spec the cadence flags are KEPT (recommendation), never zeroed -> the passage is not a
+    # strip candidate, so it is excluded from the authorized (editable) ranges. Genre never authorizes.
     assert authorized_ranges_from_diagnoses(doc, "text", genre="spec") == []
 
 
