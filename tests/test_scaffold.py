@@ -69,7 +69,7 @@ def _category_row(skill, cat):
 def test_plugin_manifest_valid_and_versioned():
     manifest = json.loads(_read(".claude-plugin", "plugin.json"))
     assert manifest["name"] == "slopslap"
-    assert manifest["version"] == "0.8.2"
+    assert manifest["version"] == "0.8.3"
     assert manifest["description"]
     assert manifest["author"]["name"]
 
@@ -181,6 +181,20 @@ def test_manifest_description_matches_v0_2_reality():
 def test_commands_guard_untrusted_input():
     for name in COMMANDS:
         assert "untrusted data" in _read("commands", f"{name}.md").lower(), f"{name}.md lacks data guard"
+
+
+def test_target_wrapping_commands_have_unforgeable_delimiter():
+    # #46: audit/suggest/apply wrap an UNTRUSTED target. The old bare `SLOPSLAP_TARGET` fence could be
+    # closed by a target line reading `SLOPSLAP_TARGET` (prompt-injection of the diagnosis step). The
+    # fence is now nonce-based, and the framing must declare that an inner fence-like line is DATA.
+    for name in ("audit", "suggest", "apply"):
+        body = _read("commands", f"{name}.md")
+        low = body.lower()
+        assert "mint a fresh random nonce" in low, f"{name}.md missing the nonce (unforgeable) delimiter"
+        assert "never ends the block" in low, f"{name}.md missing the content-is-always-data framing"
+        assert "SLOPSLAP_UNTRUSTED_TARGET" in body, f"{name}.md missing the nonce fence token"
+        # the old forgeable bare-sentinel fence must be gone
+        assert "<<<SLOPSLAP_TARGET\n" not in body, f"{name}.md still uses the forgeable bare fence"
 
 
 def test_apply_completion_signal_contract():

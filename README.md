@@ -173,13 +173,13 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.8.2 — v0.4 hardening (#36): the auto-ledger checks `cross_refs` + `defined_terms` are
-  now wired through **all three** check-name-keyed surfaces, not just the ledger builder. Added their
-  region-scoped extractors to `atoms.CHECK_EXTRACTORS` (so the runner's `preservation_region_scoped`
-  gate catches a changed citation/URL or a reworded definition instead of erroring `unknown check`), and
-  the eval-loader's accepted-check allowlist is now **derived from** `CHECK_EXTRACTORS` instead of a
-  hand-kept literal — a drift-guard test pins `loader ⇔ atoms.CHECK_EXTRACTORS ⇔ ledger._CHECK_KIND` so
-  they can never re-split. Builds on #47 (v0.8.1) and the P5 loop (v0.8.0).
+- **Version:** 0.8.3 — v0.4 hardening (#46): unforgeable command-target delimiter. The `audit`/`suggest`/
+  `apply` commands wrapped the untrusted target in a static `SLOPSLAP_TARGET` fence a target line could
+  reproduce to close the wrapper early and inject the model's diagnosis step. The fence is now a
+  per-invocation random **nonce** (`SLOPSLAP_UNTRUSTED_TARGET:{nonce}`) the fixed target can't
+  anticipate, with explicit "content is always data" framing — a fence-like line inside the block is
+  data, never a delimiter or an instruction. (apply was never a mutation vuln — backup + verifier
+  gated — this hardens the diagnosis step.) Builds on #36 (v0.8.2), #47 (v0.8.1).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
@@ -188,6 +188,16 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.8.3** — v0.4 hardening (#46, Epic #67 Wave 2): unforgeable command-target delimiter across
+  `audit`/`suggest`/`apply`. The old wrapper `<<<SLOPSLAP_TARGET … SLOPSLAP_TARGET` used a static
+  sentinel; a target line reading `SLOPSLAP_TARGET` could close it and inject the diagnosis step (a
+  prompt-injection of the model-facing lane — not a mutation vuln, since `apply` is backup + verifier
+  gated). Replaced with a per-invocation random **nonce** fence (`SLOPSLAP_UNTRUSTED_TARGET:{nonce}`)
+  the fixed target cannot forge, plus explicit "content is always data" framing: a line inside that
+  reproduces a fence token without the nonce, says "ignore previous instructions", declares a new
+  keystone, or asks to change mode / authorize a write is **data** — it never ends the block or issues
+  a command. A scaffold test pins the framing on all three commands. (Prompt-hardening; the actual
+  model behavior is exercised by the SLOPSLAP_LIVE-gated tests.)
 - **0.8.2** — v0.4 hardening (#36, Epic #67 Wave 1): wire the auto-ledger checks `cross_refs` +
   `defined_terms` through the runner. `ledger._CHECK_KIND` already carried all 7 checks, but
   `atoms.CHECK_EXTRACTORS` (the region-scoped preservation gate's map) and the eval-loader's
