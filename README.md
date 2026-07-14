@@ -187,7 +187,7 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
-- **0.7.0** — de-slop pivot P4: apply-from-decisions. New `assemble.py apply --decisions decisions.json`
+- **0.7.0** — de-slop pivot P4: apply-from-decisions. New `assemble.py apply --path PATH --decisions decisions.json`
   (+ `apply_from_decisions` in `scripts/slopslap_assemble/assemble.py`) applies ONLY the user-approved
   (apply/edit) hunks from a review `decisions.json`. `decisions.json` is UNTRUSTED — schema-validated
   (`validate_decisions_for_apply`), its finding-ids matched against the document's own findings, and

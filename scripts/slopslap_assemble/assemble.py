@@ -595,7 +595,6 @@ def apply_from_decisions(path: str, decisions_path: str, *, fmt: str = "markdown
     against the audit's own findings, and bound to ``source_sha256`` (a drifted file → digest_mismatch
     inside run_candidate). A user-approved hunk the verifier rejects is surfaced blocked, never applied;
     an all-discard/undecided set is a clean no-op (the user's decision, not a missing model output)."""
-    import base64  # noqa: PLC0415
     import dataclasses  # noqa: PLC0415
     from slopslap_review.findings import FindingsError, build_findings  # noqa: PLC0415 (review-layer; lazy avoids a load cycle)
     from slopslap_review.schema import validate_decisions_for_apply  # noqa: PLC0415

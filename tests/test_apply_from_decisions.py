@@ -154,9 +154,8 @@ def test_conflicting_same_span_decisions_rejected(tmp_path):
     for f in payload["findings"]:
         same_span.setdefault((f["span"]["start"], f["span"]["end"]), []).append(f)
     shared = next((fs for fs in same_span.values() if len(fs) >= 2), None)
-    if not shared:
-        import pytest
-        pytest.skip("fixture did not produce two metrics on one span")
+    # fail loud (not skip): the conflict path must stay exercised even if the scanner's overlap shifts.
+    assert shared, "fixture must produce two metrics on one shared span to exercise conflicting_decisions"
     actions = {shared[0]["id"]: {"action": "apply"},
                shared[1]["id"]: {"action": "edit", "replacement_b64": base64.b64encode(b"x").decode()}}
     dj = tmp_path / "decisions.json"
