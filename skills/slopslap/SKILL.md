@@ -119,6 +119,15 @@ axes. Never a single "AI %" or "sloppiness score" — those invite normalization
   verifier both pass, fails closed on a backup failure, and never silently falls back to editing or an
   implicit audit.
 
+<!-- anchor:mode-review -->
+- **review** (interactive; `/slopslap:review` → `scripts/slopslap_review/review.py`) — the seam between
+  audit and apply: it detects every tell, then presents each as a finding with a genre-gated
+  recommendation for the user to **apply / edit / keep** per finding, and emits a `decisions.json`
+  (bound to the audit's `source_sha256`) that `apply` consumes. Serves a loopback, per-run-token page
+  (or a `--static` no-server page). It authorizes NOTHING itself — only records the user's decision;
+  the byte-exact verifier still hard-gates every applied edit. This is where keystone v2's "the user's
+  review decision authorizes the edit" is operationalized.
+
 <!-- anchor:voiceprint -->
 ## One-shot manual voice sample (no learning)
 A user may paste a short **voice sample** inline with a suggest/apply request. It is a ONE-SHOT bias,

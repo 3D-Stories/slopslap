@@ -1,6 +1,6 @@
 {
   "name": "slopslap",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Repairs prose carrying high editorial cost (genericness, unsupported claims, synthetic cadence, obscured responsibility, voice discontinuity) while preserving meaning, technical accuracy, requirements, uncertainty, and intentional voice. NOT an AI-authorship detector: it never treats a stylistic tell as a contaminant. v0.2.0 ships the live model-in-the-loop path: the deterministic measure-only scanner and byte-exact 3-layer verifier are wired into suggest (invariant checks run through the real deterministic verifier), the apply command performs backup-first, staged, verified, atomic pathname replacement, and a live-orchestration seam assembles audit -> verify -> suggest -> apply end-to-end for any UTF-8 text document.",
   "author": {
     "name": "3D-Stories",
