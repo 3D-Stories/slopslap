@@ -137,6 +137,32 @@ def test_oversized_stdout_mid_run_is_killed(tmp_path, monkeypatch):
     assert elapsed < 10.0  # killed on cap, did NOT wait out the 30s sleep or the 20s timeout
 
 
+def test_drain_ring_keeps_only_tail_across_chunks(tmp_path):
+    # #31e: stderr is drained with a ring bound — a large stream is collapsed to its last `ring`
+    # bytes across MULTIPLE read iterations (not just the final slice), so memory stays O(ring)
+    # while the total-byte cap kill is untouched. Feed 5000 bytes in 500-byte reads, ring=1000.
+    import threading as _threading
+
+    class _ChunkStream:
+        def __init__(self, data, chunk):
+            self._buf, self._chunk, self._pos = data, chunk, 0
+
+        def read1(self, n):
+            if self._pos >= len(self._buf):
+                return b""
+            end = min(self._pos + self._chunk, len(self._buf))
+            out = self._buf[self._pos:end]
+            self._pos = end
+            return out
+
+    data = bytes(range(256)) * 20  # 5120 bytes, distinct head vs tail
+    chunks: list = []
+    invoke._drain(_ChunkStream(data, 500), chunks, _threading.Event(), 0, ring=1000)
+    joined = b"".join(chunks)
+    assert joined == data[-1000:]          # exact last-`ring` tail, not the head
+    assert len(joined) == 1000             # memory bounded to `ring`, not the full 5120
+
+
 # ---- bounded execution: timeout + process-group kill + no orphans ----
 def test_timeout_kills_process_group_no_orphan(tmp_path):
     # the fake spawns a descendant that records ITS pid to the path read from stdin, then both

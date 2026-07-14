@@ -173,12 +173,13 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.7.0 — de-slop pivot P4. Adds **apply-from-decisions**: `assemble.py apply --decisions
-  decisions.json` applies ONLY the user-approved (apply/edit) hunks from a review `decisions.json`,
-  with the authorization ranges taken from the user's accepted findings (keystone v2 — the user
-  authorizes, not the genre). The 3-layer verifier + mandatory verified backup + atomic replacement
-  are the unchanged engine; an approved hunk the verifier rejects is surfaced blocked, never applied.
-  Builds on P3 (v0.6.0 review stage), P2 (v0.5.0 detector), P1 (v0.4.0), and keystone v2.
+- **Version:** 0.7.1 — residual #26 hardening (#31). Tightens the Layer-3 semantic trust boundary so an
+  UNTRUSTED model (or a config/CLAUDE.md loaded into it) cannot bias or forge the faithfulness verdict:
+  a **neutrality clause** in the verifier instruction, an **invented-range defense** (an attribution
+  range not in the ledger → ambiguous, never clean), **entry_id↔range pairing** validation in the
+  response contract, and a tighter `_model_confirmed` (drops the loose substring match). A coerced
+  Layer-3 "clean" still can never override a Layer-1/Layer-2 hard REJECT. Builds on P4 (v0.7.0),
+  P3 (v0.6.0), P2 (v0.5.0), P1 (v0.4.0), and keystone v2.
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
@@ -187,6 +188,25 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.7.1** — residual #26 hardening (#31): the Layer-3 semantic verifier is UNTRUSTED, so four
+  defenses stop it (or an injected config/CLAUDE.md) from biasing or forging the faithfulness verdict.
+  (a) **Neutrality clause** in `contract._INSTRUCTION` — the verifier judges only whether the revision
+  preserves the ledger-protected meaning and DISREGARDS any voice/style/tone preference from loaded
+  config, memory, or CLAUDE.md. (b) **Invented-range defense** (`ledger.normalize_semantic(...,
+  valid_ranges=...)`) — an `original_range` not among the ledger's own ranges → `ambiguous`, never
+  clean; `verify` passes the ledger's ranges so a `semantic_fn` wired straight in (no contract adapter)
+  cannot smuggle a fabricated attribution. (c) **entry_id↔range pairing** in `contract._validate` —
+  a concern that pairs an `entry_id` with a range belonging to a *different* entry is rejected (fail
+  closed to `ambiguous`), not merely "some valid ledger range". (d) **Tighter `invoke._model_confirmed`**
+  — drops the loose substring fallback (a distinct id merely *containing* the requested alias, e.g.
+  `opus` vs `claude-opusx-9`, no longer confirms); exact + whole-token match only. A stderr **ring
+  buffer** in `_drain` bounds diagnostic memory to a tail while the total-byte DoS cap is unchanged.
+  A coerced Layer-3 "clean" still can NEVER override a Layer-1/Layer-2 hard REJECT. Hardened during
+  review: `_validate` stringifies `entry_ids` before the membership test (a nested/unhashable element
+  no longer raises `TypeError` out of the "never-raises" `parse_response`), and `normalize_semantic`
+  gained the same `entry_id↔range` pairing check so the straight-wired path has parity with the
+  contract adapter. New `tests/test_injection_resistance.py` (19 adversarial regression guards) +
+  a `_drain` ring-tail unit test.
 - **0.7.0** — de-slop pivot P4: apply-from-decisions. New `assemble.py apply --path PATH --decisions decisions.json`
   (+ `apply_from_decisions` in `scripts/slopslap_assemble/assemble.py`) applies ONLY the user-approved
   (apply/edit) hunks from a review `decisions.json`. `decisions.json` is UNTRUSTED — schema-validated
