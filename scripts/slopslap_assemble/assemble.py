@@ -706,6 +706,8 @@ def _build_argparser() -> argparse.ArgumentParser:
                      help="path to a review decisions.json — apply ONLY the approved (apply/edit) hunks (#62/P4)")
     pap.add_argument("--declared-genre", default=None)
     pap.add_argument("--format", default="markdown", choices=("markdown", "text"))
+    pap.add_argument("--no-feedback", action="store_true",
+                     help="do NOT append the applied decisions to the local learning ledger (#63/P5)")
     return parser
 
 
@@ -729,7 +731,7 @@ def main(argv=None) -> int:
     if args.cmd == "apply" and getattr(args, "decisions", None):
         run = apply_from_decisions(args.path, args.decisions, fmt=args.format,
                                    declared_genre=args.declared_genre, semantic_fn=live_semantic_fn(),
-                                   write=True)
+                                   write=True, log_feedback=not args.no_feedback)
         sys.stdout.write(json.dumps(_run_to_json(run)) + "\n")
         return exit_code(run)
 

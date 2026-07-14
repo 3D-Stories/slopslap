@@ -118,3 +118,38 @@ def reset_feedback(path: Optional[str] = None) -> None:
         os.remove(path)
     except FileNotFoundError:
         pass
+
+
+def main(argv=None) -> int:
+    """``slopslap feedback {path|show|reset}`` — inspect or purge the local learning ledger."""
+    import argparse
+
+    ap = argparse.ArgumentParser(prog="slopslap feedback",
+                                 description="Inspect or purge the local de-slop feedback ledger (#63/P5).")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("path", help="print the ledger path")
+    sub.add_parser("show", help="print the learned keep-only recommendation overlay derived from the ledger")
+    sub.add_parser("reset", help="PURGE the ledger (local, irreversible)")
+    args = ap.parse_args(argv)
+
+    if args.cmd == "path":
+        print(feedback_path())
+        return 0
+    if args.cmd == "reset":
+        reset_feedback()
+        print(f"purged {feedback_path()}")
+        return 0
+    # show: derive + print the overlay (recommendations only — never authorization)
+    from slopslap_corpus.learn import learn_from_feedback
+    lines = list(read_feedback())
+    overlay = learn_from_feedback(lines)
+    print(json.dumps({
+        "ledger": feedback_path(), "lines": len(lines),
+        "learned_keep_classes": {g: sorted(cs) for g, cs in overlay.keep_classes.items()},
+        "note": "recommendations only — the user's decision authorizes; the verifier stays the gate",
+    }, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

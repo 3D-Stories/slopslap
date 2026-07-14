@@ -77,11 +77,17 @@ def test_learned_keep_does_not_block_a_user_authorized_apply(tmp_path):
 def test_learning_seam_not_imported_by_authorization_or_verifier():
     """Structural: the recommendation-tuning seam (apply_overlay) appears ONLY in the review layer,
     never in the authorization (assemble) or verifier (verification) modules."""
+    import glob
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    for rel in ["scripts/slopslap_assemble/assemble.py",
-                "scripts/slopslap_verification/ledger.py",
-                "scripts/slopslap_scan/diagnoses.py"]:
-        src = open(os.path.join(root, rel), encoding="utf-8").read()
+    # glob the WHOLE authorization + verifier packages (+ the diagnosis seam) so a future importer in
+    # ANY file there is caught, not just the three that exist today (Step-8a reviewer note).
+    targets = (glob.glob(os.path.join(root, "scripts/slopslap_assemble/*.py"))
+               + glob.glob(os.path.join(root, "scripts/slopslap_verification/*.py"))
+               + [os.path.join(root, "scripts/slopslap_scan/diagnoses.py")])
+    assert len(targets) >= 5
+    for path in targets:
+        src = open(path, encoding="utf-8").read()
+        rel = os.path.relpath(path, root)
         assert "apply_overlay" not in src, f"{rel} must not touch the learned recommendation overlay"
         assert "slopslap_corpus.learn" not in src and "import learn" not in src, rel
 

@@ -73,6 +73,18 @@ def test_apply_overlay_is_keep_only():
     assert apply_overlay("strip", "general", _M, None) == "strip"
 
 
+def test_empty_ledger_yields_empty_overlay():
+    ov = learn_from_feedback([], min_evidence=3)
+    assert ov.keep_classes == {}
+    assert apply_overlay("strip", "general", _M, ov) == "strip"
+
+
+def test_all_apply_never_flips():
+    # a user who consistently ACCEPTS the strip must never flip the class to keep
+    ov = learn_from_feedback([_line("general", _M, "strip", "apply") for _ in range(10)], min_evidence=3)
+    assert _CLS not in ov.keep_classes.get("general", frozenset())
+
+
 def test_per_genre_isolation():
     ov = learn_from_feedback([_line("personal", _M, "strip", "discard") for _ in range(3)], min_evidence=3)
     assert apply_overlay("strip", "personal", _M, ov) == "keep"    # learned in personal

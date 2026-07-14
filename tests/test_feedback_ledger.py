@@ -74,6 +74,25 @@ def test_edit_keeps_b64_replacement(tmp_path):
     assert validate_feedback_line(ln) == []
 
 
+def test_apply_with_log_feedback_writes_the_ledger(tmp_path):
+    # end-to-end WIRED path (the Step-8a HIGH): apply_from_decisions(log_feedback=True) actually appends
+    # the user's decisions to the ledger. Library-hermetic via feedback_ledger_path (no real HOME write).
+    from slopslap_apply.backup import BackupConfig
+    from slopslap_assemble.assemble import apply_from_decisions
+    audit, findings, payload = _findings(tmp_path)
+    strip = next(f for f in payload["findings"] if f["recommendation"] == "strip")
+    actions = {strip["id"]: {"action": "discard", "reason": "false_positive"}}
+    dj = tmp_path / "d.json"
+    dj.write_text(json.dumps(decisions_from_actions(payload, actions)), encoding="utf-8")
+    ledger = _ledger(tmp_path)
+    apply_from_decisions(str(tmp_path / "doc.md"), str(dj), declared_genre="general",
+                         semantic_fn=lambda o, r, l: {"verdict": "clean", "concerns": []}, write=True,
+                         apply_config=BackupConfig(root=str(tmp_path / "b")),
+                         log_feedback=True, feedback_ledger_path=ledger)
+    lines = list(read_feedback(ledger))
+    assert len(lines) == 1 and lines[0]["user_action"] == "discard" and lines[0]["reason"] == "false_positive"
+
+
 def test_reset_purges_the_ledger(tmp_path):
     audit, findings, payload = _findings(tmp_path)
     actions = {f["id"]: {"action": "discard"} for f in payload["findings"]}
@@ -101,3 +120,23 @@ def test_feedback_path_uses_xdg_state(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
     p = feedback_path()
     assert p.endswith("slopslap/feedback.jsonl") and str(tmp_path / "state") in p
+
+
+def test_cli_path_show_reset(tmp_path, monkeypatch, capsys):
+    import json as _json
+
+    from slopslap_review.feedback import main
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
+    audit, findings, payload = _findings(tmp_path)
+    actions = {f["id"]: {"action": "discard"} for f in payload["findings"]}
+    append_feedback(decisions_from_actions(payload, actions), findings, audit.genre,
+                    now="2026-07-14T16:00:00Z")  # writes to the XDG path
+
+    assert main(["path"]) == 0
+    assert feedback_path() in capsys.readouterr().out
+    assert main(["show"]) == 0
+    shown = _json.loads(capsys.readouterr().out)
+    assert shown["lines"] > 0 and "learned_keep_classes" in shown
+    assert main(["reset"]) == 0
+    capsys.readouterr()
+    assert list(read_feedback()) == []      # purged

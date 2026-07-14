@@ -173,13 +173,15 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.7.1 — residual #26 hardening (#31). Tightens the Layer-3 semantic trust boundary so an
-  UNTRUSTED model (or a config/CLAUDE.md loaded into it) cannot bias or forge the faithfulness verdict:
-  a **neutrality clause** in the verifier instruction, an **invented-range defense** (an attribution
-  range not in the ledger → ambiguous, never clean), **entry_id↔range pairing** validation in the
-  response contract, and a tighter `_model_confirmed` (drops the loose substring match). A coerced
-  Layer-3 "clean" still can never override a Layer-1/Layer-2 hard REJECT. Builds on P4 (v0.7.0),
-  P3 (v0.6.0), P2 (v0.5.0), P1 (v0.4.0), and keystone v2.
+- **Version:** 0.8.0 — de-slop pivot **P5**: feedback ledger + learning (#63), closing the loop
+  detect→recommend→review→apply→**learn**. Every review→apply decision appends one span-hashed, local,
+  purgeable line to `~/.local/state/slopslap/feedback.jsonl`; `slopslap_corpus.learn` consumes it into a
+  **keep-only** recommendation overlay (repeated overrides of a `strip` rec flip that metric-class to
+  `keep` for that genre — the tool grows *more* conservative, never more aggressive). Structural
+  invariant, pinned by tests: **learning tunes the recommendation only — authorization never learns**
+  (the overlay is applied solely in findings-build, `metrics.recommend` stays pure, and the verifier's
+  signature can't see it). `slopslap feedback {path|show|reset}` inspects/purges the ledger. Builds on
+  P4 (v0.7.0), the #31 hardening (v0.7.1), and keystone v2.
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
@@ -188,6 +190,27 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.8.0** — de-slop pivot **P5**: feedback ledger + learning (#63) — the final `learn` arrow of
+  detect→recommend→review→apply→learn. (a) **Ledger writer** (`slopslap_review/feedback.py`): each
+  review→apply decision appends one schema-valid (frozen #58), **span-hashed**, local, purgeable JSONL
+  line to `$XDG_STATE_HOME/slopslap/feedback.jsonl` (the ledger `finding_id` hashes the byte span, so
+  it holds nothing reconstructable about *where* in the doc). `apply` logs it best-effort
+  (`--no-feedback` opts out); `read_feedback` skips malformed lines. (b) **Learning consumer**
+  (`slopslap_corpus/learn.py`): `learn_from_feedback` aggregates per `(genre, metric-class)` net
+  keep-evidence (strip-discard +1, strip-**edit** +0.5 partial-accept, strip-apply −1) and, at
+  `min_evidence`, flips that class `strip→keep` for that genre. (c) **Keep-only overlay**: applied
+  ONLY in `findings.build_findings` via `learn.apply_overlay`; the review CLI loads it from the ledger
+  (`--no-learn` opts out). (d) **`slopslap feedback {path|show|reset}`** CLI + command to inspect/purge.
+  **Invariant — "recommendations may learn; authorization never does" — pinned by
+  `tests/test_learning_invariant.py`:** `metrics.recommend()` stays pure (learning is never threaded
+  into it, so the two non-review call sites are untouched); `apply_overlay` is keep-only over the whole
+  metric×genre table (learning can only *shrink* the strip set — the #59 monotonic direction); a
+  learned `keep` never blocks a user-authorized `apply`; the overlay is imported by the review layer
+  only, and `verify()`'s signature carries no learning parameter. **Voice-floor** falls out of the
+  overlay (personal-genre voice classes flip to keep), with #31a guaranteeing a voice signal never
+  biases the verifier. P0-schema honesty: the numeric per-rate threshold is realized as its
+  conservative class-keep limit — the frozen P0 schema carries no rate field (a v2 refinement, not
+  faked). +22 tests (writer/learn/invariant/CLI + an end-to-end wired-path test); suite 590 → 612.
 - **0.7.1** — residual #26 hardening (#31): the Layer-3 semantic verifier is UNTRUSTED, so four
   defenses stop it (or an injected config/CLAUDE.md) from biasing or forging the faithfulness verdict.
   (a) **Neutrality clause** in `contract._INSTRUCTION` — the verifier judges only whether the revision
