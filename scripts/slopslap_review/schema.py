@@ -13,7 +13,9 @@ shape, base64-only replacement payloads (data, never executed). It is a pure fun
 already-parsed object — no file/path I/O, so no traversal surface. JSON decoding happens in the
 caller; these validators only see parsed Python objects.
 
-Schema versions are frozen at 1 and version-guarded, mirroring ``loader.SCHEMA_VERSION``.
+Schema versions are frozen at 1. ``decisions.json`` is always version-guarded (mirroring
+``loader.SCHEMA_VERSION``); a ``feedback.jsonl`` line is versionless by default (file-level
+versioning) but carries an OPTIONAL ``schema_version`` field that is guarded when present.
 """
 
 from __future__ import annotations
@@ -39,6 +41,7 @@ _HEX64 = re.compile(r"\A[0-9a-f]{64}\Z")
 _DECISIONS_TOP_KEYS = {"schema_version", "doc", "source_sha256", "decisions"}
 _DECISION_KEYS = {"finding_id", "user_action", "replacement", "alternative", "reason"}
 _FEEDBACK_KEYS = {
+    "schema_version",  # optional; guarded when present
     "ts",
     "finding_id",
     "category",
@@ -67,6 +70,12 @@ def _is_nonempty_str(x) -> bool:
 def _is_int(x) -> bool:
     # bool is an int subclass in Python; an untrusted boundary must not accept True as 1.
     return isinstance(x, int) and not isinstance(x, bool)
+
+
+def _in_enum(x, enum: Set[str]) -> bool:
+    # membership must not raise on an unhashable JSON value (list/dict) — this is the
+    # untrusted decisions.json boundary; a bad value is a problem, never a TypeError.
+    return isinstance(x, str) and x in enum
 
 
 def _is_valid_b64(s: str) -> bool:
@@ -143,7 +152,7 @@ def validate_decisions(
                 problems.append(at + f"unknown finding_id '{fid}' (not in audit snapshot)")
 
         action = d.get("user_action")
-        if action not in USER_ACTIONS:
+        if not _in_enum(action, USER_ACTIONS):
             problems.append(at + f"user_action must be one of {sorted(USER_ACTIONS)}")
 
         rep = d.get("replacement")
@@ -160,7 +169,7 @@ def validate_decisions(
             problems.append(at + "alternative must be a non-empty string when present")
 
         reason = d.get("reason")
-        if reason is not None and reason not in REASONS:
+        if reason is not None and not _in_enum(reason, REASONS):
             problems.append(at + f"reason must be one of {sorted(REASONS)}")
 
     return problems
@@ -178,6 +187,10 @@ def validate_feedback_line(obj) -> List[str]:
 
     problems += _unknown_keys(obj, _FEEDBACK_KEYS, "")
 
+    sv = obj.get("schema_version")
+    if sv is not None and (not _is_int(sv) or sv != FEEDBACK_SCHEMA_VERSION):
+        problems.append(f"schema_version must be {FEEDBACK_SCHEMA_VERSION} when present")
+
     for field in ("ts", "finding_id", "category", "metric"):
         if not _is_nonempty_str(obj.get(field)):
             problems.append(f"{field} must be a non-empty string")
@@ -185,17 +198,22 @@ def validate_feedback_line(obj) -> List[str]:
     ts = obj.get("ts")
     if isinstance(ts, str):
         # tolerate a trailing 'Z' (datetime.fromisoformat rejects it before 3.11)
+        norm = ts[:-1] + "+00:00" if ts.endswith("Z") else ts
         try:
-            datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            datetime.fromisoformat(norm)
         except ValueError:
             problems.append("ts must be an ISO-8601 timestamp")
+        else:
+            # a timestamp needs a time-of-day: reject a bare date / basic / week-date form
+            if "T" not in ts and " " not in ts:
+                problems.append("ts must be an ISO-8601 timestamp with a time component")
 
-    if obj.get("genre") not in VALID_GENRES:
+    if not _in_enum(obj.get("genre"), VALID_GENRES):
         problems.append(f"genre must be one of {sorted(VALID_GENRES)}")
-    if obj.get("recommendation") not in RECOMMENDATIONS:
+    if not _in_enum(obj.get("recommendation"), RECOMMENDATIONS):
         problems.append(f"recommendation must be one of {sorted(RECOMMENDATIONS)}")
     action = obj.get("user_action")
-    if action not in USER_ACTIONS:
+    if not _in_enum(action, USER_ACTIONS):
         problems.append(f"user_action must be one of {sorted(USER_ACTIONS)}")
 
     dsha = obj.get("doc_sha")
@@ -212,7 +230,7 @@ def validate_feedback_line(obj) -> List[str]:
         problems.append("replacement is only allowed with user_action 'edit'")
 
     reason = obj.get("reason")
-    if reason is not None and reason not in REASONS:
+    if reason is not None and not _in_enum(reason, REASONS):
         problems.append(f"reason must be one of {sorted(REASONS)}")
 
     return problems

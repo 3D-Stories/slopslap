@@ -155,6 +155,21 @@ def test_decisions_bad_reason_enum_rejected():
     assert any("reason" in p for p in validate_decisions(obj))
 
 
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda d: d.update(user_action=["apply"]),  # unhashable list where an enum str is expected
+        lambda d: d.update(user_action={"a": 1}),  # unhashable dict
+        lambda d: d.update(reason=["keep_voice"]),  # unhashable in the reason enum check
+    ],
+)
+def test_decisions_unhashable_enum_values_rejected_not_raised(mutate):
+    # untrusted boundary must return a problem, never raise (8a R2 Finding 1)
+    obj = _canonical_decisions()
+    mutate(obj["decisions"][0])
+    assert validate_decisions(obj) != []
+
+
 def test_decisions_non_dict_payload():
     assert validate_decisions(["not", "a", "dict"]) != []
 
@@ -205,6 +220,37 @@ def test_feedback_apply_forbids_replacement():
     obj["user_action"] = "apply"
     # replacement still present -> rejected for a non-edit action
     assert any("replacement" in p for p in validate_feedback_line(obj))
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda o: o.update(genre=["marketing"]),  # unhashable list in enum check
+        lambda o: o.update(recommendation={"x": 1}),
+        lambda o: o.update(user_action=["apply"]),
+        lambda o: o.update(reason=["keep_voice"]),
+    ],
+)
+def test_feedback_unhashable_enum_values_rejected_not_raised(mutate):
+    obj = _canonical_feedback()
+    mutate(obj)
+    assert validate_feedback_line(obj) != []
+
+
+@pytest.mark.parametrize("ts", ["2026-07-14", "20260714", "2026-W27-1"])
+def test_feedback_ts_requires_time_component(ts):
+    obj = _canonical_feedback()
+    obj["ts"] = ts
+    assert any("ts" in p for p in validate_feedback_line(obj))
+
+
+def test_feedback_schema_version_optional_but_guarded():
+    obj = _canonical_feedback()
+    assert validate_feedback_line(obj) == []  # absent is fine (line-versionless by default)
+    obj["schema_version"] = FEEDBACK_SCHEMA_VERSION
+    assert validate_feedback_line(obj) == []  # present-and-correct is fine
+    obj["schema_version"] = 2
+    assert any("schema_version" in p for p in validate_feedback_line(obj))  # present-and-wrong rejected
 
 
 def test_feedback_reason_optional():
