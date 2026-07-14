@@ -64,18 +64,6 @@ class Finding:
     verifier_precheck: dict
 
 
-def _line_starts(raw: bytes) -> List[int]:
-    """Byte offset of the start of each source line, plus a sentinel == len(raw). Mirrors
-    ``slopslap_scan.diagnoses._line_starts`` (the established byte-offset-per-line convention);
-    kept local so this producer does not depend on another module's private symbol."""
-    starts = [0]
-    for i, b in enumerate(raw):
-        if b == 0x0A:  # '\n'
-            starts.append(i + 1)
-    starts.append(len(raw))
-    return starts
-
-
 def _evidence(loc: dict) -> str:
     for k in _EVIDENCE_KEYS:
         v = loc.get(k)
@@ -85,32 +73,35 @@ def _evidence(loc: dict) -> str:
 
 
 def _extract_units(doc: bytes, fmt: str):
-    """Re-extract the scanner Units for ``doc`` the SAME way the audit did (assemble._scan_metrics /
-    diagnoses use these exact calls), so a location's line resolves to an identical Unit span."""
+    """Re-extract the scanner Units for ``doc`` the SAME way the audit did — reusing
+    ``diagnoses``'s helpers (as ``assemble._scan_metrics`` does), so a location's line resolves to an
+    identical Unit span and this producer stays a single source of truth with the range deriver."""
     text = doc.decode("utf-8")
     if fmt == "markdown":
         return ext.extract_markdown(text, diagnoses._markdown_it_cls())
     return ext.extract_text(text)  # fmt == "text"
 
 
-def _span_for(loc: dict, units, starts, last):
-    """Byte span for a scanner location, resolved to its CONTAINING Unit(s) — NOT the raw location
-    line. Six metrics record only ``line_start`` (the containing Unit's start line, no ``line_end``),
-    so using the location line alone would cover just the first physical line of a wrapped paragraph;
-    resolving to the overlapping Unit(s) makes the finding span byte-identical to what
-    ``authorized_ranges_from_diagnoses`` authorizes (diagnoses.py overlap logic, per-location here).
-    Returns ``(start_byte, end_byte)`` or ``None`` for a doc-level (line-less) location."""
+def _unit_spans_for(loc: dict, units, starts, last):
+    """Byte spans for a scanner location, ONE per overlapping Unit (disjoint) — NOT one gap-spanning
+    range. Six metrics record only ``line_start`` (the containing Unit's start line), and two
+    (``repeated_openers``, ``paragraph_sentence_count_runs``) carry a ``line_end`` spanning MULTIPLE
+    units. Resolving to per-unit spans means each finding span is exactly one Unit — the same Units
+    ``authorized_ranges_from_diagnoses`` derives its ranges from (it additionally merges adjacent
+    ones), so a finding span never covers an inter-paragraph gap the pipeline would reject on
+    locality. Returns ``[]`` for a doc-level (line-less) or malformed (<1) location."""
     ls = loc.get("line_start")
     if not isinstance(ls, int) or ls < 1:
-        return None  # doc-level (no line) or a malformed/hostile <1 line number: no localizable span
+        return []  # doc-level (no line) or a malformed/hostile <1 line number: no localizable span
     le = loc.get("line_end", ls)
-    overlapping = [u for u in units if not (u.line_end < ls or u.line_start > le)]
-    if not overlapping:
-        # a location always sits in a unit; fall back to the raw line range if the scanner ever drifts.
-        return (starts[ls - 1], starts[min(le, last)])
-    s = min(u.line_start for u in overlapping)
-    e = max(u.line_end for u in overlapping)
-    return (starts[s - 1], starts[min(e, last)])
+    spans = [(starts[u.line_start - 1], starts[min(u.line_end, last)])
+             for u in units if not (u.line_end < ls or u.line_start > le)]
+    if not spans:
+        # defensive: a real scanner location always names an in-doc line inside a unit; clamp an
+        # out-of-EOF hostile/hand-built line number rather than IndexError.
+        si = min(ls, last + 1) - 1
+        return [(starts[si], starts[min(le, last)])]
+    return spans
 
 
 def _precheck(recommendation: str, doc: bytes, start: int, end: int, ledger):
@@ -159,7 +150,7 @@ def build_findings(audit, doc: bytes) -> List[Finding]:
     if hashlib.sha256(doc).hexdigest() != audit.source_sha256:
         raise FindingsError("doc bytes do not match audit.source_sha256 (drifted file / replay)")
 
-    starts = _line_starts(doc)
+    starts = diagnoses._line_starts(doc)
     last = len(starts) - 1
     units = _extract_units(doc, audit.fmt)
 
@@ -176,18 +167,16 @@ def build_findings(audit, doc: bytes) -> List[Finding]:
         cls = met.METRIC_CLASS.get(metric_name, "unclassified")
         confidence = res.get("confidence", "unknown")
         for loc in res.get("locations") or []:
-            span = _span_for(loc, units, starts, last)
-            if span is None:
-                continue  # a doc-level metric with no localizable passage contributes no finding
-            key = (metric_name, span[0], span[1])
-            grp = groups.get(key)
-            if grp is None:
-                grp = {"rec": recommendation, "cls": cls, "conf": confidence, "evidence": []}
-                groups[key] = grp
-                order.append(key)
             ev = _evidence(loc)
-            if ev and ev not in grp["evidence"]:
-                grp["evidence"].append(ev)
+            for span in _unit_spans_for(loc, units, starts, last):
+                key = (metric_name, span[0], span[1])
+                grp = groups.get(key)
+                if grp is None:
+                    grp = {"rec": recommendation, "cls": cls, "conf": confidence, "evidence": []}
+                    groups[key] = grp
+                    order.append(key)
+                if ev and ev not in grp["evidence"]:
+                    grp["evidence"].append(ev)
 
     findings: List[Finding] = []
     for metric_name, start, end in order:

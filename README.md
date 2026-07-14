@@ -197,7 +197,10 @@ no edit. *When in doubt, it changes nothing.*
   through verifier Layers 1+2 (`decision == "ACCEPT"` ⇒ "safe", else "blocked") so a review UI can show
   safe-vs-blocked per finding. **Keystone v2** (pinned verbatim across SKILL.md, the four command files,
   and `tests/test_scaffold.py`): the user's review decision — not the scanner, genre, or learning —
-  authorizes the edit; recommendations may learn, authorization never does.
+  authorizes the edit; recommendations may learn, authorization never does. P1 ships universal
+  detection + the findings envelope + this keystone rewrite; the *enforced* review→apply loop the
+  keystone describes is built across the later phases (review UI #61/P3, apply-from-decisions #62/P4,
+  feedback learning #63/P5).
 - **0.3.0** — de-slop pivot P0: frozen review-loop data contracts. Adds
   `scripts/slopslap_review/schema.py` with two stdlib validators (no new dependency) that ARE the
   contract for the pivot's REVIEW → LEARN stages: `validate_decisions` for `decisions.json` (the

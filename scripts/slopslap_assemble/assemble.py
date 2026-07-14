@@ -404,13 +404,15 @@ def run_candidate(audit: AuditResult, edits, *, semantic_fn=None, write: bool = 
     except (ValueError, TypeError, KeyError) as err:  # EditError/binascii.Error subclass ValueError
         return _abort_after_candidate(_stage_fail("candidate", "invalid_edits", str(err)))
 
-    # --- candidate: empty-candidate policy (adv A1 + keystone v2 #59). Block an empty candidate only
-    #     when the audit is flagged AND the genre RECOMMENDS stripping at least one detected tell — a
-    #     missing model output on actionable slop is never a silent pass. A doc flagged only by
-    #     genre-KEPT tells (post-#59 its locations survive) has nothing to strip, so its empty
-    #     candidate is a legitimate no-op, exactly like a clean audit. ---
+    # --- candidate: empty-candidate policy (adv A1 + keystone v2 #59). Block an empty candidate iff
+    #     the genre RECOMMENDS stripping at least one detected tell — a missing model output on
+    #     actionable slop is never a silent pass. Keyed on `_has_strip_candidate` ALONE, not on
+    #     `audit_status`: a strip candidate (some metric with a strip recommendation + location/
+    #     soft_flag) implies audit_status=="flagged" by construction, so the extra check was redundant
+    #     and only added a silent-pass hole on a stale/tampered audit_status. A doc flagged only by
+    #     genre-KEPT tells has nothing to strip, so its empty candidate is a legitimate no-op. ---
     if not parsed:
-        if audit.audit_status == "flagged" and _has_strip_candidate(audit.metrics, audit.genre):
+        if _has_strip_candidate(audit.metrics, audit.genre):
             return _build_run(audit.run_id, [
                 audit_stage,
                 StageResult("candidate", "blocked", "candidate_empty",

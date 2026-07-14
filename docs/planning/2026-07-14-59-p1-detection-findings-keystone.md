@@ -71,17 +71,42 @@ call `verify()` from `audit` alone (Step-4 H1). Guard: assert `sha256(doc) == au
 - **Span** derived line→byte via the `diagnoses._line_starts(doc)` table (the established pattern):
   `start=line_starts[line_start-1]`, `end=line_starts[min(line_end, last)]` — line/unit-granular,
   matching how `authorized_ranges_from_diagnoses` derives ranges (P3 may refine to sub-line).
-- **`id`** = `f"{metric}:{start_byte}:{ordinal}"` where `ordinal` is a per-(metric,start_byte) counter
-  in location order — because two same-metric tells on one line share a line→byte start and a bare
-  `f"{metric}:{start_byte}"` would COLLIDE and trip the #58 duplicate-id guard (Step-4 H1). Stable
-  across re-scans of the same bytes.
-- **`proposed_rewrite`**: for `strip`, a CANDIDATE delete `Edit(start,end,b"")` of the span (coarse in
-  P1 — whole line/unit; P2/P3 add de-claim rewrites); for `keep`, `null`. It is a candidate to be
-  pre-checked, NOT asserted safe.
+- **Span** is resolved to the CONTAINING Unit(s): a location spanning multiple units yields one finding
+  PER unit (disjoint), each span byte-identical to a `authorized_ranges_from_diagnoses` component
+  (Step-11 bug/logic L1) — never one gap-spanning range.
+- **`id`** = `f"{metric}:{start}:{end}"` — content-keyed on the (metric, span), which is unique after
+  the span-dedup below; colon-safe (metric names are snake_case), so it never collides on the #58
+  duplicate-id guard. Stable across re-scans of the same bytes. (Superseded the earlier
+  `{metric}:{start_byte}:{ordinal}` sketch once same-span dedup made the ordinal unnecessary.)
+- **Dedup**: locations that resolve to the SAME (metric, span) collapse to ONE finding (distinct
+  evidence joined) — N byte-identical whole-unit delete candidates would otherwise be N redundant
+  findings + N verify() calls that also could not be jointly applied (overlap) (Step-11 T3-adversarial).
+- **`proposed_rewrite`**: for `strip`, a CANDIDATE delete `Edit(start,end,b"")` of the unit span (coarse
+  in P1 — whole unit; P2/P3 add tell-exact de-claim rewrites); for `keep`, `null`. A candidate to be
+  pre-checked, never asserted safe; the user reviews it, the verifier hard-gates it.
 - **`verifier_precheck`**: reuse `audit.ledger` (built once per doc), run `verify(doc, [candidate-delete],
-  audit.ledger, authorized_ranges=[span], semantic_fn=None, allow_two_layer=True)`, read `decision` —
-  `ACCEPT`→"safe", REJECT/ASK/SURFACE→"blocked" + reason. A blocked strip-precheck is a NORMAL,
-  expected outcome (a delete that would break structure/an invariant), surfaced per finding.
+  audit.ledger, authorized_ranges=[span], semantic_fn=None, allow_two_layer=True)`, read `decision`.
+  Status is the NON-authorizing label `deterministic_pass` (ACCEPT: Layers 1+2 clear — semantic NOT
+  run, so NOT shippable; proposal_status/semantic_status carried alongside) or `blocked`
+  (REJECT/ASK/SURFACE + reason — a NORMAL outcome for a delete that would break an invariant/protected
+  span). A P3 consumer expresses accepting a strip as a decisions `user_action:"apply"` (the empty
+  replacement cannot be an `"edit"` payload).
+
+## Follow-ups surfaced by review (out of #59 scope)
+- **#62 (P4, apply) — authorization source (Step-11 arch MEDIUM + Codex High):** when decisions→apply
+  is wired, `authorized_ranges` for `verify()` MUST derive from the user's accepted/edited finding IDs,
+  NOT the genre strip-gate in `authorized_ranges_from_diagnoses` — else a user overriding a keep→strip
+  would be silently genre-vetoed, inverting keystone v2. In P1 the genre strip-gate only RESTRICTS
+  locality (never authorizes — confirmed by the monotonicity proof: genre-keep only shrinks the set
+  below the general ceiling), so it is correct here; the concern is strictly forward.
+- **#62/P5 — apply-time L3 gate:** `assemble.live_semantic_fn` offline default returns a vacuous
+  "clean" verdict (`SLOPSLAP_LIVE!=1`), so the apply-time semantic gate is a rubber stamp offline.
+  Pre-existing; relevant when apply is wired (the P1 findings precheck is deterministic-L1+2-only and
+  honestly labeled, so it is not affected).
+- **Doc-level slop (Codex High):** a doc flagged only by a doc-level strip metric (e.g.
+  `punctuation_rates`) produces no passage-local finding (mirroring the pipeline's no-passage-local
+  range). Whether whole-doc slop gets its own rewrite lane is the documented open seam (diagnoses.py
+  module docstring), not a P1 deliverable.
 P1 envelope is a standalone producer consumed by P3's review UI (#61); wiring into the assemble
 pipeline (T4) is deferred to P3 (AC2 requires the producer + precheck to EXIST, not to be wired —
 Step-4 confirmed).

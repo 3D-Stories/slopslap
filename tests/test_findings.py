@@ -126,6 +126,21 @@ def test_same_span_tells_dedup_and_ids_unique(tmp_path):
     assert len(npf) == 1
 
 
+def test_multi_unit_location_yields_per_unit_disjoint_findings(tmp_path):
+    # #59 Step-11 bug/logic L1: a location spanning MULTIPLE units (repeated_openers across paragraphs)
+    # must yield one finding PER unit (disjoint), byte-identical to the pipeline's authorized ranges —
+    # NOT one gap-spanning range over the whole run (which would REJECT on locality at apply time).
+    from slopslap_scan.diagnoses import authorized_ranges_from_diagnoses
+    doc_text = "\n\n".join(f"However we begin this paragraph number {w} here now." for w in "abcd") + "\n"
+    audit, doc = _audit(tmp_path, doc_text, genre="general")
+    ro = [f for f in build_findings(audit, doc) if f.category == "repeated_openers"]
+    assert len(ro) >= 2, "multi-paragraph repeated_openers yields per-unit findings, not one merged span"
+    spans = {(f.span["start"], f.span["end"]) for f in ro}
+    ranges = {(r["start_byte"], r["end_byte"])
+              for r in authorized_ranges_from_diagnoses(doc, "markdown", "general")}
+    assert spans <= ranges, "every finding span must be exactly a pipeline authorized range (no gaps)"
+
+
 def test_doc_bytes_must_match_audit_sha(tmp_path):
     audit, doc = _audit(tmp_path, _CADENCE_DOC)
     assert hashlib.sha256(doc).hexdigest() == audit.source_sha256  # sanity
