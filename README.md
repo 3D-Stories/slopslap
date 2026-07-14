@@ -173,11 +173,12 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.6.0 — de-slop pivot P3. Adds the interactive review stage: `slopslap review <target>`
-  serves a loopback, per-run-token review page (stdlib `http.server`, idle-timeout, shutdown after
-  Finish) for per-finding **apply / edit / keep**, writing a `decisions.json` bound to the audit
-  `source_sha256`; `--static` writes the same page for a no-server browser (Export → `apply --decisions`).
-  Builds on P2 (v0.5.0 generic-diction detector), P1 (v0.4.0 detection + findings), and keystone v2.
+- **Version:** 0.7.0 — de-slop pivot P4. Adds **apply-from-decisions**: `assemble.py apply --decisions
+  decisions.json` applies ONLY the user-approved (apply/edit) hunks from a review `decisions.json`,
+  with the authorization ranges taken from the user's accepted findings (keystone v2 — the user
+  authorizes, not the genre). The 3-layer verifier + mandatory verified backup + atomic replacement
+  are the unchanged engine; an approved hunk the verifier rejects is surfaced blocked, never applied.
+  Builds on P3 (v0.6.0 review stage), P2 (v0.5.0 detector), P1 (v0.4.0), and keystone v2.
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
@@ -186,6 +187,17 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.7.0** — de-slop pivot P4: apply-from-decisions. New `assemble.py apply --path PATH --decisions decisions.json`
+  (+ `apply_from_decisions` in `scripts/slopslap_assemble/assemble.py`) applies ONLY the user-approved
+  (apply/edit) hunks from a review `decisions.json`. `decisions.json` is UNTRUSTED — schema-validated
+  (`validate_decisions_for_apply`), its finding-ids matched against the document's own findings, and
+  bound to the audit's `source_sha256` (a drifted file → `digest_mismatch`, which also makes a replayed
+  second pass a safe no-op). The **authorization ranges come from the user's accepted findings, not the
+  genre strip-gate** (keystone v2 — resolving the #59/#61 P4 forward-risk). The 3-layer verifier +
+  mandatory verified backup + atomic pathname replacement are the byte-for-byte unchanged engine
+  (`run_candidate` → `apply_selective`); a user-approved hunk the verifier rejects is surfaced blocked,
+  never silently applied, and an all-discard/undecided set is a clean no-op. E2E golden coverage:
+  safe-applies / invariant-breaking-blocks / discard-untouched / replay-rejected / unknown-id-rejected.
 - **0.6.0** — de-slop pivot P3: the interactive review stage. New `slopslap review <target>` command +
   `scripts/slopslap_review/review.py`: the engine writes `findings.json`, then serves a self-contained
   review page on `127.0.0.1:<random port>` (stdlib `http.server`, per-run URL token via

@@ -55,6 +55,8 @@ _EXIT_CLASS = {
     "apply_blocked": 2,
     # invalid input / contract (3)
     "invalid_edits": 3,
+    "invalid_decisions": 3,       # #62: untrusted decisions.json rejected (schema/id/sha) — pre-mutation
+    "conflicting_decisions": 3,   # #62: two approved decisions target one span with different edits
     "path_mismatch": 3,
     "digest_mismatch": 3,
     "genre_error": 3,
@@ -581,6 +583,83 @@ def _run_to_json(run: RunResult) -> dict:
     }
 
 
+def apply_from_decisions(path: str, decisions_path: str, *, fmt: str = "markdown",
+                         declared_genre: Optional[str] = None, semantic_fn=None, write: bool = True,
+                         apply_config=None) -> RunResult:
+    """Apply ONLY the user-approved (apply/edit) hunks of a review ``decisions.json`` (#62/P4).
+
+    The verifier + mandatory verified backup + atomic pathname replacement are the UNCHANGED engine
+    (``run_candidate`` → ``apply_selective``). The only new inputs are (a) the approved edit-script and
+    (b) the authorization ranges — which, per keystone v2, come from the USER's accepted findings, NOT
+    the genre strip-gate. ``decisions.json`` is UNTRUSTED: schema-validated, its finding-ids matched
+    against the audit's own findings, and bound to ``source_sha256`` (a drifted file → digest_mismatch
+    inside run_candidate). A user-approved hunk the verifier rejects is surfaced blocked, never applied;
+    an all-discard/undecided set is a clean no-op (the user's decision, not a missing model output)."""
+    import dataclasses  # noqa: PLC0415
+    from slopslap_review.findings import FindingsError, build_findings  # noqa: PLC0415 (review-layer; lazy avoids a load cycle)
+    from slopslap_review.schema import validate_decisions_for_apply  # noqa: PLC0415
+
+    stage = audit_document(path, fmt=fmt, declared_genre=declared_genre)
+    if stage.status != "ok":
+        rid = stage.data.run_id if isinstance(stage.data, AuditResult) else ""
+        return _build_run(rid, [stage] + _aborted(["candidate", "verify", "apply"], "audit"))
+    audit = stage.data
+    audit_stage = StageResult("audit", "ok", "ok", "audit complete", data=audit)
+
+    def _cand_fail(code, msg, errors=None):
+        return _build_run(audit.run_id, [audit_stage, StageResult(
+            "candidate", "failed", code, msg, data=None,
+            errors=errors or [{"code": code, "message": msg}])] + _aborted(["verify", "apply"], "candidate"))
+
+    # re-read the source + rebuild findings; a file change since the audit read → clean digest_mismatch
+    # (FindingsError) rather than an uncaught crash (the run_candidate digest recheck also guards it).
+    try:
+        with open(audit.source_path, "rb") as fh:
+            doc = fh.read()
+        by_id = {f.id: f for f in build_findings(audit, doc)}
+    except OSError as err:
+        return _cand_fail("digest_mismatch", f"cannot re-read audited source: {err}")
+    except FindingsError as err:
+        return _cand_fail("digest_mismatch", f"source changed since audit: {err}")
+
+    try:
+        with open(decisions_path, "r", encoding="utf-8") as fh:
+            decisions_obj = json.load(fh)
+    except (OSError, ValueError) as err:
+        return _cand_fail("invalid_decisions", f"cannot read --decisions: {err}")
+    # UNTRUSTED boundary: both replay bindings REQUIRED (finding-ids matched + source_sha256 bound).
+    problems = validate_decisions_for_apply(
+        decisions_obj, audit_finding_ids=set(by_id), expected_source_sha256=audit.source_sha256)
+    if problems:
+        return _cand_fail("invalid_decisions", "; ".join(problems)[:400],
+                          errors=[{"code": "invalid_decisions", "detail": problems}])
+
+    edits, spans, seen = [], [], {}
+    for d in decisions_obj["decisions"]:
+        action = d["user_action"]
+        if action == "discard":
+            continue  # discarded/undecided → left untouched
+        f = by_id[d["finding_id"]]  # validated present by validate_decisions_for_apply
+        s, e = f.span["start"], f.span["end"]
+        repl_b64 = d["replacement"] if action == "edit" else ""  # apply strip = delete the span
+        if (s, e) in seen:
+            if seen[(s, e)] != repl_b64:
+                return _cand_fail("conflicting_decisions",
+                                  f"two approved decisions target the same span [{s},{e}) with different edits")
+            continue  # identical edit for the same span already recorded
+        seen[(s, e)] = repl_b64
+        edits.append({"start_byte": s, "end_byte": e, "replacement_b64": repl_b64})
+        spans.append({"start_byte": s, "end_byte": e})
+
+    if not edits:  # all-discard / undecided → a legitimate no-op (the user's decision), never a block
+        return _build_run(audit.run_id, [audit_stage, StageResult(
+            "candidate", "ok", "ok", "no approved hunks (all discard/undecided): no-op", data=[])])
+
+    # keystone v2: the USER authorizes the edited spans — override the genre-derived authorization.
+    audit = dataclasses.replace(audit, authorization={"state": "authorized", "ranges": spans})
+    return run_candidate(audit, edits, semantic_fn=semantic_fn, write=write, apply_config=apply_config)
+
+
 def _build_argparser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="slopslap-assemble",
@@ -603,9 +682,12 @@ def _build_argparser() -> argparse.ArgumentParser:
     # #29 enablement: `apply` is the explicit MUTATING path (write=True) — a separate subcommand, not a
     # flag on `run`, so a real file mutation can never be triggered by omitting/mistyping a flag. Every
     # apply stays backup-gated + verifier-gated (apply_selective fails closed on backup failure).
-    pap = sub.add_parser("apply", help="APPLY a candidate edit-script to the file (mutates, backup-gated)")
+    pap = sub.add_parser("apply", help="APPLY approved edits to the file (mutates, backup-gated)")
     pap.add_argument("--path", required=True)
-    pap.add_argument("--edits", required=True, help="path to a JSON edit-script (list of edits, or {\"edits\": [...]})")
+    src = pap.add_mutually_exclusive_group(required=True)
+    src.add_argument("--edits", help="path to a JSON edit-script (list of edits, or {\"edits\": [...]})")
+    src.add_argument("--decisions",
+                     help="path to a review decisions.json — apply ONLY the approved (apply/edit) hunks (#62/P4)")
     pap.add_argument("--declared-genre", default=None)
     pap.add_argument("--format", default="markdown", choices=("markdown", "text"))
     return parser
@@ -624,6 +706,14 @@ def main(argv=None) -> int:
         stage = audit_document(args.path, fmt=args.format, declared_genre=args.declared_genre)
         run_id = stage.data.run_id if isinstance(stage.data, AuditResult) else ""
         run = _build_run(run_id, [stage])
+        sys.stdout.write(json.dumps(_run_to_json(run)) + "\n")
+        return exit_code(run)
+
+    # apply --decisions: apply ONLY the user-approved hunks of a review decisions.json (#62/P4).
+    if args.cmd == "apply" and getattr(args, "decisions", None):
+        run = apply_from_decisions(args.path, args.decisions, fmt=args.format,
+                                   declared_genre=args.declared_genre, semantic_fn=live_semantic_fn(),
+                                   write=True)
         sys.stdout.write(json.dumps(_run_to_json(run)) + "\n")
         return exit_code(run)
 
