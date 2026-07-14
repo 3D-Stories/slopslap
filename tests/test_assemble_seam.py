@@ -174,9 +174,11 @@ def test_e2e_dry_run_accept_golden(tmp_path):
     # THE safety assertion: the SOURCE file on disk is byte-identical
     with open(src, "rb") as fh:
         assert fh.read() == GOLDEN_DOC
-    # AND a verified backup EXISTS in the test-owned tmp dir (apply creates it before write=False)
+    # #47: a dry run mutates nothing, so it creates NO backup (a backup exists only to make a real
+    # mutation reversible). The report carries no backup handle either.
     bdir = str(tmp_path / "backups")
-    assert os.path.isdir(bdir) and any(f.endswith(".bak") for f in os.listdir(bdir))
+    assert report.get("backup") is None
+    assert not os.path.exists(bdir) or not any(f.endswith(".bak") for f in os.listdir(bdir))
 
 
 # ---- case 4: end-to-end dry-run REJECT golden x2 (out-of-range + invariant weakening) ----

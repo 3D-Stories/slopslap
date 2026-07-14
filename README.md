@@ -173,15 +173,11 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.8.0 — de-slop pivot **P5**: feedback ledger + learning (#63), closing the loop
-  detect→recommend→review→apply→**learn**. Every review→apply decision appends one span-hashed, local,
-  purgeable line to `~/.local/state/slopslap/feedback.jsonl`; `slopslap_corpus.learn` consumes it into a
-  **keep-only** recommendation overlay (repeated overrides of a `strip` rec flip that metric-class to
-  `keep` for that genre — the tool grows *more* conservative, never more aggressive). Structural
-  invariant, pinned by tests: **learning tunes the recommendation only — authorization never learns**
-  (the overlay is applied solely in findings-build, `metrics.recommend` stays pure, and the verifier's
-  signature can't see it). `slopslap feedback {path|show|reset}` inspects/purges the ledger. Builds on
-  P4 (v0.7.0), the #31 hardening (v0.7.1), and keystone v2.
+- **Version:** 0.8.1 — v0.4 hardening (#47): a dry-run (`run` / `apply --dry-run`, `write=False`) no
+  longer writes a backup file. `create_verified_backup` ran before the dry-run short-circuit, so every
+  preview left an orphaned `.bak` behind; the backup now runs only when actually mutating (`write=True`)
+  — the real apply still writes exactly one verified backup before the atomic replace. Builds on the
+  P5 learning loop (v0.8.0) and keystone v2.
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
@@ -190,6 +186,13 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.8.1** — v0.4 hardening (#47, Epic #67 Wave 1): a dry-run no longer creates a backup. In
+  `slopslap_apply/apply.py`, `create_verified_backup` ran unconditionally *before* the `if not write:`
+  dry-run short-circuit, so every `run`/`--dry-run` preview wrote (and orphaned) a `.bak`. The backup
+  block is now guarded by `if write:` — a preview creates zero backups and reports `backup: None`; a
+  real apply still writes exactly one verified backup before the atomic replace, and the
+  backup-failure-blocks gate is unchanged. Red-before-green; the seam golden test that had encoded the
+  old behavior was corrected. Suite 613/2.
 - **0.8.0** — de-slop pivot **P5**: feedback ledger + learning (#63) — the final `learn` arrow of
   detect→recommend→review→apply→learn. (a) **Ledger writer** (`slopslap_review/feedback.py`): each
   review→apply decision appends one schema-valid (frozen #58), **span-hashed**, local, purgeable JSONL

@@ -76,10 +76,15 @@ def test_apply_concurrency_guard(tmp_path):
 def test_apply_dry_run_does_not_write(tmp_path):
     src = tmp_path / "d.md"
     src.write_bytes(b"one two\n")
+    bk = tmp_path / "bk"
     r = apply_selective(str(src), [_e(0, 3, b"ONE")], ACCEPT,
-                        BackupConfig(root=str(tmp_path / "bk")), write=False)
+                        BackupConfig(root=str(bk)), write=False)
     assert r["status"] == "applied" and r["mutated"] is False
     assert src.read_bytes() == b"one two\n"
+    # #47: a dry run makes NO mutation, so it must create NO backup file (and report no backup).
+    assert r.get("backup") is None
+    made = [p for _, _, files in os.walk(str(bk)) for p in files] if bk.exists() else []
+    assert made == [], f"dry run created backup files: {made}"
 
 
 def test_apply_loop_converges_over_multiple_iterations(tmp_path):
