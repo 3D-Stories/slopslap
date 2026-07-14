@@ -173,15 +173,12 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.8.3 — v0.4 hardening (#46): harden the untrusted command-target boundary across
-  `audit`/`suggest`/`apply`. The old wrapper used a static `SLOPSLAP_TARGET` sentinel a target line
-  could reproduce to close the block early and inject the model's diagnosis step. A static command
-  prompt (expanded only for `$ARGUMENTS`) **cannot** carry an unforgeable per-run delimiter, so the fix
-  is **rule-based, not token-based**: a distinctive `SLOPSLAP_UNTRUSTED_TARGET` fence + decisive framing
-  that everything between the fences is DATA — a line inside is data *even if it reproduces the fence
-  verbatim*, says "ignore previous instructions", or asks to change mode / authorize a write. This is a
-  soft, model-obeyed guard (there is no delimiter parser); `apply` stays backup + verifier gated so an
-  injected line can never reach the file. Builds on #36 (v0.8.2), #47 (v0.8.1).
+- **Version:** 0.8.4 — v0.4 hardening (#43): a **self-checking edit-script**. The wire shape
+  `{start_byte,end_byte,replacement_b64}` had no preimage, so an in-bounds offset at the WRONG bytes (a
+  stale script against a drifted doc) could pass bounds/overlap while editing the wrong text. `Edit`
+  now carries an optional `preimage_sha256` (parsed from `preimage_b64` or `preimage_sha256` in the
+  script); `apply_edits` rejects a range whose doc bytes don't match. Backward-compatible — absent
+  preimage = no check, byte-identical to before. Builds on #46 (v0.8.3), #36 (v0.8.2), #47 (v0.8.1).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
@@ -190,6 +187,16 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.8.4** — v0.4 hardening (#43, Epic #67 Wave 3): a self-checking edit-script. The wire shape
+  `{start_byte,end_byte,replacement_b64}` carried no expected preimage, so an in-bounds offset at the
+  WRONG bytes — a stale/drifted script whose offsets happened to stay valid, and that still preserved
+  every invariant — was not caught structurally. `Edit` gains an optional `preimage_sha256`, parsed
+  from either `preimage_b64` (raw expected bytes) or `preimage_sha256` (bare hex) in the script;
+  `apply_edits` (the choke point for apply + verify) rejects a range whose `original[start:end)` doesn't
+  match, with an `EditError` the apply/run entry points already surface as a clean invalid-input
+  failure (never a crash). Backward-compatible: absent preimage = no check, byte-identical to pre-#43;
+  the whole-doc `source_sha256` binding on the apply path is unchanged, so the per-range preimage is the
+  finer-grained guard for scripts that lack a whole-doc binding. +7 tests; suite 620 → 627.
 - **0.8.3** — v0.4 hardening (#46, Epic #67 Wave 2): harden the untrusted command-target boundary
   across `audit`/`suggest`/`apply`. The old wrapper `<<<SLOPSLAP_TARGET … SLOPSLAP_TARGET` used a static
   sentinel; a target line reading `SLOPSLAP_TARGET` could close it and inject the model's diagnosis step
