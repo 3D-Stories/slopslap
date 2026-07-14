@@ -4,7 +4,7 @@
   "control": false,
   "pair": true,
   "clean_file": "clean.md",
-  "provenance": "Authored slop→clean pair (#58, P0). original.md is a corporate adjective pile ('robust, scalable, and innovative', 'best-in-class', 'leverages', 'empower', 'seamless, cutting-edge solutions'). clean.md drops the unverifiable superlatives and keeps only concrete, doc-supportable capability (distributed workloads; integrates with existing tools) — a de-claim rewrite, NOT a lateral swap to a new claim.",
+  "provenance": "Authored slop→clean pair (#58, P0). original.md is a corporate adjective pile ('robust, scalable, and innovative', 'best-in-class', 'leverages', 'seamless, cutting-edge solutions'). clean.md is a STRICT de-claim: it keeps only claim atoms already present in the original ('empowers teams', 'delivers solutions', 'across the enterprise') and drops every superlative/adjective-pile token. It introduces NO new claim — an earlier draft that invented 'distributed workloads'/'integrates with tools' was a lateral swap and was rejected in the #58 Step-11 review.",
   "byte_policy": {
     "encoding": "utf-8",
     "trailing_newline": "preserve"
@@ -18,7 +18,7 @@
     {
       "class": "adjective_pile",
       "region": "corporate-superlatives",
-      "note": "Adjective pile + laundered superlatives ('best-in-class', 'cutting-edge'). Genre=marketing → recommendation strip. clean.md scopes to the verifiable: no 'best'/'leading' claim survives, so Layer-1 no_new_claim_atoms would accept it (no new claim atoms). The pair encodes the target for a claim-carrying strip that stays verifier-safe."
+      "note": "Adjective pile + laundered superlatives ('best-in-class', 'cutting-edge'). Genre=marketing → recommendation strip. clean.md keeps ONLY claim atoms already in original.md (empower teams / deliver solutions / enterprise) and drops the superlatives, so it introduces no new claim atoms and would pass Layer-1 no_new_claim_atoms. This is the rule-#3 de-claim target: strip the corporate voice hard while staying verifier-safe, without inventing a new capability."
     }
   ],
   "control_reason": null

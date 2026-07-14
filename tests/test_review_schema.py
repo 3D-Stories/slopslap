@@ -20,8 +20,12 @@ from slopslap_review.schema import (
     DecisionsError,
     FeedbackError,
     validate_decisions,
+    validate_decisions_for_apply,
     validate_feedback_line,
 )
+
+# valid base64 whose decoded bytes are NOT valid UTF-8 (0xff 0xfe is not a UTF-8 sequence)
+NON_UTF8_B64 = base64.b64encode(b"\xff\xfe").decode()
 
 SHA_A = "a" * 64
 SHA_B = "b" * 64
@@ -143,6 +147,33 @@ def test_decisions_edit_replacement_must_be_base64():
     assert any("base64" in p for p in validate_decisions(obj))
 
 
+def test_decisions_edit_replacement_must_decode_to_utf8():
+    obj = _canonical_decisions()
+    obj["decisions"][1]["replacement"] = NON_UTF8_B64  # valid base64, non-UTF-8 bytes
+    assert any("UTF-8" in p or "utf-8" in p for p in validate_decisions(obj))
+
+
+def test_validate_decisions_for_apply_requires_bindings_and_enforces_them():
+    ids = {"generic_diction:12", "adjective_pile:40", "simulation:88"}
+    # correct bindings → valid
+    assert validate_decisions_for_apply(
+        _canonical_decisions(), audit_finding_ids=ids, expected_source_sha256=SHA_A
+    ) == []
+    # wrong sha → rejected (the structural-only validate_decisions would have passed without it)
+    assert validate_decisions_for_apply(
+        _canonical_decisions(), audit_finding_ids=ids, expected_source_sha256=SHA_B
+    ) != []
+    # unknown finding id vs snapshot → rejected
+    assert validate_decisions_for_apply(
+        _canonical_decisions(),
+        audit_finding_ids={"generic_diction:12"},
+        expected_source_sha256=SHA_A,
+    ) != []
+    # bindings are NOT optional on the apply-facing entry point
+    with pytest.raises(TypeError):
+        validate_decisions_for_apply(_canonical_decisions())
+
+
 def test_decisions_duplicate_finding_id_rejected():
     obj = _canonical_decisions()
     obj["decisions"][1]["finding_id"] = obj["decisions"][0]["finding_id"]
@@ -251,6 +282,12 @@ def test_feedback_schema_version_optional_but_guarded():
     assert validate_feedback_line(obj) == []  # present-and-correct is fine
     obj["schema_version"] = 2
     assert any("schema_version" in p for p in validate_feedback_line(obj))  # present-and-wrong rejected
+
+
+def test_feedback_edit_replacement_must_decode_to_utf8():
+    obj = _canonical_feedback()
+    obj["replacement"] = NON_UTF8_B64
+    assert any("UTF-8" in p or "utf-8" in p for p in validate_feedback_line(obj))
 
 
 def test_feedback_reason_optional():

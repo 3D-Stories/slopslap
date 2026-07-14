@@ -34,16 +34,17 @@ def test_golden_pairs_validate():
 
 def test_golden_pairs_have_distinct_clean_target():
     for d in PAIR_DIRS:
+        original, manifest = load_fixture(d)
         name = os.path.basename(d)
-        clean_path = os.path.join(d, "clean.md")
-        assert os.path.isfile(clean_path), f"{name}: missing clean.md (the after target)"
+        # honor the manifest's declared clean_file (default clean.md) — the field is not dead data
+        clean_name = manifest.get("clean_file", "clean.md")
+        clean_path = os.path.join(d, clean_name)
+        assert os.path.isfile(clean_path), f"{name}: missing {clean_name} (the after target)"
         with open(clean_path, "rb") as fh:
             clean = fh.read()
-        assert clean, f"{name}: empty clean.md"
+        assert clean, f"{name}: empty {clean_name}"
         clean.decode("utf-8")  # a pair target must be valid UTF-8 (raises => fail)
-        with open(os.path.join(d, "original.md"), "rb") as fh:
-            original = fh.read()
-        assert clean != original, f"{name}: clean.md is byte-identical to original.md (not a pair)"
+        assert clean != original, f"{name}: {clean_name} is byte-identical to original.md (not a pair)"
 
 
 def test_golden_pairs_disposition_is_coherent():

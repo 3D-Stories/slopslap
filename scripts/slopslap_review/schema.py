@@ -78,12 +78,22 @@ def _in_enum(x, enum: Set[str]) -> bool:
     return isinstance(x, str) and x in enum
 
 
-def _is_valid_b64(s: str) -> bool:
+def _b64_utf8_problem(s: str) -> Optional[str]:
+    """None if ``s`` is valid base64 decoding to valid UTF-8, else a short reason.
+
+    A replacement is the exact bytes an ``edit`` would splice into a document; the seam is
+    UTF-8-text-only, so a payload that decodes to non-UTF-8 bytes is rejected HERE, not
+    deep in apply.
+    """
     try:
-        base64.b64decode(s, validate=True)
+        raw = base64.b64decode(s, validate=True)
     except (binascii.Error, ValueError):
-        return False
-    return True
+        return "is not valid base64"
+    try:
+        raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return "base64 does not decode to UTF-8"
+    return None
 
 
 def _unknown_keys(obj: dict, allowed: Set[str], prefix: str) -> List[str]:
@@ -159,8 +169,10 @@ def validate_decisions(
         if action == "edit":
             if not _is_nonempty_str(rep):
                 problems.append(at + "user_action 'edit' requires a base64 replacement")
-            elif not _is_valid_b64(rep):
-                problems.append(at + "replacement is not valid base64")
+            else:
+                b64_problem = _b64_utf8_problem(rep)
+                if b64_problem:
+                    problems.append(at + "replacement " + b64_problem)
         elif rep is not None:
             problems.append(at + "replacement is only allowed with user_action 'edit'")
 
@@ -173,6 +185,28 @@ def validate_decisions(
             problems.append(at + f"reason must be one of {sorted(REASONS)}")
 
     return problems
+
+
+def validate_decisions_for_apply(
+    obj,
+    *,
+    audit_finding_ids: Set[str],
+    expected_source_sha256: str,
+) -> List[str]:
+    """Apply-facing validation: BOTH replay bindings are REQUIRED (no keyword default).
+
+    ``validate_decisions`` leaves the audit-snapshot match and the source-sha binding
+    OPTIONAL so structural validity is exercisable at P0 (no findings-envelope producer
+    exists yet). But the ``apply`` stage authorizes edits, so it must never run against a
+    ``decisions.json`` whose finding-ids and file-binding were not both checked. This entry
+    point makes that impossible to forget: a caller that omits either argument gets a
+    ``TypeError`` at the call site, not a silently-relaxed "valid".
+    """
+    return validate_decisions(
+        obj,
+        audit_finding_ids=audit_finding_ids,
+        expected_source_sha256=expected_source_sha256,
+    )
 
 
 def validate_feedback_line(obj) -> List[str]:
@@ -224,8 +258,10 @@ def validate_feedback_line(obj) -> List[str]:
     if action == "edit":
         if not _is_nonempty_str(rep):
             problems.append("user_action 'edit' requires a base64 replacement")
-        elif not _is_valid_b64(rep):
-            problems.append("replacement is not valid base64")
+        else:
+            b64_problem = _b64_utf8_problem(rep)
+            if b64_problem:
+                problems.append("replacement " + b64_problem)
     elif rep is not None:
         problems.append("replacement is only allowed with user_action 'edit'")
 

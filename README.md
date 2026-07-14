@@ -170,8 +170,9 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.2.2 — v0.2 epic (#16) **complete**: live model-in-the-loop audit → verify → suggest
-  → apply for any UTF-8 text document.
+- **Version:** 0.3.0 — de-slop pivot underway. v0.2 epic (#16) **complete**: live model-in-the-loop
+  audit → verify → suggest → apply for any UTF-8 text document. v0.3.0 begins the pivot (P0): frozen
+  review-loop data contracts (`decisions.json` / feedback-ledger) + slop→clean golden pair fixtures.
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
