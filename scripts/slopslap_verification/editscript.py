@@ -12,7 +12,7 @@ import base64
 import difflib
 import hashlib
 from dataclasses import dataclass
-from typing import Callable, List, Sequence
+from typing import Callable, List, Optional, Sequence
 
 
 class EditError(ValueError):
@@ -34,6 +34,10 @@ class Edit:
     start_byte: int
     end_byte: int
     replacement: bytes
+    # #43: OPTIONAL self-check — the expected sha256 (hex) of original[start_byte:end_byte). When set,
+    # apply_edits rejects the script if the doc's bytes at that range don't match (a stale/drifted
+    # script whose offsets stayed in bounds). None (the default) = no check → byte-identical to pre-#43.
+    preimage_sha256: Optional[str] = None
 
     @property
     def is_insertion(self) -> bool:
@@ -59,17 +63,34 @@ def parse_edits(raw_edits: Sequence[dict]) -> List[Edit]:
             repl = r if isinstance(r, bytes) else str(r).encode("utf-8")
         else:
             repl = b""
-        out.append(Edit(int(e["start_byte"]), int(e["end_byte"]), repl))
+        # #43: optional expected preimage — accept either the raw bytes (preimage_b64) or a bare
+        # sha256 hex (preimage_sha256); both normalize to a hex digest checked in _validated_sorted.
+        pre: Optional[str] = None
+        if "preimage_b64" in e:
+            pre = sha256_hex(base64.b64decode(e["preimage_b64"]))
+        elif "preimage_sha256" in e:
+            pre = str(e["preimage_sha256"]).strip().lower()
+        out.append(Edit(int(e["start_byte"]), int(e["end_byte"]), repl, pre))
     return out
 
 
-def _validated_sorted(original_len: int, edits: Sequence[Edit]) -> List[Edit]:
+def _validated_sorted(original: bytes, edits: Sequence[Edit]) -> List[Edit]:
+    original_len = len(original)
     for e in edits:
         if not (0 <= e.start_byte <= e.end_byte <= original_len):
             raise EditError(
                 f"edit out of bounds or inverted: [{e.start_byte},{e.end_byte}) "
                 f"against original length {original_len}"
             )
+        # #43: self-checking edit-script — reject a range whose doc bytes don't match its declared
+        # preimage (bounds/overlap can pass while the script is stale against a drifted doc).
+        if e.preimage_sha256 is not None:
+            actual = sha256_hex(original[e.start_byte:e.end_byte])
+            if actual != e.preimage_sha256:
+                raise EditError(
+                    f"preimage mismatch at [{e.start_byte},{e.end_byte}): expected "
+                    f"{e.preimage_sha256[:12]}…, doc has {actual[:12]}… (stale/drifted edit-script)"
+                )
     ordered = sorted(edits, key=lambda e: (e.start_byte, e.end_byte))
     for a, b in zip(ordered, ordered[1:]):
         if a.end_byte > b.start_byte:
@@ -91,7 +112,7 @@ def _validated_sorted(original_len: int, edits: Sequence[Edit]) -> List[Edit]:
 
 def apply_edits(original: bytes, edits: Sequence[Edit]) -> bytes:
     """Reconstruct the revision by splicing edits into ``original``."""
-    ordered = _validated_sorted(len(original), edits)
+    ordered = _validated_sorted(original, edits)
     out = bytearray()
     cursor = 0
     for e in ordered:
