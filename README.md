@@ -170,8 +170,9 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.2.2 — v0.2 epic (#16) **complete**: live model-in-the-loop audit → verify → suggest
-  → apply for any UTF-8 text document.
+- **Version:** 0.3.0 — de-slop pivot underway. v0.2 epic (#16) **complete**: live model-in-the-loop
+  audit → verify → suggest → apply for any UTF-8 text document. v0.3.0 begins the pivot (P0): frozen
+  review-loop data contracts (`decisions.json` / feedback-ledger) + slop→clean golden pair fixtures.
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
@@ -180,6 +181,16 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.3.0** — de-slop pivot P0: frozen review-loop data contracts. Adds
+  `scripts/slopslap_review/schema.py` with two stdlib validators (no new dependency) that ARE the
+  contract for the pivot's REVIEW → LEARN stages: `validate_decisions` for `decisions.json` (the
+  user's per-finding apply/edit/discard set — **untrusted** input to `apply`, so the validator is a
+  fail-closed boundary: strict key/enum allowlists, 64-hex `source_sha256` binding that rejects
+  replay against a drifted file, base64-only replacement payloads, optional finding-id matching
+  against an audit snapshot) and `validate_feedback_line` for the local `feedback.jsonl` ledger.
+  Also seeds the `tests/fixtures/eval/pair-*` **slop→clean golden pair** fixture family (before/after
+  labels the calibration harness was starved of) with a hermetic `pair-*` glob guard. Schema versions
+  frozen at 1. No user-facing command yet — this is the groundwork P1–P5 build on.
 - **0.2.2** — doc-honesty fix. The seam ingests **UTF-8 text only** (`--format markdown|text`; a
   non-UTF-8/binary input exits `3` `genre_error`), so the "arbitrary / any documents" copy was an
   overclaim — corrected to "any UTF-8 text document" across the overview page, README, and the plugin

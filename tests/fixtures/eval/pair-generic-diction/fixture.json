@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "genre": "general",
+  "control": false,
+  "pair": true,
+  "clean_file": "clean.md",
+  "provenance": "Authored slop→clean pair (#58, P0). original.md packs stock openers ('In today's fast-paced world', 'it is important to note', 'At the end of the day'), an empty intensifier ('truly seamless'), and a padded quantifier ('each and every one of the ... involved in the process'). clean.md is a hand-written tightening that keeps the single real claim (the guide helps users get started). No number/requirement/negation to preserve.",
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [],
+  "protected_spans": [],
+  "invariant_regions": [],
+  "expected_invariants": [],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "generic_diction",
+      "region": "stock-opener-and-filler",
+      "note": "Stock opener + 'it is important to note' + 'At the end of the day' + 'truly seamless' + 'each and every one ... involved in the process'. Genre=general → recommendation strip. The pair's after (clean.md) is the target an aggressive de-slop pass should approach; no invariant to preserve, so a rewrite here is verifier-safe."
+    }
+  ],
+  "control_reason": null
+}

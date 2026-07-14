@@ -1,0 +1,1 @@
+In today's fast-paced world, it is important to note that this onboarding guide will help new users get started with the platform. At the end of the day, the goal is to ensure a truly seamless experience for each and every one of the users involved in the process.

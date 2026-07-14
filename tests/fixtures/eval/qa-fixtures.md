@@ -23,6 +23,31 @@ is drop-in). This is the established home — do not stand up a parallel one.
 3. Always add `provenance` (source doc · who labeled it · date) and `genre` from the loader's
    `VALID_GENRES`.
 
+## Golden pairs (`pair-*`) — slop→clean before/after
+
+`qa-*` captures single-doc discrepancies; `pair-*` captures the **destination**. Each is a
+labeled before/after pair — the labeled data the #25 calibration harness was starved of (it
+shipped measure-only against 0 labeled points). A pair carries the clean rewrite an aggressive,
+verifier-safe de-slop pass should approach, so the eval can score *how close* a candidate gets,
+not just whether it abstained.
+
+Recipe (one pair = one dir), guarded by `tests/test_golden_pairs.py` (globs `pair-*`, drop-in):
+
+1. `tests/fixtures/eval/pair-<slug>/` with:
+   - `original.md` — the **slop** (before). Minimal, self-contained.
+   - `clean.md` — the **target clean rewrite** (after). Valid UTF-8, must differ from `original.md`.
+   - `fixture.json` — loader-valid (`validate_manifest` returns `[]`); `control: false` (a pair
+     contains slop by construction); `seeded_defects: [{class, region, note}]` naming the slop;
+     `pair: true` and `clean_file: "clean.md"` mark it as a pair. `provenance` + a `VALID_GENRES`
+     `genre` as usual.
+2. **P0 scope:** `editable_ranges` MAY be empty — the pair (original.md + clean.md) IS the label,
+   and the guard checks only loader-validity + that `clean.md` is present, non-empty, UTF-8, and
+   distinct. It does **not** assert any single edit reproduces `clean.md` byte-for-byte; wiring a
+   pair into a verifier-checked golden repair (populated `editable_ranges` + a machine-produced
+   candidate scored against `clean.md`) needs a live model and is a P2+ follow-up.
+3. Keep the `clean.md` a **de-claim / tighten**, never a lateral swap to a new unsupported claim —
+   the pair must itself be an example the Layer-1 `no_new_claim_atoms` gate would accept.
+
 ## Promotion to canonical (deferred, batched)
 
 `run_eval.py` drives `CANONICAL`/`CONTROLS` from an explicit inventory with **pinned first-pass
