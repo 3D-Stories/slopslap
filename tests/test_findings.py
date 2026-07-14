@@ -92,6 +92,24 @@ def test_strip_that_would_drop_an_invariant_prechecks_blocked(tmp_path):
     assert f.verifier_precheck["decision"] != "ACCEPT"
 
 
+def test_finding_span_covers_full_multiline_passage(tmp_path):
+    # #59 T3 8a (correctness HIGH): a location on a multi-line/soft-wrapped paragraph must span the
+    # whole passage (its containing Unit), not just the first physical line. Six metrics record only
+    # line_start, so a naive line-based span would cover one line; resolving to the Unit fixes it and
+    # makes the finding span byte-identical to the pipeline's authorized range.
+    from slopslap_scan.diagnoses import authorized_ranges_from_diagnoses
+    para = "\n".join(f"We choose {w} thing, not other thing here." for w in "abcdef")
+    audit, doc = _audit(tmp_path, f"Clean intro line here.\n\n{para}\n", genre="general")
+    fs = [f for f in build_findings(audit, doc) if f.category == "negative_parallelism"]
+    assert fs
+    spans = {(f.span["start"], f.span["end"]) for f in fs}
+    assert len(spans) == 1, "all tells in one paragraph resolve to the same containing-unit span"
+    (start, end), = spans
+    assert end - start > 100, "span must cover the whole multi-line paragraph, not just line 1"
+    ranges = authorized_ranges_from_diagnoses(doc, "markdown", "general")
+    assert {(r["start_byte"], r["end_byte"]) for r in ranges} == {(start, end)}
+
+
 def test_doc_bytes_must_match_audit_sha(tmp_path):
     audit, doc = _audit(tmp_path, _CADENCE_DOC)
     assert hashlib.sha256(doc).hexdigest() == audit.source_sha256  # sanity

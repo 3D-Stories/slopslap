@@ -22,6 +22,8 @@ import hashlib
 from dataclasses import dataclass
 from typing import List, Optional
 
+from slopslap_scan import diagnoses
+from slopslap_scan import extract as ext
 from slopslap_scan import metrics as met
 from slopslap_verification.editscript import Edit
 from slopslap_verification.ledger import verify
@@ -30,7 +32,7 @@ from slopslap_verification.ledger import verify
 _DELETE_B64 = base64.b64encode(b"").decode("ascii")
 
 # short human-readable snippet keys a scanner location may carry (first present wins).
-_EVIDENCE_KEYS = ("match", "phrase", "opener", "cluster", "adjective")
+_EVIDENCE_KEYS = ("match", "phrase", "opener", "prefix", "cluster", "adjective")
 
 
 class FindingsError(ValueError):
@@ -75,6 +77,35 @@ def _evidence(loc: dict) -> str:
     return ""
 
 
+def _extract_units(doc: bytes, fmt: str):
+    """Re-extract the scanner Units for ``doc`` the SAME way the audit did (assemble._scan_metrics /
+    diagnoses use these exact calls), so a location's line resolves to an identical Unit span."""
+    text = doc.decode("utf-8")
+    if fmt == "markdown":
+        return ext.extract_markdown(text, diagnoses._markdown_it_cls())
+    return ext.extract_text(text)  # fmt == "text"
+
+
+def _span_for(loc: dict, units, starts, last):
+    """Byte span for a scanner location, resolved to its CONTAINING Unit(s) — NOT the raw location
+    line. Six metrics record only ``line_start`` (the containing Unit's start line, no ``line_end``),
+    so using the location line alone would cover just the first physical line of a wrapped paragraph;
+    resolving to the overlapping Unit(s) makes the finding span byte-identical to what
+    ``authorized_ranges_from_diagnoses`` authorizes (diagnoses.py overlap logic, per-location here).
+    Returns ``(start_byte, end_byte)`` or ``None`` for a doc-level (line-less) location."""
+    ls = loc.get("line_start")
+    if ls is None:
+        return None
+    le = loc.get("line_end", ls)
+    overlapping = [u for u in units if not (u.line_end < ls or u.line_start > le)]
+    if not overlapping:
+        # a location always sits in a unit; fall back to the raw line range if the scanner ever drifts.
+        return (starts[ls - 1], starts[min(le, last)])
+    s = min(u.line_start for u in overlapping)
+    e = max(u.line_end for u in overlapping)
+    return (starts[s - 1], starts[min(e, last)])
+
+
 def _precheck(recommendation: str, doc: bytes, start: int, end: int, ledger):
     """Return (proposed_rewrite, verifier_precheck) for one finding.
 
@@ -112,6 +143,7 @@ def build_findings(audit, doc: bytes) -> List[Finding]:
 
     starts = _line_starts(doc)
     last = len(starts) - 1
+    units = _extract_units(doc, audit.fmt)
     findings: List[Finding] = []
     ordinals: dict = {}  # (metric, start_byte) -> next ordinal, for id uniqueness
 
@@ -119,12 +151,10 @@ def build_findings(audit, doc: bytes) -> List[Finding]:
         recommendation = met.recommend(audit.genre, metric_name)
         cls = met.METRIC_CLASS.get(metric_name, "unclassified")
         for loc in res.get("locations") or []:
-            line_start = loc.get("line_start")
-            if line_start is None:
+            span = _span_for(loc, units, starts, last)
+            if span is None:
                 continue  # a doc-level metric with no localizable passage contributes no finding
-            line_end = loc.get("line_end", line_start)
-            start = starts[line_start - 1]
-            end = starts[min(line_end, last)]
+            start, end = span
             key = (metric_name, start)
             ordinal = ordinals.get(key, 0)
             ordinals[key] = ordinal + 1
