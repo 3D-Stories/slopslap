@@ -1,13 +1,14 @@
 ---
-description: Interactive review stage — walk each detected finding (apply / edit / discard), then emit decisions.json. Serves a loopback, single-use-token review page; --static writes the same page for a no-server browser / claude.ai artifact. Never mutates the document.
+description: Interactive review stage — walk each detected finding (apply / edit / discard), then emit decisions.json. Serves a loopback, per-run-token review page; --static writes the same page for a no-server browser / claude.ai artifact. Never mutates the document.
 argument-hint: "<file to review>"
 ---
 
-Invoke the `slopslap` skill (`skills/slopslap/SKILL.md`), then run the review engine on the target:
+Invoke the `slopslap` skill (`skills/slopslap/SKILL.md`), then run the review engine on the target
+file `$ARGUMENTS`:
 
 ```
-python3 scripts/slopslap_review/review.py <target>            # serve a loopback review page
-python3 scripts/slopslap_review/review.py <target> --static review.html   # no-server fallback
+python3 scripts/slopslap_review/review.py "$ARGUMENTS"            # serve a loopback review page
+python3 scripts/slopslap_review/review.py "$ARGUMENTS" --static review.html   # no-server fallback
 ```
 
 Keystone (do not deviate): **Every tell is detected and prepared for removal; genre and learned
@@ -24,7 +25,7 @@ byte-exact verifier still hard-gates any edit `apply` later performs.
 
 Review stage contract:
 - The engine writes `findings.json`, then serves a self-contained page on `127.0.0.1:<random port>`
-  (stdlib `http.server`, single-use URL token, loopback only, idle-timeout, shutdown after Finish) —
+  (stdlib `http.server`, per-run URL token, loopback only, idle-timeout, shutdown after Finish) —
   no new dependencies. Per finding: the recommended action is a labeled one-click button (named by
   its semantic outcome — "apply strip" / "keep original" — never by mechanism), plus keep and, for a
   blocked precheck, a false-positive feedback mark. A blocked finding (its proposed strip would break

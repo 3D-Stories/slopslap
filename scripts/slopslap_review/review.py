@@ -5,7 +5,7 @@ sole output is a `decisions.json` (the frozen #58 schema, bound to the audit's `
 `apply` (#62/P4) consumes. Two delivery mechanisms, one schema:
 
 - **A. Local review server** (`serve_review`) — stdlib `http.server` bound to 127.0.0.1 on a random
-  port, gated by a single-use URL token, with an idle-timeout and shutdown-after-finish. It serves
+  port, gated by a per-run URL token, with an idle-timeout and shutdown-after-finish. It serves
   ONE self-contained page and accepts ONE `POST /finish?token=…`; every other path/method/bad-token
   is 404/403. No filesystem serving (no path-traversal surface), no new dependencies.
 - **B. Static-export fallback** (`render_review_page` written to a file) — the same page; where a
@@ -34,7 +34,7 @@ from typing import Optional
 # `scripts/` parent, is on sys.path[0] when run directly). Harmless/idempotent when imported.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from slopslap_review.schema import RECOMMENDATIONS, USER_ACTIONS, validate_decisions  # noqa: E402
+from slopslap_review.schema import validate_decisions  # noqa: E402
 
 REVIEW_SCHEMA_VERSION = 1
 DECISIONS_SCHEMA_VERSION = 1
@@ -79,8 +79,6 @@ def decisions_from_actions(payload: dict, actions: dict) -> dict:
         entry = {"finding_id": fid, "user_action": action}
         if action == "edit" and act.get("replacement_b64"):
             entry["replacement"] = act["replacement_b64"]
-        if act.get("alternative"):
-            entry["alternative"] = act["alternative"]
         if act.get("reason"):
             entry["reason"] = act["reason"]
         decisions.append(entry)
@@ -107,7 +105,7 @@ body{{font:15px/1.5 system-ui,sans-serif;max-width:52rem;margin:2rem auto;paddin
 .cat{{font-weight:600}} .rec{{font-size:.8em;border:1px solid;border-radius:6px;padding:0 .35em;margin-left:.4em}}
 .ev{{background:#8881;border-radius:4px;padding:.15em .35em;font-family:ui-monospace,monospace;font-size:.9em}}
 .src{{font-size:.9em;margin:.35em 0}} .srctext{{background:#8881;border-radius:4px;padding:.1em .3em;white-space:pre-wrap}}
-.blocked{{opacity:.7}} .blocked .act{{display:none}}
+.blocked{{opacity:.7}} .blocked .apply,.blocked .edit{{display:none}}
 .act button{{margin-right:.35em}} button{{cursor:pointer;border-radius:6px;border:1px solid #8886;padding:.2em .6em}}
 .recbtn{{border-color:currentColor;font-weight:600;box-shadow:0 0 0 1px currentColor}}
 .done{{margin:1.5rem 0;font-weight:600}}
@@ -160,7 +158,7 @@ PAYLOAD.findings.forEach(f => {
     act.appendChild(outcomeBtn('apply','Apply strip','apply'));
     const ed = mk('button','btn edit','Edit…');
     // pre-fill with the FULL span text (what gets replaced) so an edit is a hand-tune of visible text.
-    ed.onclick=()=>{ const t=window.prompt('Edit this passage — your text replaces the whole shown span:', f.span_text||''); if(t!==null){ choose('edit',{replacement_b64:b64utf8(t)}); } };
+    ed.onclick=()=>{ const t=window.prompt('Edit this passage — your text replaces the whole shown span (to delete it, use Apply strip):', f.span_text||''); if(t!==null && t!==''){ choose('edit',{replacement_b64:b64utf8(t)}); } };
     act.appendChild(ed);
   }
   // agreeing with a keep recommendation is not a voice-override; only tag keep_voice when overriding a strip.
@@ -213,7 +211,7 @@ _MAX_BODY = 1 << 20  # 1 MiB cap on the /finish POST body (a decisions.json is t
 
 class _ReviewHandler(http.server.BaseHTTPRequestHandler):
     """Serves EXACTLY one page (GET /) and one decision POST (POST /finish), both gated by the
-    server's single-use token. No filesystem access — there is no path-traversal surface. Every
+    server's per-run token. No filesystem access — there is no path-traversal surface. Every
     other path/method, or a bad/missing token, is 403/404."""
 
     timeout = 30  # bound a slow/stalled socket read so one client can't hang the single-threaded server
@@ -305,6 +303,8 @@ class _ReviewServer(http.server.HTTPServer):
             return False, problems
         with open(self.out_path, "w", encoding="utf-8") as fh:
             json.dump(data, fh, indent=2)
+        if self._timer is not None:
+            self._timer.cancel()  # decisions saved; cancel the pending auto-shutdown timer (no leak)
         return True, []
 
     def touch(self):
@@ -335,11 +335,9 @@ def serve_review(payload: dict, out_path: str, *, idle_timeout: float = 900.0) -
 
 # --------------------------------------------------------------------------- CLI
 def _build(target: str, fmt: str, genre):
-    """Audit → findings → review payload for `target`. Imports the sibling packages lazily so the
-    module stays importable (and unit-testable) without the whole engine on the path."""
-    import os
-    import sys
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    """Audit → findings → review payload for `target`. Imports the sibling engine packages lazily so
+    the module stays importable (and unit-testable) without the whole engine on the path; the module
+    load already put `scripts/` on sys.path."""
     from slopslap_assemble.assemble import audit_document
     from slopslap_review.findings import build_findings
     stage = audit_document(target, fmt=fmt, declared_genre=genre)
@@ -383,7 +381,7 @@ def main(argv=None) -> int:
     srv = serve_review(payload, args.out, idle_timeout=args.idle_timeout)
     # flush=True: the URL must appear immediately — serve_forever() blocks, so a buffered stdout
     # would never reach the user who needs to open the link.
-    print(f"review → {srv.url}\n(loopback only, single-use token; {len(payload['findings'])} findings; "
+    print(f"review → {srv.url}\n(loopback only, per-run token; {len(payload['findings'])} findings; "
           f"decisions → {args.out}; idle-timeout {args.idle_timeout:g}s)", flush=True)
     try:
         srv.serve_forever()
@@ -393,9 +391,8 @@ def main(argv=None) -> int:
 
 
 __all__ = ["build_review_payload", "decisions_from_actions", "render_review_page", "serve_review",
-           "main", "REVIEW_SCHEMA_VERSION", "RECOMMENDATIONS", "USER_ACTIONS", "validate_decisions"]
+           "main", "REVIEW_SCHEMA_VERSION"]
 
 
 if __name__ == "__main__":
-    import sys
     raise SystemExit(main(sys.argv[1:]))

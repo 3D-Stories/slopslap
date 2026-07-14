@@ -185,6 +185,28 @@ def test_page_shows_span_text_so_edits_are_not_blind(tmp_path):
     payload, _, _ = _payload(tmp_path)
     page = render_review_page(payload, post_url="http://127.0.0.1:9/finish?token=x")
     assert "this passage" in page and "span_text" in page  # span source shown + carried for Edit pre-fill
+    # Bug1 fix: an emptied Edit prompt cancels (does not emit an invalid empty-replacement edit)
+    assert "t!==''" in page or "t !== ''" in page
+    # Bug2 fix: blocked findings hide only apply/edit — the false-positive feedback button stays visible
+    assert ".blocked .apply" in page and ".blocked .act{display:none}" not in page
+
+
+def test_cli_main_static_writes_page_and_findings(tmp_path):
+    from slopslap_review.review import main
+    doc = tmp_path / "in.md"
+    doc.write_text(_DOC, encoding="utf-8")
+    page = tmp_path / "review.html"
+    fj = tmp_path / "findings.json"
+    rc = main([str(doc), "--genre", "general", "--static", str(page), "--findings-out", str(fj)])
+    assert rc == 0
+    assert page.exists() and "slopslap review" in page.read_text()
+    assert json.loads(fj.read_text())["source_sha256"]
+
+
+def test_cli_main_missing_target_returns_1(tmp_path):
+    from slopslap_review.review import main
+    rc = main([str(tmp_path / "nope.md"), "--static", str(tmp_path / "o.html")])
+    assert rc == 1
 
 
 def test_server_rejects_finish_with_wrong_sha(tmp_path):

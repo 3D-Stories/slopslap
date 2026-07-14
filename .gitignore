@@ -4,3 +4,8 @@ __pycache__/
 .slopslap/
 .venv/
 *.egg-info/
+
+# slopslap review-stage CLI artifacts (written to CWD; never committed)
+findings.json
+decisions.json
+review.html

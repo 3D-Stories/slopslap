@@ -174,7 +174,7 @@ no edit. *When in doubt, it changes nothing.*
 ## Status
 
 - **Version:** 0.6.0 — de-slop pivot P3. Adds the interactive review stage: `slopslap review <target>`
-  serves a loopback, single-use-token review page (stdlib `http.server`, idle-timeout, shutdown after
+  serves a loopback, per-run-token review page (stdlib `http.server`, idle-timeout, shutdown after
   Finish) for per-finding **apply / edit / keep**, writing a `decisions.json` bound to the audit
   `source_sha256`; `--static` writes the same page for a no-server browser (Export → `apply --decisions`).
   Builds on P2 (v0.5.0 generic-diction detector), P1 (v0.4.0 detection + findings), and keystone v2.
@@ -188,7 +188,7 @@ no edit. *When in doubt, it changes nothing.*
 
 - **0.6.0** — de-slop pivot P3: the interactive review stage. New `slopslap review <target>` command +
   `scripts/slopslap_review/review.py`: the engine writes `findings.json`, then serves a self-contained
-  review page on `127.0.0.1:<random port>` (stdlib `http.server`, single-use URL token via
+  review page on `127.0.0.1:<random port>` (stdlib `http.server`, per-run URL token via
   `secrets.compare_digest`, loopback-only bind, idle-timeout, shutdown after Finish; no filesystem
   serving → no path-traversal surface; no new dependencies). Per finding: a labeled one-click button
   per outcome (**apply strip / edit / keep original**, the recommended one rec-badged), with blocked
