@@ -8,8 +8,11 @@ voice.
 **slopslap is NOT an AI-authorship detector.** It beats humanizer-style tools precisely by *not*
 treating a stylistic feature as a contaminant. Its whole discipline is the keystone rule:
 
-> **Edit authorization comes only from demonstrated editorial harm; the scanner, genre, ratings,
-> and voiceprint never authorize an edit.**
+> **Every tell is detected and prepared for removal; genre and learned feedback set each finding's
+> recommendation; the user's review decision — not the scanner, not the genre, not the learning —
+> authorizes the edit; and the byte-exact verifier guarantees no applied edit changes a number,
+> requirement, negation, condition, defined term, or protected span. Recommendations may learn;
+> authorization never does.**
 
 The name says "slap" — ignore that impulse. An em-dash, a fragment, a tricolon, a passive verb:
 none is harm on its own. Harm is prose that does less than it claims, hides who is responsible,
@@ -170,9 +173,11 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.3.0 — de-slop pivot underway. v0.2 epic (#16) **complete**: live model-in-the-loop
-  audit → verify → suggest → apply for any UTF-8 text document. v0.3.0 begins the pivot (P0): frozen
-  review-loop data contracts (`decisions.json` / feedback-ledger) + slop→clean golden pair fixtures.
+- **Version:** 0.4.0 — de-slop pivot P1. Universal detection (genre no longer zeroes a metric's
+  `locations` — suppression is now a per-finding recommendation via `recommend(genre, metric)`), a
+  findings-with-recommendations envelope with verifier-prechecked strip rewrites, and the keystone v2
+  rewrite (the user's review decision authorizes; recommendations may learn, authorization never does).
+  Builds on v0.3.0 (P0): frozen review-loop data contracts + slop→clean golden pair fixtures.
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
@@ -181,6 +186,18 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.4.0** — de-slop pivot P1: universal detection + findings-with-recommendations + keystone v2.
+  `GENRE_SUPPRESS` polarity flips — genre never empties a metric's `locations`; suppression survives
+  only as a per-finding `recommendation` (a new per-(genre, metric-class) `recommend()` table whose
+  keep-sets are seeded from the prior suppress profiles). `authorized_ranges_from_diagnoses` now gates
+  editable ranges on `recommendation == "strip"`, so a genre-KEPT passage can never leak into the
+  verifier's authorized edit set — genre still never authorizes. New `scripts/slopslap_review/findings.py`
+  builds a strip-ready `Finding` per tell `{id, category, span, evidence, genre, recommendation,
+  rationale, confidence, proposed_rewrite, verifier_precheck}`; each `proposed_rewrite` is pre-cleared
+  through verifier Layers 1+2 (`decision == "ACCEPT"` ⇒ "safe", else "blocked") so a review UI can show
+  safe-vs-blocked per finding. **Keystone v2** (pinned verbatim across SKILL.md, the four command files,
+  and `tests/test_scaffold.py`): the user's review decision — not the scanner, genre, or learning —
+  authorizes the edit; recommendations may learn, authorization never does.
 - **0.3.0** — de-slop pivot P0: frozen review-loop data contracts. Adds
   `scripts/slopslap_review/schema.py` with two stdlib validators (no new dependency) that ARE the
   contract for the pivot's REVIEW → LEARN stages: `validate_decisions` for `decisions.json` (the

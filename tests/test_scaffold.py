@@ -15,8 +15,11 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # the one canonical keystone sentence that must appear verbatim in SKILL.md AND every command
 KEYSTONE = (
-    "Edit authorization comes only from demonstrated editorial harm; the scanner, genre, "
-    "ratings, and voiceprint never authorize an edit."
+    "Every tell is detected and prepared for removal; genre and learned feedback set each "
+    "finding's recommendation; the user's review decision — not the scanner, not the genre, "
+    "not the learning — authorizes the edit; and the byte-exact verifier guarantees no applied "
+    "edit changes a number, requirement, negation, condition, defined term, or protected span. "
+    "Recommendations may learn; authorization never does."
 )
 
 # every item of the irreducible core must be anchored in SKILL.md (not merely somewhere in the pkg)
@@ -66,7 +69,7 @@ def _category_row(skill, cat):
 def test_plugin_manifest_valid_and_versioned():
     manifest = json.loads(_read(".claude-plugin", "plugin.json"))
     assert manifest["name"] == "slopslap"
-    assert manifest["version"] == "0.3.0"
+    assert manifest["version"] == "0.4.0"
     assert manifest["description"]
     assert manifest["author"]["name"]
 
