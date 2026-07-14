@@ -55,6 +55,8 @@ _EXIT_CLASS = {
     "apply_blocked": 2,
     # invalid input / contract (3)
     "invalid_edits": 3,
+    "invalid_decisions": 3,       # #62: untrusted decisions.json rejected (schema/id/sha) — pre-mutation
+    "conflicting_decisions": 3,   # #62: two approved decisions target one span with different edits
     "path_mismatch": 3,
     "digest_mismatch": 3,
     "genre_error": 3,
@@ -595,7 +597,7 @@ def apply_from_decisions(path: str, decisions_path: str, *, fmt: str = "markdown
     an all-discard/undecided set is a clean no-op (the user's decision, not a missing model output)."""
     import base64  # noqa: PLC0415
     import dataclasses  # noqa: PLC0415
-    from slopslap_review.findings import build_findings  # noqa: PLC0415 (review-layer; lazy avoids a load cycle)
+    from slopslap_review.findings import FindingsError, build_findings  # noqa: PLC0415 (review-layer; lazy avoids a load cycle)
     from slopslap_review.schema import validate_decisions_for_apply  # noqa: PLC0415
 
     stage = audit_document(path, fmt=fmt, declared_genre=declared_genre)
@@ -604,14 +606,22 @@ def apply_from_decisions(path: str, decisions_path: str, *, fmt: str = "markdown
         return _build_run(rid, [stage] + _aborted(["candidate", "verify", "apply"], "audit"))
     audit = stage.data
     audit_stage = StageResult("audit", "ok", "ok", "audit complete", data=audit)
-    with open(audit.source_path, "rb") as fh:
-        doc = fh.read()
-    by_id = {f.id: f for f in build_findings(audit, doc)}
 
     def _cand_fail(code, msg, errors=None):
         return _build_run(audit.run_id, [audit_stage, StageResult(
             "candidate", "failed", code, msg, data=None,
             errors=errors or [{"code": code, "message": msg}])] + _aborted(["verify", "apply"], "candidate"))
+
+    # re-read the source + rebuild findings; a file change since the audit read → clean digest_mismatch
+    # (FindingsError) rather than an uncaught crash (the run_candidate digest recheck also guards it).
+    try:
+        with open(audit.source_path, "rb") as fh:
+            doc = fh.read()
+        by_id = {f.id: f for f in build_findings(audit, doc)}
+    except OSError as err:
+        return _cand_fail("digest_mismatch", f"cannot re-read audited source: {err}")
+    except FindingsError as err:
+        return _cand_fail("digest_mismatch", f"source changed since audit: {err}")
 
     try:
         with open(decisions_path, "r", encoding="utf-8") as fh:
