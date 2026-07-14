@@ -1,6 +1,6 @@
 """#25 — scanner threshold calibration harness.
 
-The scanner ships 11 metrics whose soft-flag thresholds are un-calibrated guesses
+The scanner ships 12 metrics whose soft-flag thresholds are un-calibrated guesses
 (`purpose="candidate_selection_only"`). This harness fits a per-metric threshold on the corpus
 CALIBRATION partition ONLY, then reports precision / recall / abstention per stratum (tell / genre /
 length) on the HELD-OUT partition — and NEVER tunes against held-out (the disjoint #30 split is what

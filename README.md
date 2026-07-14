@@ -192,7 +192,8 @@ no edit. *When in doubt, it changes nothing.*
   Classified into the `filler` metric-class, so it feeds the P1 genre recommendation layer (strip under
   general/prd/technical; the user's review decision still authorizes, the verifier still hard-gates) and
   is registered in the `calibrate.py` tell map (`genericness`) for threshold fitting once P5 review-decision
-  labels arrive. Existing `pair-corporate-adjective-pile` / `pair-generic-diction` golden fixtures exercise it.
+  labels arrive. The `pair-corporate-adjective-pile` / `pair-generic-diction` golden fixtures carry
+  labeled `generic_diction` slop; the detector's behavior is exercised by `tests/test_scanner_metrics.py`.
 - **0.4.0** — de-slop pivot P1: universal detection + findings-with-recommendations + keystone v2.
   `GENRE_SUPPRESS` polarity flips — genre never empties a metric's `locations`; suppression survives
   only as a per-finding `recommendation` (a new per-(genre, metric-class) `recommend()` table whose
