@@ -173,10 +173,11 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.5.0 — de-slop pivot P2. Adds the generic-diction / filler detector (`generic_diction`):
-  corporate-slop buzzwords (robust · scalable · best-in-class · leverage · empower · …) and empty
-  intensifiers (incredibly · extremely · truly · …), measure-only and feeding the P1 recommendation
-  layer (filler class). Builds on P1 (v0.4.0): universal detection, the findings envelope, and keystone v2.
+- **Version:** 0.6.0 — de-slop pivot P3. Adds the interactive review stage: `slopslap review <target>`
+  serves a loopback, single-use-token review page (stdlib `http.server`, idle-timeout, shutdown after
+  Finish) for per-finding **apply / edit / keep**, writing a `decisions.json` bound to the audit
+  `source_sha256`; `--static` writes the same page for a no-server browser (Export → `apply --decisions`).
+  Builds on P2 (v0.5.0 generic-diction detector), P1 (v0.4.0 detection + findings), and keystone v2.
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
@@ -185,6 +186,19 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.6.0** — de-slop pivot P3: the interactive review stage. New `slopslap review <target>` command +
+  `scripts/slopslap_review/review.py`: the engine writes `findings.json`, then serves a self-contained
+  review page on `127.0.0.1:<random port>` (stdlib `http.server`, single-use URL token via
+  `secrets.compare_digest`, loopback-only bind, idle-timeout, shutdown after Finish; no filesystem
+  serving → no path-traversal surface; no new dependencies). Per finding: a labeled one-click button
+  per outcome (**apply strip / edit / keep original**, the recommended one rec-badged), with blocked
+  prechecks shown read-only + selectable as false-positive feedback. The page is XSS-safe by
+  construction — the findings payload is an inert `<script type="application/json">` blob rendered with
+  `textContent` only (no HTML-string concatenation). **Finish** POSTs the decision set → the engine
+  writes `decisions.json` (frozen #58 schema, bound to `source_sha256`, schema-validated) and exits;
+  **`--static`** / **Export** produces the same file for a no-server browser (feed to
+  `apply --decisions`, #62/P4). The review stage authorizes nothing itself — it only records the
+  user's per-finding decision; the byte-exact verifier still hard-gates every applied edit.
 - **0.5.0** — de-slop pivot P2: the generic-diction / filler detector (the "finds more" payload).
   New `generic_diction` scanner metric (`scripts/slopslap_scan/metrics.py` + pinned `CORPORATE_BUZZWORDS`
   / `EMPTY_INTENSIFIERS` tables): flags corporate-slop buzzwords and empty intensifiers as escaped
