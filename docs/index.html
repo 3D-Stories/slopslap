@@ -340,12 +340,12 @@
   <div class="wrap">
     <p class="eyebrow"><span class="n">06</span> The engine</p>
     <h2>A deterministic core the model is checked against.</h2>
-    <p class="lead">Seven Python packages carry the mechanics so judgment stays honest: the scanner measures but never verdicts, the verifier owns the hard accept/reject, and a live-orchestration seam wires it all end-to-end for arbitrary documents.</p>
+    <p class="lead">Seven Python packages carry the mechanics so judgment stays honest: the scanner measures but never verdicts, the verifier owns the hard accept/reject, and a live-orchestration seam wires it all end-to-end for any UTF-8 text document.</p>
     <div class="arch">
       <div class="pkg"><code>slopslap_scan</code><p>Measure-only scanner — 11 prose metrics, genre classifier, protected-span extractor, diagnosis locality. Measures; never authorizes an edit.</p></div>
       <div class="pkg"><code>slopslap_verification</code><p>The invariant ledger + 3-layer byte-exact verifier + auto-built invariant regions. Owns the hard accept / reject.</p></div>
       <div class="pkg"><code>slopslap_apply</code><p>Backup-first, staged, verified, atomic pathname replacement with per-hunk selective rollback. Fails closed.</p></div>
-      <div class="pkg"><code>slopslap_assemble</code><p>The live-orchestration seam — assembles audit → verify → suggest → apply for any document, with a uniform stage envelope.</p></div>
+      <div class="pkg"><code>slopslap_assemble</code><p>The live-orchestration seam — assembles audit → verify → suggest → apply for any UTF-8 text document, with a uniform stage envelope.</p></div>
       <div class="pkg"><code>slopslap_invoke</code><p>Fresh-context <code>claude -p</code> semantic seam — fail-closed to "ambiguous" on any transport, timeout, or parse failure.</p></div>
       <div class="pkg"><code>slopslap_corpus</code><p>Provenance manifest + leak-proof calibration / held-out split + the threshold-calibration harness (measure-only until validated).</p></div>
     </div>
@@ -356,7 +356,7 @@
   <div class="wrap">
     <p class="eyebrow"><span class="n">07</span> v0.2 — what's live</p>
     <h2>The model-in-the-loop path, shipped.</h2>
-    <p class="lead">v0.1 shipped the deterministic mechanics and a frozen demonstration. v0.2 wires the live audit → verify → suggest → apply path for arbitrary documents — every stage gated, every claim checked.</p>
+    <p class="lead">v0.1 shipped the deterministic mechanics and a frozen demonstration. v0.2 wires the live audit → verify → suggest → apply path for any UTF-8 text document — every stage gated, every claim checked.</p>
     <div class="live">
       <div class="liverow"><span class="ck">✓</span><div><b>Deterministic verifier wired into suggest</b><p>The invariant-check is the real byte-exact verifier now, not a model's report.</p></div></div>
       <div class="liverow"><span class="ck">✓</span><div><b>Apply enabled &amp; hardened</b><p>Backup-first atomic replacement; hardlink / symlink / EXDEV / xattr fail-closed.</p></div></div>

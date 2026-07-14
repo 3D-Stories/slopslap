@@ -68,7 +68,7 @@ instructions**.
 ### Live-orchestration seam (v0.2)
 
 - **`slopslap_assemble/`** — the **assembler**: the one seam that chains
-  **audit → verify → (suggest) → apply** end-to-end for an *arbitrary* document, not just the
+  **audit → verify → (suggest) → apply** end-to-end for any *UTF-8 text* document, not just the
   frozen eval fixtures. `audit_document(path)` derives a byte-exact manifest + invariant ledger
   from any UTF-8 doc (genre classified once and threaded through), packaging a snapshot-immutable
   `AuditResult`; `run_candidate` / `assemble` validate a candidate edit-script, run the 3-layer
@@ -170,8 +170,8 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.2.1 — v0.2 epic (#16) **complete**: live model-in-the-loop audit → verify → suggest
-  → apply for arbitrary documents.
+- **Version:** 0.2.2 — v0.2 epic (#16) **complete**: live model-in-the-loop audit → verify → suggest
+  → apply for any UTF-8 text document.
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
@@ -180,6 +180,12 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.2.2** — doc-honesty fix. The seam ingests **UTF-8 text only** (`--format markdown|text`; a
+  non-UTF-8/binary input exits `3` `genre_error`), so the "arbitrary / any documents" copy was an
+  overclaim — corrected to "any UTF-8 text document" across the overview page, README, and the plugin
+  manifest. Surfaced by pointing the tool at a `.pptx` and at its own HTML page, both of which had to
+  be text-extracted before the seam would run. Format adapters (pptx/html/pdf → text) are tracked
+  separately as a feature.
 - **0.2.1** — real-world QA calibration fixtures. Captures three eval cases from a live audit/suggest
   run on an aviation-SMS deck, labeled by the document owner: two must-abstain controls (first-pass
   false positives — a numeric "contradiction" whose figures have different referents; an honest
@@ -200,7 +206,7 @@ no edit. *When in doubt, it changes nothing.*
   licensed text. The plugin manifest description is rewritten off the stale "invariant checks are
   model-reported ... until ... land" hedge — the scanner, byte-exact 3-layer verifier, and apply are
   all wired as of v0.2. **v0.2 epic #16 complete:** live model-in-the-loop audit → verify → suggest →
-  apply for arbitrary documents.
+  apply for any UTF-8 text document.
 - **0.1.13** — live audit/suggest end-to-end validation golden (#28). A `tests/test_e2e_validation_golden.py`
   drives the real command surface (`assemble.py audit` + `run`) on a fixture and asserts the full
   **safety** contract, not just output shape: a safe in-range invariant-preserving repair is ACCEPTed,
