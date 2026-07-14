@@ -41,20 +41,27 @@ class FindingsError(ValueError):
 
 @dataclass(frozen=True)
 class Finding:
-    """One strip-ready finding. ``id`` is content-keyed and stable across re-scans of the same
-    bytes: ``f"{metric}:{start_byte}:{ordinal}"`` — the ordinal disambiguates two same-metric tells
-    that share a line→byte start, so two findings never collide on the #58 decisions-layer id guard."""
+    """One strip-ready finding. ``id`` = ``f"{metric}:{start_byte}:{end_byte}"`` — content-keyed on
+    the (metric, span) that is unique after dedup, stable across re-scans of the same bytes, colon-safe
+    (metric names are snake_case), so it never collides on the #58 decisions-layer id guard.
+
+    A strip finding's ``proposed_rewrite`` is a delete (empty ``replacement_b64``); a P3 consumer
+    expresses accepting it as a decisions ``user_action:"apply"`` (NOT ``"edit"``, whose schema
+    requires a non-empty base64 replacement)."""
 
     id: str
     category: str                     # the metric name (the tell's category)
     span: dict                        # {"start": int, "end": int}, half-open byte offsets
-    evidence: str                     # short snippet of the tell (may be "")
+    evidence: str                     # distinct snippet(s) of the tell, "; "-joined (may be "")
     genre: str
     recommendation: str               # "strip" | "keep"
     rationale: str
     confidence: str                   # the metric's confidence tier
     proposed_rewrite: Optional[dict]  # {"start","end","replacement_b64"} for strip; None for keep
-    verifier_precheck: dict           # {"status": "safe"|"blocked"|"n/a", "decision", "reason"}
+    # {"status": "deterministic_pass"|"blocked"|"n/a", "decision", "proposal_status",
+    #  "semantic_status", "reason"} — status is NON-authorizing (see _precheck): deterministic_pass
+    #  means Layers 1+2 clear, NOT shippable (semantic layer not run).
+    verifier_precheck: dict
 
 
 def _line_starts(raw: bytes) -> List[int]:
@@ -94,8 +101,8 @@ def _span_for(loc: dict, units, starts, last):
     ``authorized_ranges_from_diagnoses`` authorizes (diagnoses.py overlap logic, per-location here).
     Returns ``(start_byte, end_byte)`` or ``None`` for a doc-level (line-less) location."""
     ls = loc.get("line_start")
-    if ls is None:
-        return None
+    if not isinstance(ls, int) or ls < 1:
+        return None  # doc-level (no line) or a malformed/hostile <1 line number: no localizable span
     le = loc.get("line_end", ls)
     overlapping = [u for u in units if not (u.line_end < ls or u.line_start > le)]
     if not overlapping:
@@ -109,26 +116,37 @@ def _span_for(loc: dict, units, starts, last):
 def _precheck(recommendation: str, doc: bytes, start: int, end: int, ledger):
     """Return (proposed_rewrite, verifier_precheck) for one finding.
 
-    For ``keep`` there is no proposed rewrite. For ``strip`` the CANDIDATE is a delete of the span;
-    it is run through ``verify()`` Layers 1+2 (``semantic_fn=None, allow_two_layer=True``) restricted
-    to this span's authorized range. Read ``decision`` (NOT ``proposal_status``, which stays BLOCKED
-    whenever the semantic layer did not run): ``ACCEPT`` -> "safe"; anything else -> "blocked" with
-    the verifier's own reason. A blocked strip-precheck (a delete that would drop a protected span or
-    an invariant) is a NORMAL, expected outcome the review UI surfaces per finding."""
+    For ``keep`` there is no proposed rewrite. For ``strip`` the CANDIDATE is a delete of the span,
+    run through ``verify()`` Layers 1+2 (``semantic_fn=None, allow_two_layer=True``) restricted to
+    this span. We read ``decision`` (NOT ``proposal_status``, which stays BLOCKED whenever the
+    semantic layer did not run).
+
+    ``status`` is a DELIBERATELY NON-AUTHORIZING label so a downstream review UI can never read it as
+    "verified shippable": ``deterministic_pass`` means only "Layers 1+2 (the deterministic gates:
+    numbers/modals/negations/conditions/defined-terms/protected-spans/structure) find no violation" —
+    the adversarial SEMANTIC layer (causal claims, attribution, unsupported intent) is NOT run here,
+    so a ``deterministic_pass`` delete is still NOT shippable. ``proposal_status`` (always BLOCKED for
+    this L1+2-only check) and ``semantic_status`` ("not_run") are carried alongside so the seam is
+    unambiguous. ``blocked`` = a delete that would drop a detected invariant/protected span (a NORMAL,
+    expected outcome surfaced per finding)."""
     if recommendation != "strip":
-        return None, {"status": "n/a", "decision": None,
-                      "reason": "keep recommendation: no rewrite proposed"}
+        return None, {"status": "n/a", "decision": None, "proposal_status": None,
+                      "semantic_status": None, "reason": "keep recommendation: no rewrite proposed"}
     result = verify(doc, [Edit(start, end, b"")], ledger,
                     authorized_ranges=[{"start_byte": start, "end_byte": end}],
                     semantic_fn=None, allow_two_layer=True)
     decision = result["decision"]
     if decision == "ACCEPT":
-        precheck = {"status": "safe", "decision": decision,
-                    "reason": "verifier Layers 1+2 accept the candidate delete"}
+        status = "deterministic_pass"
+        reason = ("verifier Layers 1+2 (deterministic) find no violation; semantic layer NOT run "
+                  "here — this is NOT a shippable verdict")
     else:
-        reasons = "; ".join(f"{f.get('code')}: {f.get('message')}" for f in result.get("findings", []))
-        precheck = {"status": "blocked", "decision": decision,
-                    "reason": reasons or f"verifier decision {decision}"}
+        status = "blocked"
+        reason = "; ".join(f"{f.get('code')}: {f.get('message')}" for f in result.get("findings", [])) \
+            or f"verifier decision {decision}"
+    precheck = {"status": status, "decision": decision,
+                "proposal_status": result.get("proposal_status"),
+                "semantic_status": result.get("semantic_status"), "reason": reason}
     proposed = {"start": start, "end": end, "replacement_b64": _DELETE_B64}
     return proposed, precheck
 
@@ -144,31 +162,47 @@ def build_findings(audit, doc: bytes) -> List[Finding]:
     starts = _line_starts(doc)
     last = len(starts) - 1
     units = _extract_units(doc, audit.fmt)
-    findings: List[Finding] = []
-    ordinals: dict = {}  # (metric, start_byte) -> next ordinal, for id uniqueness
 
+    # Collapse locations that resolve to the SAME (metric, span) into ONE finding: many tells in a
+    # paragraph resolve to the same containing-Unit span, and N byte-identical delete candidates would
+    # be N duplicate findings + N redundant verify() calls (and could not be jointly applied — they
+    # overlap). One finding per unique (metric, span) carries the distinct evidence snippets. (One
+    # verify() per unique span remains; memoizing the per-doc ledger/parse across prechecks is a
+    # deeper ledger.py optimization left as a follow-up.)
+    groups: dict = {}   # (metric, start, end) -> {"rec","cls","conf","evidence":[...]}
+    order: list = []    # first-seen order -> stable output
     for metric_name, res in audit.metrics.items():
         recommendation = met.recommend(audit.genre, metric_name)
         cls = met.METRIC_CLASS.get(metric_name, "unclassified")
+        confidence = res.get("confidence", "unknown")
         for loc in res.get("locations") or []:
             span = _span_for(loc, units, starts, last)
             if span is None:
                 continue  # a doc-level metric with no localizable passage contributes no finding
-            start, end = span
-            key = (metric_name, start)
-            ordinal = ordinals.get(key, 0)
-            ordinals[key] = ordinal + 1
-            proposed, precheck = _precheck(recommendation, doc, start, end, audit.ledger)
-            findings.append(Finding(
-                id=f"{metric_name}:{start}:{ordinal}",
-                category=metric_name,
-                span={"start": start, "end": end},
-                evidence=_evidence(loc),
-                genre=audit.genre,
-                recommendation=recommendation,
-                rationale=f"{metric_name} ({cls} class) under genre '{audit.genre}' → {recommendation}",
-                confidence=res.get("confidence", "unknown"),
-                proposed_rewrite=proposed,
-                verifier_precheck=precheck,
-            ))
+            key = (metric_name, span[0], span[1])
+            grp = groups.get(key)
+            if grp is None:
+                grp = {"rec": recommendation, "cls": cls, "conf": confidence, "evidence": []}
+                groups[key] = grp
+                order.append(key)
+            ev = _evidence(loc)
+            if ev and ev not in grp["evidence"]:
+                grp["evidence"].append(ev)
+
+    findings: List[Finding] = []
+    for metric_name, start, end in order:
+        grp = groups[(metric_name, start, end)]
+        proposed, precheck = _precheck(grp["rec"], doc, start, end, audit.ledger)
+        findings.append(Finding(
+            id=f"{metric_name}:{start}:{end}",
+            category=metric_name,
+            span={"start": start, "end": end},
+            evidence="; ".join(grp["evidence"]),
+            genre=audit.genre,
+            recommendation=grp["rec"],
+            rationale=f"{metric_name} ({grp['cls']} class) under genre '{audit.genre}' → {grp['rec']}",
+            confidence=grp["conf"],
+            proposed_rewrite=proposed,
+            verifier_precheck=precheck,
+        ))
     return findings
