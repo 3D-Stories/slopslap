@@ -122,7 +122,8 @@ def apply_selective(
     `hunks`). A candidate PASSES iff its verify decision == "ACCEPT" (design R3).
     """
     source = os.path.realpath(source_path)
-    report: dict = {"status": None, "mutated": False, "source": source, "warnings": [], "errors": []}
+    report: dict = {"status": None, "mutated": False, "source": source, "backup": None,
+                    "warnings": [], "errors": []}
     try:
         with open(source, "rb") as fh:
             original = fh.read()
@@ -165,16 +166,20 @@ def apply_selective(
     all_edits = sorted(_edits(edits_input), key=lambda e: (e.start_byte, e.end_byte))
     report["original_digest"] = _sha256(original)
 
-    # --- mandatory backup FIRST ---
-    try:
-        backup = create_verified_backup(source, original, config)
-    except BackupError as err:
-        report.update(status="blocked", errors=[f"backup failed, refusing to mutate: {err}"])
-        return report
-    report["backup"] = {"path": backup.path, "metadata": backup.metadata_path,
-                        "restore_command": backup.restore_command, "restore_argv": backup.restore_argv,
-                        "containment": backup.containment}
-    report["warnings"] += backup.warnings
+    # --- mandatory backup FIRST (only when actually mutating) ---
+    # #47: a dry run (write=False) never mutates, so it must not write a backup file. The backup
+    # exists solely to make the mutation reversible; creating one on every preview left orphaned
+    # .bak files behind. The verify sequence below still runs on a dry run (that IS the preview).
+    if write:
+        try:
+            backup = create_verified_backup(source, original, config)
+        except BackupError as err:
+            report.update(status="blocked", errors=[f"backup failed, refusing to mutate: {err}"])
+            return report
+        report["backup"] = {"path": backup.path, "metadata": backup.metadata_path,
+                            "restore_command": backup.restore_command, "restore_argv": backup.restore_argv,
+                            "containment": backup.containment}
+        report["warnings"] += backup.warnings
 
     # --- initial verify (validated + exception-guarded; H4) ---
     try:
