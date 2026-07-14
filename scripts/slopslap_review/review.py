@@ -52,6 +52,10 @@ def build_review_payload(audit, doc: bytes, findings) -> dict:
         "findings": [
             {
                 "id": f.id, "category": f.category, "span": f.span, "evidence": f.evidence,
+                # the SOURCE TEXT of the span (the whole containing unit an edit/strip acts on) so the
+                # review UI can SHOW it and pre-fill the Edit box — an edit is a hand-tune of visible
+                # text, never a blind overwrite of a span the user can't see.
+                "span_text": doc[f.span["start"]:f.span["end"]].decode("utf-8", "replace"),
                 "recommendation": f.recommendation, "rationale": f.rationale,
                 "confidence": f.confidence, "proposed_rewrite": f.proposed_rewrite,
                 "verifier_precheck": f.verifier_precheck,
@@ -102,6 +106,7 @@ body{{font:15px/1.5 system-ui,sans-serif;max-width:52rem;margin:2rem auto;paddin
 .f[data-state="discard"]{{border-color:#2874a6}}
 .cat{{font-weight:600}} .rec{{font-size:.8em;border:1px solid;border-radius:6px;padding:0 .35em;margin-left:.4em}}
 .ev{{background:#8881;border-radius:4px;padding:.15em .35em;font-family:ui-monospace,monospace;font-size:.9em}}
+.src{{font-size:.9em;margin:.35em 0}} .srctext{{background:#8881;border-radius:4px;padding:.1em .3em;white-space:pre-wrap}}
 .blocked{{opacity:.7}} .blocked .act{{display:none}}
 .act button{{margin-right:.35em}} button{{cursor:pointer;border-radius:6px;border:1px solid #8886;padding:.2em .6em}}
 .recbtn{{border-color:currentColor;font-weight:600;box-shadow:0 0 0 1px currentColor}}
@@ -138,6 +143,8 @@ PAYLOAD.findings.forEach(f => {
   box.appendChild(h);
   if(f.evidence){ const ev=mk('div'); ev.appendChild(mk('span','ev', f.evidence)); box.appendChild(ev); }
   box.appendChild(mk('div', null, f.rationale));
+  // show the SPAN's source text (what an apply/edit acts on) so the user is never editing blind.
+  if(f.span_text){ const s=mk('div','src'); s.appendChild(mk('span',null,'this passage: ')); s.appendChild(mk('span','srctext', f.span_text)); box.appendChild(s); }
   if(blocked && f.verifier_precheck.reason){ box.appendChild(mk('div', null, 'Blocked: '+f.verifier_precheck.reason)); }
   const act = mk('div','act');
   function choose(action, extra){ actions[f.id]=Object.assign({action}, extra||{}); box.dataset.state=action; }
@@ -152,10 +159,12 @@ PAYLOAD.findings.forEach(f => {
   if(!blocked){
     act.appendChild(outcomeBtn('apply','Apply strip','apply'));
     const ed = mk('button','btn edit','Edit…');
-    ed.onclick=()=>{ const t=window.prompt('Replacement text for this span (blank cancels):',''); if(t!==null && t!==''){ choose('edit',{replacement_b64:b64utf8(t)}); } };
+    // pre-fill with the FULL span text (what gets replaced) so an edit is a hand-tune of visible text.
+    ed.onclick=()=>{ const t=window.prompt('Edit this passage — your text replaces the whole shown span:', f.span_text||''); if(t!==null){ choose('edit',{replacement_b64:b64utf8(t)}); } };
     act.appendChild(ed);
   }
-  act.appendChild(outcomeBtn('discard','Keep original','discard',{reason:'keep_voice'}));
+  // agreeing with a keep recommendation is not a voice-override; only tag keep_voice when overriding a strip.
+  act.appendChild(outcomeBtn('discard','Keep original','discard', f.recommendation==='keep' ? {} : {reason:'keep_voice'}));
   if(blocked){ const fb=mk('button','btn','Mark false positive'); fb.onclick=()=>choose('discard',{reason:'false_positive'}); act.appendChild(fb); }
   box.appendChild(act);
   root.appendChild(box);
@@ -199,16 +208,23 @@ def render_review_page(payload: dict, *, post_url: Optional[str] = None) -> str:
 
 
 # --------------------------------------------------------------------------- local review server
+_MAX_BODY = 1 << 20  # 1 MiB cap on the /finish POST body (a decisions.json is tiny; reject the rest)
+
+
 class _ReviewHandler(http.server.BaseHTTPRequestHandler):
     """Serves EXACTLY one page (GET /) and one decision POST (POST /finish), both gated by the
     server's single-use token. No filesystem access — there is no path-traversal surface. Every
     other path/method, or a bad/missing token, is 403/404."""
 
+    timeout = 30  # bound a slow/stalled socket read so one client can't hang the single-threaded server
+
     def _token_ok(self) -> bool:
         from urllib.parse import parse_qs, urlparse
         token = parse_qs(urlparse(self.path).query).get("token", [""])[0]
-        # constant-time compare against the server's per-run token
-        return bool(self.server.review_token) and secrets.compare_digest(token, self.server.review_token)
+        # constant-time compare on BYTES — secrets.compare_digest raises TypeError on a non-ASCII str,
+        # so an attacker-supplied non-ASCII token would otherwise escape the 403 path (encode both sides).
+        return bool(self.server.review_token) and secrets.compare_digest(
+            token.encode("utf-8"), self.server.review_token.encode("utf-8"))
 
     def _path(self) -> str:
         from urllib.parse import urlparse
@@ -234,7 +250,14 @@ class _ReviewHandler(http.server.BaseHTTPRequestHandler):
         if self._path() != "/finish" or not self._token_ok():
             self.send_error(403)
             return
-        length = int(self.headers.get("Content-Length", 0) or 0)
+        try:
+            length = int(self.headers.get("Content-Length", 0) or 0)
+        except (ValueError, TypeError):
+            self.send_error(400)  # a malformed Content-Length must not escape as an uncaught traceback
+            return
+        if length < 0 or length > _MAX_BODY:
+            self.send_error(413)  # negative (read-to-EOF) or oversized body — refuse, don't block/DoS
+            return
         try:
             data = json.loads(self.rfile.read(length) or b"{}")
         except (ValueError, TypeError):
@@ -285,7 +308,10 @@ class _ReviewServer(http.server.HTTPServer):
         return True, []
 
     def touch(self):
-        """(Re)arm the idle-timeout: no valid activity within the window → shut the server down."""
+        """(Re)arm the auto-shutdown deadline. Armed when serving starts (see serve_forever) and
+        re-armed on each page GET — a total safety cap so a served-but-abandoned server never lingers,
+        NOT a per-keystroke idle timer (the page is client-side after load). If it lapses mid-review the
+        Finish POST fails gracefully and the user falls back to Export. ``idle_timeout=0`` disables it."""
         if self._timer is not None:
             self._timer.cancel()
         if self._idle_timeout:
@@ -293,11 +319,17 @@ class _ReviewServer(http.server.HTTPServer):
             self._timer.daemon = True
             self._timer.start()
 
+    def serve_forever(self, poll_interval=0.5):
+        self.touch()  # arm the deadline WHEN serving starts, so an opened-but-never-loaded server still shuts down
+        super().serve_forever(poll_interval)
 
-def serve_review(payload: dict, out_path: str, *, idle_timeout: float = 300.0) -> _ReviewServer:
+
+def serve_review(payload: dict, out_path: str, *, idle_timeout: float = 900.0) -> _ReviewServer:
     """Build (do NOT start) a loopback review server for `payload`. The caller prints `server.url`,
-    opens it, then `server.serve_forever()`; a valid `POST /finish` writes `decisions.json` to
-    `out_path`, sets `finished`, and shuts the server down. Returns the server so a test can drive it."""
+    opens it, then `server.serve_forever()` (which arms the auto-shutdown deadline); a valid
+    `POST /finish` writes `decisions.json` to `out_path`, sets `finished`, and shuts the server down.
+    `idle_timeout` is a total safety cap (default 900s), not a per-keystroke idle timer; 0 disables it.
+    Returns the server so a test can drive it."""
     return _ReviewServer(payload, out_path, idle_timeout)
 
 
@@ -332,7 +364,8 @@ def main(argv=None) -> int:
                     help="write the static review page (no server) instead of serving")
     ap.add_argument("--findings-out", default="findings.json", help="where to write the findings payload")
     ap.add_argument("--out", default="decisions.json", help="where the server writes decisions.json on Finish")
-    ap.add_argument("--idle-timeout", type=float, default=300.0)
+    ap.add_argument("--idle-timeout", type=float, default=900.0,
+                    help="auto-shutdown deadline in seconds (total safety cap, not a per-keystroke idle timer; 0 disables)")
     args = ap.parse_args(argv)
     try:
         payload = _build(args.target, args.format, args.genre)

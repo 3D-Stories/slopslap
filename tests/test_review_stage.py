@@ -2,6 +2,7 @@
 
 import http.client
 import json
+import socket
 import threading
 
 import pytest
@@ -35,7 +36,9 @@ def test_payload_shape_and_binding(tmp_path):
     assert payload["source_sha256"] == audit.source_sha256
     assert payload["findings"], "a flagged doc yields findings"
     for f in payload["findings"]:
-        assert {"id", "category", "span", "recommendation", "verifier_precheck"} <= set(f)
+        assert {"id", "category", "span", "span_text", "recommendation", "verifier_precheck"} <= set(f)
+        # span_text is the actual source bytes of the span (so the review UI can show/pre-fill it)
+        assert isinstance(f["span_text"], str)
 
 
 def test_decisions_from_actions_is_schema_valid(tmp_path):
@@ -129,6 +132,59 @@ def test_server_serves_page_and_writes_decisions_on_finish(tmp_path):
     assert out.exists() and srv.finished
     written = json.loads(out.read_text())
     assert written["source_sha256"] == payload["source_sha256"]
+
+
+def _raw(host, port, request_bytes):
+    s = socket.create_connection((host, port), timeout=5)
+    try:
+        s.sendall(request_bytes)
+        return s.recv(4096)
+    finally:
+        s.close()
+
+
+def test_server_non_ascii_token_is_clean_403(tmp_path):
+    # a non-ASCII token must yield a clean 403, NOT an uncaught secrets.compare_digest TypeError
+    # (which would reset the connection with no HTTP response).
+    srv, _, _ = _serve(tmp_path)
+    try:
+        host, port = srv.server_address
+        resp = _raw(host, port, b"GET /?token=%E6%97%A5%E6%9C%AC HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n")
+        assert resp.split(b"\r\n")[0].split()[1] == b"403", resp[:80]
+    finally:
+        srv.shutdown()
+
+
+def test_server_malformed_content_length_is_400(tmp_path):
+    srv, _, _ = _serve(tmp_path)
+    try:
+        host, port = srv.server_address
+        req = (f"POST /finish?token={srv.review_token} HTTP/1.1\r\nHost: x\r\n"
+               "Content-Length: notanint\r\nConnection: close\r\n\r\n").encode()
+        resp = _raw(host, port, req)
+        assert resp.split(b"\r\n")[0].split()[1] == b"400", resp[:80]
+    finally:
+        srv.shutdown()
+
+
+def test_server_oversized_body_is_413(tmp_path):
+    # the server rejects on the Content-Length HEADER (>1 MiB) before reading the body — the DoS
+    # protection. Declare 2 MiB, send no body, and confirm a clean 413 (never a blocking read).
+    srv, _, _ = _serve(tmp_path)
+    try:
+        host, port = srv.server_address
+        req = (f"POST /finish?token={srv.review_token} HTTP/1.1\r\nHost: x\r\n"
+               f"Content-Length: {1 << 21}\r\nConnection: close\r\n\r\n").encode()
+        resp = _raw(host, port, req)
+        assert resp.split(b"\r\n")[0].split()[1] == b"413", resp[:80]
+    finally:
+        srv.shutdown()
+
+
+def test_page_shows_span_text_so_edits_are_not_blind(tmp_path):
+    payload, _, _ = _payload(tmp_path)
+    page = render_review_page(payload, post_url="http://127.0.0.1:9/finish?token=x")
+    assert "this passage" in page and "span_text" in page  # span source shown + carried for Edit pre-fill
 
 
 def test_server_rejects_finish_with_wrong_sha(tmp_path):
