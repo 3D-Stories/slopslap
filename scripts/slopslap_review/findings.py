@@ -1,0 +1,144 @@
+"""Findings-with-recommendations envelope (issue #59, de-slop pivot P1 / AC2).
+
+``build_findings(audit, doc)`` turns an ``AuditResult`` (+ its source bytes) into a list of
+strip-ready ``Finding``s — one per scanner metric location — each carrying:
+  - the genre-gated *advisory* ``recommendation`` (``metrics.recommend``; genre NEVER authorizes),
+  - a CANDIDATE ``proposed_rewrite`` (a delete of the span for ``strip``; ``None`` for ``keep``),
+  - a ``verifier_precheck`` that runs the candidate through ``verify()`` Layers 1+2 (semantic not
+    run) so a review UI can show "safe" vs "blocked" per finding.
+
+The doc bytes are an EXPLICIT parameter: an ``AuditResult`` carries no bytes (it is snapshot-immutable
+and byte-free) and scanner metric ``locations`` are LINE-based only, so byte spans and the verifier
+precheck can only be derived from the bytes here. ``doc`` is bound to the audit by sha256 (a
+drifted-file / replay guard). This module only PRODUCES findings — nothing here mutates a document,
+and the ``recommendation`` is advisory: the user's review decision authorizes, the byte-exact verifier
+hard-gates every applied edit (keystone v2).
+"""
+
+from __future__ import annotations
+
+import base64
+import hashlib
+from dataclasses import dataclass
+from typing import List, Optional
+
+from slopslap_scan import metrics as met
+from slopslap_verification.editscript import Edit
+from slopslap_verification.ledger import verify
+
+# base64 of an empty replacement — a delete. Precomputed (b64 of b"" is "").
+_DELETE_B64 = base64.b64encode(b"").decode("ascii")
+
+# short human-readable snippet keys a scanner location may carry (first present wins).
+_EVIDENCE_KEYS = ("match", "phrase", "opener", "cluster", "adjective")
+
+
+class FindingsError(ValueError):
+    """The supplied ``doc`` bytes do not match the ``AuditResult`` (drifted file / replay)."""
+
+
+@dataclass(frozen=True)
+class Finding:
+    """One strip-ready finding. ``id`` is content-keyed and stable across re-scans of the same
+    bytes: ``f"{metric}:{start_byte}:{ordinal}"`` — the ordinal disambiguates two same-metric tells
+    that share a line→byte start, so two findings never collide on the #58 decisions-layer id guard."""
+
+    id: str
+    category: str                     # the metric name (the tell's category)
+    span: dict                        # {"start": int, "end": int}, half-open byte offsets
+    evidence: str                     # short snippet of the tell (may be "")
+    genre: str
+    recommendation: str               # "strip" | "keep"
+    rationale: str
+    confidence: str                   # the metric's confidence tier
+    proposed_rewrite: Optional[dict]  # {"start","end","replacement_b64"} for strip; None for keep
+    verifier_precheck: dict           # {"status": "safe"|"blocked"|"n/a", "decision", "reason"}
+
+
+def _line_starts(raw: bytes) -> List[int]:
+    """Byte offset of the start of each source line, plus a sentinel == len(raw). Mirrors
+    ``slopslap_scan.diagnoses._line_starts`` (the established byte-offset-per-line convention);
+    kept local so this producer does not depend on another module's private symbol."""
+    starts = [0]
+    for i, b in enumerate(raw):
+        if b == 0x0A:  # '\n'
+            starts.append(i + 1)
+    starts.append(len(raw))
+    return starts
+
+
+def _evidence(loc: dict) -> str:
+    for k in _EVIDENCE_KEYS:
+        v = loc.get(k)
+        if v:
+            return str(v)
+    return ""
+
+
+def _precheck(recommendation: str, doc: bytes, start: int, end: int, ledger):
+    """Return (proposed_rewrite, verifier_precheck) for one finding.
+
+    For ``keep`` there is no proposed rewrite. For ``strip`` the CANDIDATE is a delete of the span;
+    it is run through ``verify()`` Layers 1+2 (``semantic_fn=None, allow_two_layer=True``) restricted
+    to this span's authorized range. Read ``decision`` (NOT ``proposal_status``, which stays BLOCKED
+    whenever the semantic layer did not run): ``ACCEPT`` -> "safe"; anything else -> "blocked" with
+    the verifier's own reason. A blocked strip-precheck (a delete that would drop a protected span or
+    an invariant) is a NORMAL, expected outcome the review UI surfaces per finding."""
+    if recommendation != "strip":
+        return None, {"status": "n/a", "decision": None,
+                      "reason": "keep recommendation: no rewrite proposed"}
+    result = verify(doc, [Edit(start, end, b"")], ledger,
+                    authorized_ranges=[{"start_byte": start, "end_byte": end}],
+                    semantic_fn=None, allow_two_layer=True)
+    decision = result["decision"]
+    if decision == "ACCEPT":
+        precheck = {"status": "safe", "decision": decision,
+                    "reason": "verifier Layers 1+2 accept the candidate delete"}
+    else:
+        reasons = "; ".join(f"{f.get('code')}: {f.get('message')}" for f in result.get("findings", []))
+        precheck = {"status": "blocked", "decision": decision,
+                    "reason": reasons or f"verifier decision {decision}"}
+    proposed = {"start": start, "end": end, "replacement_b64": _DELETE_B64}
+    return proposed, precheck
+
+
+def build_findings(audit, doc: bytes) -> List[Finding]:
+    """Build the findings-with-recommendations envelope for ``audit`` over its source ``doc`` bytes.
+
+    Raises ``FindingsError`` when ``doc`` does not hash to ``audit.source_sha256``.
+    """
+    if hashlib.sha256(doc).hexdigest() != audit.source_sha256:
+        raise FindingsError("doc bytes do not match audit.source_sha256 (drifted file / replay)")
+
+    starts = _line_starts(doc)
+    last = len(starts) - 1
+    findings: List[Finding] = []
+    ordinals: dict = {}  # (metric, start_byte) -> next ordinal, for id uniqueness
+
+    for metric_name, res in audit.metrics.items():
+        recommendation = met.recommend(audit.genre, metric_name)
+        cls = met.METRIC_CLASS.get(metric_name, "unclassified")
+        for loc in res.get("locations") or []:
+            line_start = loc.get("line_start")
+            if line_start is None:
+                continue  # a doc-level metric with no localizable passage contributes no finding
+            line_end = loc.get("line_end", line_start)
+            start = starts[line_start - 1]
+            end = starts[min(line_end, last)]
+            key = (metric_name, start)
+            ordinal = ordinals.get(key, 0)
+            ordinals[key] = ordinal + 1
+            proposed, precheck = _precheck(recommendation, doc, start, end, audit.ledger)
+            findings.append(Finding(
+                id=f"{metric_name}:{start}:{ordinal}",
+                category=metric_name,
+                span={"start": start, "end": end},
+                evidence=_evidence(loc),
+                genre=audit.genre,
+                recommendation=recommendation,
+                rationale=f"{metric_name} ({cls} class) under genre '{audit.genre}' → {recommendation}",
+                confidence=res.get("confidence", "unknown"),
+                proposed_rewrite=proposed,
+                verifier_precheck=precheck,
+            ))
+    return findings
