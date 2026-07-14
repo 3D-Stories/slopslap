@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>slopslap — de-slop pivot v2 (design, ratified 2026-07-13)</title>
+</head>
+<body>
+<style>
+  :root{
+    --paper:#F6F1E7; --card:#FCF9F2; --card2:#FFFDF8; --ink:#1E1B16; --soft:#5C554A; --faint:#8A8377;
+    --hair:#E0D6C2; --hair2:#CDBFA6; --grid:rgba(51,85,110,.06);
+    --red:#C0362C; --red-soft:rgba(192,54,44,.08); --blue:#33556E; --blue-soft:rgba(51,85,110,.09);
+    --green:#3E7A52; --green-soft:rgba(62,122,82,.12); --amber:#9A6B12; --amber-soft:rgba(154,107,18,.13);
+    --disp:Georgia,'Iowan Old Style Text','Times New Roman',serif;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,'SF Mono','IBM Plex Mono',Menlo,Consolas,monospace;
+    --shadow:0 1px 0 rgba(30,27,22,.04),0 10px 30px -14px rgba(51,85,110,.30); --maxw:1080px;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --paper:#15130F; --card:#1E1A15; --card2:#241F18; --ink:#EEE7D8; --soft:#A79E8C; --faint:#6E665A;
+    --hair:#332C22; --hair2:#463C2E; --grid:rgba(143,178,203,.06);
+    --red:#E27567; --red-soft:rgba(226,117,103,.13); --blue:#8FB2CB; --blue-soft:rgba(143,178,203,.12);
+    --green:#77B58C; --green-soft:rgba(119,181,140,.14); --amber:#D6A24E; --amber-soft:rgba(214,162,78,.15);
+    --shadow:0 1px 0 rgba(0,0,0,.3),0 14px 34px -14px rgba(0,0,0,.7);
+  }}
+  :root[data-theme="light"]{
+    --paper:#F6F1E7; --card:#FCF9F2; --card2:#FFFDF8; --ink:#1E1B16; --soft:#5C554A; --faint:#8A8377;
+    --hair:#E0D6C2; --hair2:#CDBFA6; --grid:rgba(51,85,110,.06);
+    --red:#C0362C; --red-soft:rgba(192,54,44,.08); --blue:#33556E; --blue-soft:rgba(51,85,110,.09);
+    --green:#3E7A52; --green-soft:rgba(62,122,82,.12); --amber:#9A6B12; --amber-soft:rgba(154,107,18,.13);
+    --shadow:0 1px 0 rgba(30,27,22,.04),0 10px 30px -14px rgba(51,85,110,.30);
+  }
+  :root[data-theme="dark"]{
+    --paper:#15130F; --card:#1E1A15; --card2:#241F18; --ink:#EEE7D8; --soft:#A79E8C; --faint:#6E665A;
+    --hair:#332C22; --hair2:#463C2E; --grid:rgba(143,178,203,.06);
+    --red:#E27567; --red-soft:rgba(226,117,103,.13); --blue:#8FB2CB; --blue-soft:rgba(143,178,203,.12);
+    --green:#77B58C; --green-soft:rgba(119,181,140,.14); --amber:#D6A24E; --amber-soft:rgba(214,162,78,.15);
+    --shadow:0 1px 0 rgba(0,0,0,.3),0 14px 34px -14px rgba(0,0,0,.7);
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:26px 26px}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px}
+  code{font-family:var(--mono); font-size:.84em; background:var(--blue-soft); color:var(--blue); padding:1px 5px; border-radius:2px; word-break:break-word}
+  .toggle{position:fixed; top:14px; right:14px; z-index:20; font-family:var(--mono); font-size:11px; letter-spacing:.08em;
+    text-transform:uppercase; background:var(--card); color:var(--soft); border:1px solid var(--hair2); border-radius:2px; padding:7px 11px; cursor:pointer}
+  .toggle:hover{color:var(--ink); border-color:var(--red)} .toggle:focus-visible{outline:2px solid var(--red); outline-offset:2px}
+
+  header.mast{border-bottom:2px solid var(--ink); background:radial-gradient(120% 100% at 50% -20%, var(--red-soft), transparent 60%)}
+  .rule-top{border-bottom:1px solid var(--hair2)}
+  .kicker{font-family:var(--mono); font-size:11.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--red);
+    display:flex; gap:14px; align-items:center; padding:14px 0; flex-wrap:wrap}
+  .kicker .dot{width:5px;height:5px;background:var(--red);border-radius:50%;display:inline-block}
+  .kicker .muted{color:var(--faint)}
+  .hero{padding:30px 0 40px}
+  h1.title{font-family:var(--disp); font-weight:700; letter-spacing:-.02em; line-height:.92; font-size:clamp(44px,9.5vw,112px); margin:0; text-wrap:balance}
+  h1.title .slap{color:var(--red); font-style:italic}
+  .tagline{font-family:var(--disp); font-size:clamp(18px,2.4vw,26px); line-height:1.34; max-width:38ch; margin:20px 0 0; text-wrap:balance}
+  .tagline em{color:var(--red); font-style:italic}
+  .sub{color:var(--soft); max-width:66ch; margin:14px 0 0; font-size:15.5px}
+
+  .invert{margin:34px 0 0; background:var(--card2); border:1px solid var(--hair2); border-left:3px solid var(--red);
+    border-radius:3px; box-shadow:var(--shadow); overflow:hidden}
+  .invert .bar{padding:9px 16px; border-bottom:1px solid var(--hair); font-family:var(--mono); font-size:11px;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--faint)}
+  .invert .row{padding:18px 20px}
+  .invert .row + .row{border-top:1px dashed var(--hair2)}
+  .invert .lbl{font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); margin:0 0 9px}
+  .invert .old{font-family:var(--disp); font-size:16.5px; line-height:1.7; color:var(--faint);
+    text-decoration:line-through; text-decoration-color:var(--red); text-decoration-thickness:2px; margin:0}
+  .invert .new{font-family:var(--disp); font-size:17.5px; line-height:1.7; color:var(--ink); margin:0}
+  .invert .new b{color:var(--green)} .invert .new .hl{color:var(--red); font-style:italic}
+  .invert .ok{color:var(--green); font-weight:700}
+
+  section{padding:56px 0; border-bottom:1px solid var(--hair)}
+  .eyebrow{font-family:var(--mono); font-size:11.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--red);
+    margin:0 0 8px; display:flex; gap:12px; align-items:baseline}
+  .eyebrow .n{color:var(--faint)}
+  h2{font-family:var(--disp); font-weight:700; letter-spacing:-.015em; font-size:clamp(25px,3.7vw,38px); margin:0 0 8px; line-height:1.06; text-wrap:balance}
+  .lead{color:var(--soft); max-width:70ch; font-size:16px; margin:0 0 24px}
+
+  .pipe{display:grid; grid-template-columns:1fr; gap:14px}
+  @media (min-width:760px){ .pipe{grid-template-columns:repeat(5,1fr); gap:0} }
+  .stage{background:var(--card); border:1px solid var(--hair2); padding:16px 15px 18px; position:relative}
+  @media (min-width:760px){ .stage{border-right:none}
+    .stage:first-child{border-radius:3px 0 0 3px} .stage:last-child{border-right:1px solid var(--hair2); border-radius:0 3px 3px 0} }
+  @media (max-width:759px){ .stage{border-radius:3px} }
+  .stage .num{font-family:var(--mono); font-size:10.5px; color:var(--faint); letter-spacing:.1em; text-transform:uppercase}
+  .stage h3{font-family:var(--disp); font-size:19px; margin:6px 0 6px}
+  .stage p{margin:0; font-size:13px; color:var(--soft); line-height:1.5}
+  .stage.user{border-top:3px solid var(--red)} .stage.user .num{color:var(--red)}
+  .stage.gate{border-top:3px solid var(--green)} .stage.gate .num{color:var(--green)}
+  .stage.learn{border-top:3px solid var(--blue)} .stage.learn .num{color:var(--blue)}
+
+  .demo{background:var(--card2); border:1px solid var(--hair2); border-left:3px solid var(--red); border-radius:3px;
+    box-shadow:var(--shadow); overflow:hidden}
+  .demo .bar{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 16px;
+    border-bottom:1px solid var(--hair); font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint)}
+  .demo .bar b{color:var(--red)}
+  .f{padding:16px 18px; border-bottom:1px dashed var(--hair2)}
+  .f:last-of-type{border-bottom:none}
+  .f .top{display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:8px}
+  .f .cat{font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--red);
+    background:var(--red-soft); border:1px solid var(--red); border-radius:2px; padding:2px 7px}
+  .f .gen{font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--blue);
+    background:var(--blue-soft); border:1px solid var(--blue); border-radius:2px; padding:2px 7px}
+  .f .rec{font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; border-radius:2px; padding:2px 7px}
+  .f .rec.strip{color:var(--red); border:1px solid var(--red); background:var(--red-soft)}
+  .f .rec.keep{color:var(--green); border:1px solid var(--green); background:var(--green-soft)}
+  .f .ms{font-family:var(--disp); font-size:16.5px; line-height:1.8; margin:0 0 6px}
+  .f .ms .strike{text-decoration:line-through; text-decoration-color:var(--red); text-decoration-thickness:2px; color:var(--faint)}
+  .f .ms .to{color:var(--green)}
+  .f .why{font-size:13px; color:var(--soft); margin:0 0 12px}
+  .btns{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+  .btn{font-family:var(--mono); font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; padding:7px 14px;
+    border-radius:2px; cursor:pointer; border:1.5px solid var(--hair2); background:var(--card); color:var(--soft)}
+  .btn:focus-visible{outline:2px solid var(--red); outline-offset:2px}
+  .btn.apply:hover{border-color:var(--red); color:var(--red)}
+  .btn.edit:hover{border-color:var(--amber); color:var(--amber)}
+  .btn.discard:hover{border-color:var(--blue); color:var(--blue)}
+  .btn.recd{border-color:var(--green); color:var(--green); position:relative}
+  .btn.recd::after{content:"· rec"; margin-left:6px; font-size:9.5px; letter-spacing:.1em; opacity:.8}
+  .btn.recd:hover{background:var(--green); border-color:var(--green); color:var(--paper)}
+  .f[data-state="edit"]{background:var(--amber-soft)}
+  .f[data-state="edit"] .btn.edit{background:var(--amber); border-color:var(--amber); color:var(--paper)}
+  .editbox{display:none; margin:0 0 12px}
+  .editbox.show{display:block}
+  .editbox textarea{width:100%; min-height:46px; font-family:var(--disp); font-size:15px; color:var(--ink);
+    background:var(--card); border:1px solid var(--amber); border-radius:2px; padding:8px 10px; line-height:1.6}
+  .editbox textarea:focus-visible{outline:2px solid var(--amber); outline-offset:1px}
+  .editbox .hint{font-family:var(--mono); font-size:10.5px; color:var(--faint); margin-top:5px}
+  .alts{display:grid; gap:7px; margin:0 0 12px}
+  .alt{display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:9px 12px; background:var(--card);
+    border:1.5px solid var(--hair2); border-radius:2px; cursor:pointer; width:100%; text-align:left; font:inherit; color:inherit}
+  .alt:hover{border-color:var(--amber)}
+  .alt:focus-visible{outline:2px solid var(--amber); outline-offset:2px}
+  .alt.sel{border-color:var(--green); background:var(--green-soft)}
+  .alt .txt{font-family:var(--disp); font-size:15px; flex:1 1 auto; min-width:200px}
+  .alt .cs{font-family:var(--mono); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase;
+    border-radius:2px; padding:2px 6px; white-space:nowrap}
+  .alt .cs.none{color:var(--green); border:1px solid var(--green); background:var(--green-soft)}
+  .alt .cs.scoped{color:var(--blue); border:1px solid var(--blue); background:var(--blue-soft)}
+  .alt .cs.kept{color:var(--amber); border:1px solid var(--amber); background:var(--amber-soft)}
+  .alt .cs.banned{color:var(--red); border:1px solid var(--red); background:var(--red-soft)}
+  .alt.banned{opacity:.6; cursor:not-allowed}
+  .alt.banned:hover{border-color:var(--hair2)}
+  .altlbl{font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); margin:0 0 7px}
+  .f[data-state="apply"]{background:var(--red-soft)}
+  .f[data-state="apply"] .btn.apply{background:var(--red); border-color:var(--red); color:var(--paper)}
+  .f[data-state="discard"]{background:var(--blue-soft)}
+  .f[data-state="discard"] .btn.discard{background:var(--blue); border-color:var(--blue); color:var(--paper)}
+  .f .state{font-family:var(--mono); font-size:10.5px; color:var(--faint); margin-left:auto}
+  .demo .foot{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:13px 16px;
+    border-top:1px solid var(--hair); background:var(--card)}
+  .tally{font-family:var(--mono); font-size:12px; color:var(--soft)}
+  .tally b{color:var(--ink)}
+  .btn.export{border-color:var(--green); color:var(--green)}
+  .btn.export:hover{background:var(--green); color:var(--paper)}
+  .exportout{display:none; margin:0; padding:13px 16px; border-top:1px dashed var(--hair2); background:var(--card);
+    font-family:var(--mono); font-size:11.5px; line-height:1.6; color:var(--soft); overflow-x:auto; white-space:pre}
+  .exportout.show{display:block}
+
+  .two{display:grid; gap:18px; grid-template-columns:1fr}
+  @media(min-width:820px){.two{grid-template-columns:1fr 1fr}}
+  .card{background:var(--card); border:1px solid var(--hair2); border-radius:3px; box-shadow:var(--shadow); padding:18px 20px}
+  .card h3{font-family:var(--disp); font-size:20px; margin:0 0 8px}
+  .card p{margin:0; font-size:14.5px; color:var(--soft); line-height:1.55}
+  .card.win{border-left:3px solid var(--green)} .card.risk{border-left:3px solid var(--amber)}
+
+  .tbl{width:100%; border-collapse:collapse; font-size:14.5px; border:1px solid var(--hair2)}
+  .tbl th,.tbl td{text-align:left; padding:10px 14px; border-bottom:1px solid var(--hair)}
+  .tbl th{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); background:var(--card2)}
+  .tbl td:first-child{font-family:var(--mono); font-size:13px}
+  .tbl tr:last-child td{border-bottom:none}
+  .pol{font-family:var(--mono); font-size:11px; text-transform:uppercase; padding:3px 8px; border-radius:2px; white-space:nowrap}
+  .pol.a{color:var(--red); background:var(--red-soft); border:1px solid var(--red)}
+  .pol.p{color:var(--green); background:var(--green-soft); border:1px solid var(--green)}
+  .pol.c{color:var(--amber); background:var(--amber-soft); border:1px solid var(--amber)}
+  .scroll{overflow-x:auto}
+
+  .phases{display:grid; gap:12px}
+  .phase{display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start; padding:15px 17px; background:var(--card); border:1px solid var(--hair); border-radius:3px}
+  .phase .n{font-family:var(--mono); font-size:12px; color:var(--red); border:1.5px solid var(--red); border-radius:2px; padding:4px 8px; white-space:nowrap; height:fit-content}
+  .phase.gate .n{color:var(--blue); border-color:var(--blue)}
+  .phase .t{font-weight:600; margin-bottom:3px}
+  .phase .d{color:var(--soft); font-size:14.5px}
+
+  .keystone{background:var(--ink); color:var(--paper); border-radius:4px; padding:40px; position:relative; box-shadow:var(--shadow)}
+  .keystone .stamp{position:absolute; top:20px; right:22px; font-family:var(--mono); font-size:10px; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--red); border:1.5px solid var(--red); padding:5px 9px; border-radius:2px; transform:rotate(4deg)}
+  .keystone p{font-family:var(--disp); font-size:clamp(18px,2.4vw,25px); line-height:1.4; margin:0; max-width:36ch}
+  .keystone p .hl{color:var(--red); font-style:italic}
+  .keystone .foot{margin-top:18px; opacity:.66; font-size:14px; max-width:66ch}
+  footer{padding:38px 0 60px; color:var(--faint); font-family:var(--mono); font-size:12px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<button class="toggle" id="tg" aria-label="Toggle light or dark theme">◐ theme</button>
+
+<header class="mast"><div class="wrap">
+  <div class="rule-top"></div>
+  <div class="kicker"><span class="dot"></span> Design v2 · the pivot <span class="muted">RATIFIED by owner 2026-07-13 · base v0.2.2</span></div>
+  <div class="hero">
+    <h1 class="title">Find everything.<br><span class="slap">You</span> hold the pen.</h1>
+    <p class="tagline">slopslap detects every tell, recommends by genre, and hands <em>you</em> the review — apply, <em>hand-edit</em>, or discard every finding. Then it learns from your clicks.</p>
+    <p class="sub">"Better than humanizer" = do what humanizer does, but <b>more</b> — with a byte-exact guarantee no fact, requirement, or negation breaks, and a user gate no humanizer offers.</p>
+
+    <div class="invert">
+      <div class="bar">the keystone, marked</div>
+      <div class="row">
+        <p class="lbl">◦ before — v0.2 (the timid thesis)</p>
+        <p class="old">Edit authorization comes only from demonstrated editorial harm; the scanner, genre, ratings, and voiceprint never authorize an edit.</p>
+      </div>
+      <div class="row">
+        <p class="lbl"><span class="ok">◦</span> after — keystone v2 (proposed)</p>
+        <p class="new">Every tell is <b>detected</b> and prepared for removal; genre + learned feedback set each finding's <b>recommendation</b>; <span class="hl">the user's review decision</span> — not the scanner, not the genre, not the learning — <b>authorizes</b> the edit; and the byte-exact <b>verifier</b> guarantees no applied edit changes a number, requirement, negation, condition, or protected span. Recommendations may learn; authorization never does. <span class="ok">✓</span></p>
+      </div>
+    </div>
+  </div>
+</div></header>
+
+<section><div class="wrap">
+  <p class="eyebrow"><span class="n">01</span> The loop</p>
+  <h2>Five stages. You are stage three.</h2>
+  <p class="lead">Genre no longer suppresses <em>detection</em> — it gates the <em>recommendation</em>. Nothing applies unseen; nothing unsafe applies at all.</p>
+  <div class="pipe">
+    <div class="stage"><div class="num">→ 1 detect</div><h3>Everything</h3><p>Every tell, every genre — cadence, filler, generic diction. Each finding ships strip-ready with a verifier precheck.</p></div>
+    <div class="stage"><div class="num">→ 2 recommend</div><h3>By genre + learning</h3><p>strip / keep + rationale per finding. Advisory metadata — it never limits what you can do.</p></div>
+    <div class="stage user"><div class="num">→ 3 · you</div><h3>Review</h3><p>Interactive doc: apply / <b>edit</b> / discard each finding — hand-tune any proposal, override any recommendation.</p></div>
+    <div class="stage gate"><div class="num">→ 4 · gate</div><h3>Apply</h3><p>Approved hunks only, through the unchanged 3-layer verifier + backup-first atomic engine.</p></div>
+    <div class="stage learn"><div class="num">→ 5 learn</div><h3>Feedback</h3><p>Your clicks are labeled data — false positives + genre corrections tune future recommendations.</p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow"><span class="n">02</span> The review stage — live demo</p>
+  <h2>This is the interactive document. Try it.</h2>
+  <p class="lead">Twenty-nine findings across all six harm categories and seven genres — including deliberately debatable calls, verifier-blocked traps, and false-positive bait. Click <b>apply</b>, <b>✎ edit</b>, or <b>keep</b> on each; hand-tune any proposal; pick a de-claim alternative where offered. Export renders the exact <code>decisions.json</code> the plugin consumes — every click a calibration label.</p>
+
+  <div class="demo" id="demo">
+    <div class="bar"><span>Review · <b>demo corpus</b> · 29 findings · mixed genres</span><span id="prog">0 / 29 decided</span></div>
+
+    <div class="f" data-id="f1" data-state="">
+      <div class="top"><span class="cat">emptiness · filler-opener</span><span class="gen">marketing</span><span class="rec strip">recommend: strip</span><span class="state"></span></div>
+      <p class="ms"><span class="strike">In today's fast-paced world, it is important to note that</span> <span class="to">our</span> parser handles every supported grammar.</p>
+      <p class="why">Stock opener adds zero content. Verifier precheck: <code>safe</code> — no invariant in range.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 1">Our parser handles every supported grammar.</textarea><div class="hint">your text replaces the span — verifier-gated exactly like the proposal</div></div>
+      <div class="btns"><button class="btn apply recd">✂ apply strip</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f2" data-state="">
+      <div class="top"><span class="cat">lexical_structural · adjective pile</span><span class="gen">marketing</span><span class="rec strip">recommend: strip</span><span class="state"></span></div>
+      <p class="ms">our <span class="strike">robust, scalable, and innovative</span> <span class="to">distributed</span> parser…</p>
+      <p class="why">Corporate tricolon collapses to the one word carrying meaning. Verifier precheck: <code>safe</code>. Disagree with the machine's pick? <b>✎ edit</b> — e.g. keep <i>innovative</i>: "our innovative distributed parser…"</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 2">our distributed parser…</textarea><div class="hint">try: our innovative distributed parser… — your kept tokens become learning signal</div></div>
+      <div class="btns"><button class="btn apply recd">✂ apply strip</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f3" data-state="">
+      <div class="top"><span class="cat">simulation · unsupported claim</span><span class="gen">marketing</span><span class="rec keep">recommend: keep + flag</span><span class="state"></span></div>
+      <p class="ms">delivers <span class="strike">best-in-class</span> results <span class="to">[claim: no benchmark shown]</span></p>
+      <p class="why">Claim findings don't reduce to strip-or-flag — the tool offers <b>de-claim alternatives</b>: keep the evocation, drop the unverifiable assertion. Pick one (it stays editable), or strip, or keep + flag.</p>
+      <p class="altlbl">alternatives — each pre-checked by the no-new-claims gate</p>
+      <div class="alts">
+        <button type="button" class="alt" data-alt="subjectivize"><span class="txt">delivers results we stand behind</span><span class="cs none">no external claim</span></button>
+        <button type="button" class="alt" data-alt="describe-intent"><span class="txt">built to deliver fast, accurate parses</span><span class="cs none">no external claim</span></button>
+        <button type="button" class="alt" data-alt="scope-verifiable"><span class="txt">delivers results that pass the full 3-layer verification suite</span><span class="cs scoped">claims what the doc supports</span></button>
+        <button type="button" class="alt banned" data-alt="lateral" disabled><span class="txt">delivers industry-leading results</span><span class="cs banned">BLOCKED · lateral swap — new unsupported claim (no_new_claim_atoms)</span></button>
+      </div>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 3">delivers results we stand behind</textarea><div class="hint">picked alternative lands here — tune it; an edit that ADDS a claim gets flagged for support too</div></div>
+      <div class="btns"><button class="btn apply">✂ strip anyway</button><button class="btn edit">✎ edit</button><button class="btn discard recd">✓ keep + flag</button></div>
+    </div>
+
+    <div class="f" data-id="f4" data-state="">
+      <div class="top"><span class="cat">epistemic_distortion · number rewrite</span><span class="gen">marketing</span><span class="rec keep">recommend: keep</span><span class="state"></span></div>
+      <p class="ms">processes <span class="strike">10,000</span> <span class="to">thousands of</span> documents per second</p>
+      <p class="why">Verifier precheck: <b>BLOCKED</b> — <code>entry_weakened (number_or_quantity 10,000)</code>. Apply or edit, the verifier refuses anything that softens the number — an edit keeping "10,000" verbatim would pass. Selecting a blocked action only feeds the learning signal.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 4">processes 10,000 documents per second</textarea><div class="hint">keep the number byte-exact and your edit clears the verifier; soften it and you're blocked</div></div>
+      <div class="btns"><button class="btn apply">✂ try to apply</button><button class="btn edit">✎ edit</button><button class="btn discard recd">✓ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f5" data-state="">
+      <div class="top"><span class="cat">emptiness · stock opener</span><span class="gen">general</span><span class="rec strip">recommend: strip</span><span class="state"></span></div>
+      <p class="ms"><span class="strike">At the end of the day, what really matters is that</span> <span class="to">T</span>he migration completed without data loss.</p>
+      <p class="why">Stock framing adds zero content. Verifier precheck: <code>safe</code>.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 5">The migration completed without data loss.</textarea><div class="hint">verifier-gated like any proposal</div></div>
+      <div class="btns"><button class="btn apply recd">✂ apply strip</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f6" data-state="">
+      <div class="top"><span class="cat">lexical_structural · transition cluster</span><span class="gen">general</span><span class="rec strip">recommend: strip</span><span class="state"></span></div>
+      <p class="ms"><span class="strike">Moreover, it is worth noting that, in addition,</span> the cache also dedupes requests.</p>
+      <p class="why">Three stacked transitions doing one job. Precheck: <code>safe</code>.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 6">The cache also dedupes requests.</textarea><div class="hint"></div></div>
+      <div class="btns"><button class="btn apply recd">✂ apply strip</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f7" data-state="">
+      <div class="top"><span class="cat">lexical_structural · tricolon</span><span class="gen">marketing</span><span class="rec strip">recommend: strip</span><span class="state"></span></div>
+      <p class="ms">a <span class="strike">simple, powerful, and flexible</span> <span class="to">flexible</span> API</p>
+      <p class="why">Corporate rule-of-three; one word carries the meaning. Precheck: <code>safe</code>.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 7">a flexible API</textarea><div class="hint">disagree on which word survives? edit — kept tokens are learning signal</div></div>
+      <div class="btns"><button class="btn apply recd">✂ apply strip</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f8" data-state="">
+      <div class="top"><span class="cat">emptiness · intensifier pile</span><span class="gen">general</span><span class="rec strip">recommend: strip</span><span class="state"></span></div>
+      <p class="ms">This is a <span class="strike">really very genuinely</span> significant improvement.</p>
+      <p class="why">Intensifiers add no information. Note: "significant" itself is a separate candidate if unsupported — one span, one harm, one record. Precheck: <code>safe</code>.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 8">This is a significant improvement.</textarea><div class="hint"></div></div>
+      <div class="btns"><button class="btn apply recd">✂ apply strip</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f9" data-state="">
+      <div class="top"><span class="cat">lexical_structural · negative parallelism</span><span class="gen">marketing</span><span class="rec strip">recommend: strip</span><span class="state"></span></div>
+      <p class="ms"><span class="strike">It's not just a linter, it's a philosophy.</span> <span class="to">It lints, and it enforces the structure conventions you configure.</span></p>
+      <p class="why">The "not just X, it's Y" tic promises depth it doesn't deliver; the rewrite says what it actually does. Precheck: <code>safe</code>.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 9">It lints, and it enforces the structure conventions you configure.</textarea><div class="hint"></div></div>
+      <div class="btns"><button class="btn apply recd">✂ apply strip</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f10" data-state="">
+      <div class="top"><span class="cat">emptiness · stock closer</span><span class="gen">marketing</span><span class="rec strip">recommend: strip (weak)</span><span class="state"></span></div>
+      <p class="ms"><span class="strike">We're excited to see what you'll build!</span></p>
+      <p class="why"><b>Debatable.</b> Stock closer — but genuine warmth is a marketing asset. Recommendation is weak-strip; if you keep these, the learner raises the closer threshold for marketing. Precheck: <code>safe</code>.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 10"></textarea><div class="hint">empty replacement = delete the span; or write a closer you'd actually say</div></div>
+      <div class="btns"><button class="btn apply recd">✂ apply strip</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f11" data-state="">
+      <div class="top"><span class="cat">lexical_structural · adjective pile</span><span class="gen">technical</span><span class="rec strip">recommend: strip filler</span><span class="state"></span></div>
+      <p class="ms">a <span class="strike">robust, production-grade, battle-tested</span> retry helper</p>
+      <p class="why">Technical genre: filler strips, identifiers and exact terms stay. Precheck: <code>safe</code>.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 11">a retry helper</textarea><div class="hint"></div></div>
+      <div class="btns"><button class="btn apply recd">✂ apply strip</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f12" data-state="">
+      <div class="top"><span class="cat">simulation · vague attribution</span><span class="gen">general</span><span class="rec keep">recommend: keep + flag</span><span class="state"></span></div>
+      <p class="ms"><span class="strike">Many experts agree that</span> microservices reduce coupling.</p>
+      <p class="why">Borrowed authority, no source. Alternatives either own the claim or drop the borrowing — none may invent a citation.</p>
+      <p class="altlbl">alternatives — pre-checked by the no-new-claims gate</p>
+      <div class="alts">
+        <button type="button" class="alt" data-alt="own-claim"><span class="txt">Microservices can reduce coupling.</span><span class="cs scoped">claim now owned, not borrowed</span></button>
+        <button type="button" class="alt" data-alt="describe-decision"><span class="txt">We chose microservices to reduce coupling.</span><span class="cs none">describes your decision</span></button>
+        <button type="button" class="alt banned" data-alt="lateral" disabled><span class="txt">Industry consensus holds that microservices reduce coupling.</span><span class="cs banned">BLOCKED · still borrowed authority</span></button>
+      </div>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 12">We chose microservices to reduce coupling.</textarea><div class="hint"></div></div>
+      <div class="btns"><button class="btn apply">✂ strip anyway</button><button class="btn edit">✎ edit</button><button class="btn discard recd">✓ keep + flag</button></div>
+    </div>
+
+    <div class="f" data-id="f13" data-state="">
+      <div class="top"><span class="cat">simulation · claimed experience</span><span class="gen">general</span><span class="rec keep">recommend: keep + flag</span><span class="state"></span></div>
+      <p class="ms"><span class="strike">As we've seen in countless deployments,</span> the pattern holds.</p>
+      <p class="why">"Countless deployments" claims experience the doc never shows. The tool won't invent a real count — flag it, or edit to what you can stand behind.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 13">We expect the pattern to hold.</textarea><div class="hint">or scope it to deployments you can actually cite</div></div>
+      <div class="btns"><button class="btn apply">✂ strip anyway</button><button class="btn edit">✎ edit</button><button class="btn discard recd">✓ keep + flag</button></div>
+    </div>
+
+    <div class="f" data-id="f14" data-state="">
+      <div class="top"><span class="cat">laundering · adjective-as-requirement</span><span class="gen">prd</span><span class="rec keep">recommend: convert</span><span class="state"></span></div>
+      <p class="ms">The dashboard <span class="strike">should feel snappy and delightful</span>. <span class="to">[open: set the interaction-latency target — e.g. &lt;200 ms]</span></p>
+      <p class="why">Laundering <b>never deletes</b> — the aspiration is load-bearing intent. Remedy: convert to a testable open question. Precheck: <code>safe</code> (no requirement weakened; one made visible).</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 14">The dashboard must respond within the interaction-latency target [open: define it — e.g. <200 ms].</textarea><div class="hint"></div></div>
+      <div class="btns"><button class="btn apply recd">↻ apply convert</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f15" data-state="">
+      <div class="top"><span class="cat">laundering · untestable requirement</span><span class="gen">spec</span><span class="rec keep">recommend: convert</span><span class="state"></span></div>
+      <p class="ms">The API <span class="strike">must be user-friendly</span>. <span class="to">[open: define the usability requirement — e.g. task X completable in ≤N calls]</span></p>
+      <p class="why">A MUST bound to an untestable adjective. Convert keeps the normative intent and makes it checkable; deleting the MUST would be blocked (modality invariant).</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 15">The API must meet the usability requirement [open: define — e.g. common task completable in ≤3 calls].</textarea><div class="hint"></div></div>
+      <div class="btns"><button class="btn apply recd">↻ apply convert</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f16" data-state="">
+      <div class="top"><span class="cat">epistemic_distortion · hedge pile</span><span class="gen">general</span><span class="rec strip">recommend: strip to one hedge</span><span class="state"></span></div>
+      <p class="ms"><span class="strike">It might possibly be the case that, in some situations,</span> retries <span class="strike">could perhaps</span> <span class="to">may</span> help <span class="to">when the failure is transient</span>.</p>
+      <p class="why">The pile buries the real uncertainty. Exactly ONE modal survives — stripping ALL hedging would inflate certainty and the verifier would block it (modality invariant). Precheck: <code>safe</code> (may preserved).</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 16">Retries may help when the failure is transient.</textarea><div class="hint">the "may" is load-bearing — remove it and you're blocked</div></div>
+      <div class="btns"><button class="btn apply recd">✂ apply strip</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f17" data-state="">
+      <div class="top"><span class="cat">epistemic_distortion · passive hides actor</span><span class="gen">general</span><span class="rec keep">recommend: keep + flag</span><span class="state"></span></div>
+      <p class="ms">Mistakes were made during the rollout. <span class="to">[by whom?]</span></p>
+      <p class="why">The passive hides responsibility — but the doc never names the actor, and the tool may NOT invent one. Flag the gap; only you can fill it truthfully.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 17">Mistakes were made during the rollout [by whom?].</textarea><div class="hint">name the actor yourself if you know it — that edit passes</div></div>
+      <div class="btns"><button class="btn apply">✂ strip anyway</button><button class="btn edit">✎ edit</button><button class="btn discard recd">✓ keep + flag</button></div>
+    </div>
+
+    <div class="f" data-id="f18" data-state="">
+      <div class="top"><span class="cat">lexical_structural · repeated openers ×3</span><span class="gen">spec</span><span class="rec keep">recommend: keep</span><span class="state"></span></div>
+      <p class="ms">A message MUST be acked. A message MUST be idempotent. A message MUST NOT reorder.</p>
+      <p class="why">Detected (three identical openers) — but spec parallelism is correctness infrastructure. Precheck on the merge proposal: <b>BLOCKED</b> — <code>entry_weakened (modality ×3, negation ×1)</code>.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 18">A message MUST be acked. A message MUST be idempotent. A message MUST NOT reorder.</textarea><div class="hint">any merge that drops a MUST or the NOT is blocked</div></div>
+      <div class="btns"><button class="btn apply">✂ try merge</button><button class="btn edit">✎ edit</button><button class="btn discard recd">✓ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f19" data-state="">
+      <div class="top"><span class="cat">lexical_structural · em-dash + aside</span><span class="gen">personal</span><span class="rec keep">recommend: keep · voice-floor</span><span class="state"></span></div>
+      <p class="ms">The fix — if you can call it that — held.</p>
+      <p class="why">Detected as an em-dash tell; personal genre weighs voice highest, so the recommendation is keep. Your strip is still one click away — and if you strip these consistently, the learner lowers the voice-floor for you.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 19">The fix held, more or less.</textarea><div class="hint"></div></div>
+      <div class="btns"><button class="btn apply">✂ apply strip</button><button class="btn edit">✎ edit</button><button class="btn discard recd">✓ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f20" data-state="">
+      <div class="top"><span class="cat">lexical_structural · legal tricolon</span><span class="gen">legal</span><span class="rec keep">recommend: keep</span><span class="state"></span></div>
+      <p class="ms">The Indemnifying Party shall indemnify, defend, and hold harmless the Indemnified Party…</p>
+      <p class="why">Tricolon detected — but legal genre is flag-only posture: the three verbs are distinct obligations, not style. Precheck on any strip: <b>BLOCKED</b> — <code>entry_weakened (defined_term ×2, modality shall)</code>.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 20">The Indemnifying Party shall indemnify, defend, and hold harmless the Indemnified Party…</textarea><div class="hint"></div></div>
+      <div class="btns"><button class="btn apply">✂ try strip</button><button class="btn edit">✎ edit</button><button class="btn discard recd">✓ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f21" data-state="">
+      <div class="top"><span class="cat">simulation · claim wrapping a number</span><span class="gen">marketing</span><span class="rec keep">recommend: keep + flag</span><span class="state"></span></div>
+      <p class="ms">Our 99.99% uptime speaks for itself. <span class="to">[measured over what window? by whom?]</span></p>
+      <p class="why">Unsupported framing AND the span carries <code>99.99%</code> — a whole-sentence strip would drop a number entry, so the strip precheck is <b>BLOCKED</b>. An edit that keeps <code>99.99%</code> byte-exact passes.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 21">We measured 99.99% uptime over [period — cite the report].</textarea><div class="hint">keep 99.99% exactly; soften or drop it and you're blocked</div></div>
+      <div class="btns"><button class="btn apply">✂ try strip</button><button class="btn edit">✎ edit</button><button class="btn discard recd">✓ keep + flag</button></div>
+    </div>
+
+    <div class="f" data-id="f22" data-state="">
+      <div class="top"><span class="cat">lexical_structural · em-dash cadence</span><span class="gen">general</span><span class="rec strip">recommend: strip (repunctuate)</span><span class="state"></span></div>
+      <p class="ms">The parser <span class="strike">— fast, small —</span> runs anywhere <span class="strike">—</span> even embedded.</p>
+      <p class="why"><b>Debatable.</b> Three em-dashes in one sentence reads synthetic in general prose; in personal genre this same sentence would recommend keep. Precheck: <code>safe</code>.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 22">The parser is fast and small; it runs anywhere, even embedded.</textarea><div class="hint"></div></div>
+      <div class="btns"><button class="btn apply recd">✂ apply strip</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f23" data-state="">
+      <div class="top"><span class="cat">lexical_structural · stock cluster</span><span class="gen">marketing</span><span class="rec strip">recommend: strip</span><span class="state"></span></div>
+      <p class="ms"><span class="strike">leverage synergies to unlock value</span> <span class="to">share components</span> across the stack</p>
+      <p class="why">Three stock lexemes in six words. The rewrite says the thing. Precheck: <code>safe</code>.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 23">share components across the stack</textarea><div class="hint"></div></div>
+      <div class="btns"><button class="btn apply recd">✂ apply strip</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f24" data-state="">
+      <div class="top"><span class="cat">lexical_structural · single-lexeme tell</span><span class="gen">general</span><span class="rec strip">recommend: strip (low conf)</span><span class="state"></span></div>
+      <p class="ms">Let's <span class="strike">delve into</span> <span class="to">look at</span> the internals.</p>
+      <p class="why"><b>Bait, on purpose.</b> v1's charter protected "delve" absolutely; v2 detects it and recommends weakly at LOW confidence. If you keep it, that's a false-positive label and the single-lexeme threshold rises.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 24">Let's look at the internals.</textarea><div class="hint"></div></div>
+      <div class="btns"><button class="btn apply recd">✂ apply strip</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f25" data-state="">
+      <div class="top"><span class="cat">emptiness · label restates content</span><span class="gen">technical</span><span class="rec strip">recommend: strip (merge)</span><span class="state"></span></div>
+      <p class="ms"><span class="strike">**Fast:** it's fast. **Safe:** it's safe.</span> <span class="to">It's fast and safe.</span></p>
+      <p class="why">Bold-label density with zero information gain — each label restates itself. Precheck: <code>safe</code>.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 25">It's fast and safe.</textarea><div class="hint"></div></div>
+      <div class="btns"><button class="btn apply recd">✂ apply strip</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f26" data-state="">
+      <div class="top"><span class="cat">epistemic candidate · unresolved intent</span><span class="gen">prd</span><span class="rec keep">recommend: keep</span><span class="state"></span></div>
+      <p class="ms">Auth provider: TBD — decision after the spike.</p>
+      <p class="why">Vagueness detector fires — but PRD rule: unresolved intent stays <b>visibly unresolved</b>. A rewrite asserting a provider would be fabrication; precheck on any "resolving" edit: <b>BLOCKED</b> (<code>no_new_claim_atoms</code>).</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 26">Auth provider: TBD — decision after the spike.</textarea><div class="hint">resolve it only if the decision is actually made</div></div>
+      <div class="btns"><button class="btn apply">✂ try resolve</button><button class="btn edit">✎ edit</button><button class="btn discard recd">✓ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f27" data-state="">
+      <div class="top"><span class="cat">simulation · completed-work claim</span><span class="gen">general</span><span class="rec keep">recommend: keep + flag</span><span class="state"></span></div>
+      <p class="ms"><span class="strike">Extensive testing confirms</span> the fix<span class="to"> [what testing?]</span>.</p>
+      <p class="why">"Extensive testing" claims work the doc doesn't show. Scope it to something real, own it as belief, or flag it — never certify it harder.</p>
+      <p class="altlbl">alternatives — pre-checked by the no-new-claims gate</p>
+      <div class="alts">
+        <button type="button" class="alt" data-alt="scope-verifiable"><span class="txt">The full regression suite (465 tests) passes with the fix.</span><span class="cs scoped">claims what the repo supports — only if true</span></button>
+        <button type="button" class="alt" data-alt="subjectivize"><span class="txt">We believe the fix is sound.</span><span class="cs none">no external claim</span></button>
+        <button type="button" class="alt banned" data-alt="lateral" disabled><span class="txt">Rigorous QA certifies the fix.</span><span class="cs banned">BLOCKED · lateral swap — new unsupported claim</span></button>
+      </div>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 27">We believe the fix is sound.</textarea><div class="hint"></div></div>
+      <div class="btns"><button class="btn apply">✂ strip anyway</button><button class="btn edit">✎ edit</button><button class="btn discard recd">✓ keep + flag</button></div>
+    </div>
+
+    <div class="f" data-id="f28" data-state="">
+      <div class="top"><span class="cat">voice_discontinuity · register snap</span><span class="gen">technical</span><span class="rec strip">recommend: strip (re-register)</span><span class="state"></span></div>
+      <p class="ms">The allocator uses a slab strategy. <span class="strike">Buckle up folks, because this next part absolutely SLAPS.</span> <span class="to">The next section covers the harder part.</span></p>
+      <p class="why">One-voice doc; a mid-doc register snap is the discontinuity evidence. <b>Debatable</b> — some docs earn the wink. In personal genre this would recommend keep. Precheck: <code>safe</code>.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 28">The next section covers the harder part.</textarea><div class="hint"></div></div>
+      <div class="btns"><button class="btn apply recd">✂ apply strip</button><button class="btn edit">✎ edit</button><button class="btn discard">✋ keep original</button></div>
+    </div>
+
+    <div class="f" data-id="f29" data-state="">
+      <div class="top"><span class="cat">epistemic_distortion · condition drop</span><span class="gen">spec</span><span class="rec keep">recommend: keep</span><span class="state"></span></div>
+      <p class="ms">Retries are safe <span class="kept">unless the operation is non-idempotent</span>.</p>
+      <p class="why">A "tightening" proposal wanted to drop the unless-clause for punch. Precheck: <b>BLOCKED</b> — <code>entry_weakened (condition, negation non-idempotent)</code>. The exception IS the sentence. Edits preserving the clause pass.</p>
+      <div class="editbox"><textarea aria-label="Edit replacement for finding 29">Retries are safe unless the operation is non-idempotent.</textarea><div class="hint">rephrase freely — drop the unless and you're blocked</div></div>
+      <div class="btns"><button class="btn apply">✂ try tighten</button><button class="btn edit">✎ edit</button><button class="btn discard recd">✓ keep original</button></div>
+    </div>
+
+    <div class="foot">
+      <span class="tally" id="tally">0 strip · 0 edited · 0 keep · 29 undecided</span>
+      <div class="btns">
+        <button class="btn export" id="exp">⇩ export decisions.json</button>
+      </div>
+    </div>
+    <pre class="exportout" id="out"></pre>
+  </div>
+
+  <p class="sub" style="margin-top:16px"><b>Delivery, for real:</b> the product path is a local review server — <code>slopslap review &lt;file&gt;</code> serves this page on loopback (single-use token, auto-shutdown); clicking Finish sends decisions straight back. The export flow you just used is the zero-infra fallback that works anywhere — including inside this artifact's no-network sandbox.</p>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow"><span class="n">03</span> Recommendations</p>
+  <h2>Genre gates the advice — never the detection, never you.</h2>
+  <div class="scroll"><table class="tbl">
+    <thead><tr><th>genre</th><th>default rec for tells</th><th>note</th></tr></thead>
+    <tbody>
+      <tr><td>general-prose · marketing</td><td><span class="pol a">strip</span></td><td>the target case; corporate-slop voice killed</td></tr>
+      <tr><td>PRD (prose)</td><td><span class="pol a">strip fluff</span></td><td>real constraints + unresolved decisions stay keep</td></tr>
+      <tr><td>technical-doc</td><td><span class="pol c">strip filler</span></td><td>identifiers + exact terms recommend keep</td></tr>
+      <tr><td>spec</td><td><span class="pol p">keep</span></td><td>parallelism = correctness infra — you can still override</td></tr>
+      <tr><td>legal</td><td><span class="pol p">keep</span></td><td>flag-only posture; verifier still gates any override</td></tr>
+      <tr><td>personal</td><td><span class="pol p">keep · voice-floor</span></td><td>voice weighted high; strip stays one click away</td></tr>
+      <tr><td>low confidence</td><td><span class="pol p">keep</span></td><td>asymmetric-failure rule — now advisory, not absolute</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow"><span class="n">04</span> The learning loop</p>
+  <h2>Your clicks are the calibration corpus.</h2>
+  <p class="lead">The #25 calibration harness shipped starved — <b>0 labeled points</b> (the corpus had no licensed verbatim text). Review decisions manufacture exactly what it lacked.</p>
+  <div class="two">
+    <div class="card win"><h3>What feeds back</h3><p>Every decision appends to a local feedback ledger: finding, metric, genre, recommendation, your action (+ your replacement on an edit), your reason (<code>false_positive</code> · <code>keep_voice</code> · <code>genre_wrong</code>). False-positive marks raise that metric's threshold in that genre; repeated strip-overrides flip a genre's default. <b>Edits are the richest labels</b> — keeping "innovative" out of an adjective pile says that word was a real claim there, not filler: a partial-accept no binary click can express.</p></div>
+    <div class="card risk"><h3>What never learns</h3><p><b>Authorization.</b> Learning tunes recommendations only. The user gate stays final forever; the verifier stays the hard gate forever — even a user-approved edit that would break a number is blocked and surfaced. Ledger is local, hashed spans only, purgeable.</p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow"><span class="n">05</span> Plan</p>
+  <h2>Six phases. Keystone rewrite is the blast zone.</h2>
+  <div class="phases">
+    <div class="phase gate"><span class="n">P0 · gate</span><div><div class="t">Ratify design</div><div class="d">Keystone v2 wording + decisions/feedback schemas + slop→clean golden pairs for eval.</div></div></div>
+    <div class="phase"><span class="n">P1</span><div><div class="t">Universal detection + findings schema</div><div class="d">Genre suppression moves from detection to recommendation. Keystone rewrite across SKILL.md + 4 commands + <code>test_scaffold.py</code> (pinned sentence — high blast).</div></div></div>
+    <div class="phase"><span class="n">P2</span><div><div class="t">Generic-diction / filler detector</div><div class="d">The "finds more" payload — stock openers, adjective piles, empty intensifiers.</div></div></div>
+    <div class="phase"><span class="n">P3</span><div><div class="t">Interactive review stage</div><div class="d">findings.json → local review server + static-export fallback → <code>decisions.json</code> bound to <code>source_sha256</code>.</div></div></div>
+    <div class="phase"><span class="n">P4</span><div><div class="t">Apply-from-decisions</div><div class="d">Approved hunks only through the unchanged verifier + backup engine; blocked hunks surfaced.</div></div></div>
+    <div class="phase"><span class="n">P5</span><div><div class="t">Feedback ledger + learning</div><div class="d">Ledger → calibrate harness → per-genre recommendation tuning + <code>feedback reset</code>. Voiceprint's real job: protect a demonstrated personal voice.</div></div></div>
+  </div>
+  <p class="sub" style="margin-top:14px">Pulled-forward hardening (verifier now load-bearing): <b>#31a</b> neutrality · <b>#43</b> preimage · <b>#31b</b> injection suite. Secondary: #47 · #36 · #46 · #42 · #31c–e.</p>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow"><span class="n">06</span> The trade, stated</p>
+  <h2>What the verifier can't judge, you now do.</h2>
+  <div class="two">
+    <div class="card risk"><h3>Residual risk</h3><p>The verifier guarantees invariants, not taste — an invariant-clean rewrite can still flatten a nuance. v1's answer was timidity.</p></div>
+    <div class="card win"><h3>v2's answer</h3><p>Nothing applies unseen: every rewrite crosses your review with its evidence and rationale. The human gate replaces the timid gate — strictly better on both axes.</p></div>
+  </div>
+  <div class="keystone" style="margin-top:28px">
+    <span class="stamp">the product</span>
+    <p>Strip like a humanizer. Guarantee like a spec tool. <span class="hl">Decide like an editor.</span> And get better every time you click.</p>
+    <p class="foot">Detection universal · recommendation genre-gated + learned · authorization user-only · safety verifier-owned. Four powers, four different owners — that separation is the design.</p>
+  </div>
+</div></section>
+
+<footer><div class="wrap">slopslap · de-slop pivot v2 · docs/planning/2026-07-13-deslop-pivot-design.md · base v0.2.2</div></footer>
+
+<script>
+(function(){
+  var b=document.getElementById('tg');
+  function cur(){var e=document.documentElement.getAttribute('data-theme');return e?e:(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');}
+  b.addEventListener('click',function(){document.documentElement.setAttribute('data-theme',cur()==='dark'?'light':'dark');});
+
+  var findings=Array.prototype.slice.call(document.querySelectorAll('.f'));
+  var tally=document.getElementById('tally'), prog=document.getElementById('prog'), out=document.getElementById('out');
+  function refresh(){
+    var a=0,e=0,d=0;
+    findings.forEach(function(f){var s=f.getAttribute('data-state');
+      if(s==='apply')a++; else if(s==='edit')e++; else if(s==='discard')d++;
+      var st=f.querySelector('.state');
+      st.textContent = s==='apply'?'✂ will apply':(s==='edit'?'✎ will apply (edited)':(s==='discard'?'✓ kept original':''));
+      var box=f.querySelector('.editbox');
+      if(box){ if(s==='edit'){box.classList.add('show');} else {box.classList.remove('show');} }
+    });
+    var u=findings.length-a-e-d;
+    tally.textContent = a+' strip · '+e+' edited · '+d+' keep · '+u+' undecided';
+    prog.textContent=(a+e+d)+' / '+findings.length+' decided';
+  }
+  function setState(f, s){
+    f.setAttribute('data-state', f.getAttribute('data-state')===s?'':s); refresh();
+  }
+  findings.forEach(function(f){
+    f.querySelector('.btn.apply').addEventListener('click',function(){setState(f,'apply');});
+    f.querySelector('.btn.edit').addEventListener('click',function(){setState(f,'edit');});
+    f.querySelector('.btn.discard').addEventListener('click',function(){setState(f,'discard');});
+    Array.prototype.slice.call(f.querySelectorAll('.alt:not(.banned)')).forEach(function(alt){
+      alt.addEventListener('click',function(){
+        Array.prototype.slice.call(f.querySelectorAll('.alt')).forEach(function(x){x.classList.remove('sel');});
+        alt.classList.add('sel');
+        f.setAttribute('data-alt', alt.getAttribute('data-alt'));
+        var ta=f.querySelector('.editbox textarea');
+        if(ta){ta.value=alt.querySelector('.txt').textContent;}
+        f.setAttribute('data-state','edit'); refresh();
+      });
+    });
+  });
+  document.getElementById('exp').addEventListener('click',function(){
+    var payload={schema_version:1, doc:"demo-slop.md", source_sha256:"bound-at-audit",
+      decisions:findings.map(function(f){
+        var s=f.getAttribute('data-state')||'undecided';
+        var rec={finding_id:f.getAttribute('data-id'), user_action:s};
+        if(s==='edit'){var ta=f.querySelector('.editbox textarea'); rec.replacement=ta?ta.value:'';
+          var chosen=f.getAttribute('data-alt'); if(chosen){rec.alternative=chosen;}}
+        return rec;})};
+    out.textContent=JSON.stringify(payload, null, 2);
+    out.classList.add('show');
+  });
+  refresh();
+})();
+</script>
+
+</body>
+</html>
