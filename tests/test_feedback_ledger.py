@@ -4,6 +4,7 @@ tests the writer's storage properties (hashed spans, purge) that the schema deli
 """
 
 import json
+import os
 
 from slopslap_assemble.assemble import audit_document
 from slopslap_review.feedback import append_feedback, feedback_path, read_feedback, reset_feedback
@@ -114,6 +115,24 @@ def test_reader_skips_malformed_lines(tmp_path):
         fh.write('{"missing":"fields"}\n')
     good = list(read_feedback(path))
     assert len(good) == 1 and good[0]["metric"] == "m"
+
+
+def test_cli_runs_as_a_script_via_documented_entry_path(tmp_path):
+    # the DOCUMENTED invocation `python3 scripts/slopslap_review/feedback.py <cmd>` must self-locate
+    # scripts/ on sys.path — an in-process import (what conftest enables) cannot catch a missing
+    # self-location line, so exec the script for real in a clean env (no inherited PYTHONPATH).
+    import subprocess
+    import sys
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    script = os.path.join(root, "scripts", "slopslap_review", "feedback.py")
+    env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
+    env["XDG_STATE_HOME"] = str(tmp_path / "state")
+    for cmd in ("path", "show", "reset"):
+        r = subprocess.run([sys.executable, script, cmd], capture_output=True, text=True, env=env)
+        assert r.returncode == 0, f"feedback {cmd} failed as a script: {r.stderr}"
+    # bare invocation (no subcommand) exits non-zero cleanly (argparse usage), never a traceback
+    bare = subprocess.run([sys.executable, script], capture_output=True, text=True, env=env)
+    assert bare.returncode != 0 and "Traceback" not in bare.stderr
 
 
 def test_feedback_path_uses_xdg_state(tmp_path, monkeypatch):

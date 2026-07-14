@@ -210,7 +210,8 @@ no edit. *When in doubt, it changes nothing.*
   overlay (personal-genre voice classes flip to keep), with #31a guaranteeing a voice signal never
   biases the verifier. P0-schema honesty: the numeric per-rate threshold is realized as its
   conservative class-keep limit — the frozen P0 schema carries no rate field (a v2 refinement, not
-  faked). +22 tests (writer/learn/invariant/CLI + an end-to-end wired-path test); suite 590 → 612.
+  faked). +23 tests (writer/learn/invariant/CLI + end-to-end wired-path + a real-script-entry-path
+  gate); suite 590 → 613.
 - **0.7.1** — residual #26 hardening (#31): the Layer-3 semantic verifier is UNTRUSTED, so four
   defenses stop it (or an injected config/CLAUDE.md) from biasing or forging the faithfulness verdict.
   (a) **Neutrality clause** in `contract._INSTRUCTION` — the verifier judges only whether the revision

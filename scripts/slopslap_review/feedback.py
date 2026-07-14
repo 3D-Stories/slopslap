@@ -19,11 +19,17 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import sys
 from datetime import datetime, timezone
 from typing import Iterator, List, Optional
 
-from slopslap_review.schema import FeedbackError, validate_feedback_line
-from slopslap_scan.metrics import METRIC_CLASS
+# self-locate: when run AS A SCRIPT (`python3 scripts/slopslap_review/feedback.py …`, the documented
+# invocation), sys.path[0] is this file's dir, not scripts/ — put scripts/ on the path so the absolute
+# slopslap_* imports below resolve. Matches every sibling CLI (assemble.py / review.py / apply.py).
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from slopslap_review.schema import FeedbackError, validate_feedback_line  # noqa: E402
+from slopslap_scan.metrics import METRIC_CLASS  # noqa: E402
 
 
 def feedback_path() -> str:
