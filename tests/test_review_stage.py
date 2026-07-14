@@ -64,12 +64,19 @@ def test_page_embeds_payload_inertly_and_avoids_innerhtml(tmp_path):
     assert "null" in static and "Export" in static
 
 
-def test_page_json_blob_escapes_script_close(tmp_path):
-    # a finding whose evidence contains "</script>" must not break out of the inert blob
+def test_page_json_blob_is_script_safe_and_roundtrips(tmp_path):
+    # a finding whose evidence contains "</script>" must not break out of the inert blob, AND payloads
+    # with <, >, & must round-trip: <script type=application/json> content is NOT entity-decoded, so
+    # html.escape would corrupt JSON.parse — the \uXXXX embedding decodes back to the real chars.
     payload, _, _ = _payload(tmp_path)
-    payload["findings"][0]["evidence"] = "danger </script><script>alert(1)</script>"
+    payload["findings"][0]["evidence"] = "danger </script><script>alert(1)</script> a<b & c>d"
     page = render_review_page(payload, post_url="http://127.0.0.1:9/finish?token=x")
-    assert "</script><script>alert(1)" not in page  # escaped inside the blob
+    assert "</script><script>alert(1)" not in page          # no breakout
+    assert "&lt;" not in page and "&amp;" not in page        # NOT html-escaped (would corrupt JSON.parse)
+    import re
+    m = re.search(r'<script id="payload" type="application/json">(.*?)</script>', page, re.S)
+    assert m, "payload blob present"
+    assert json.loads(m.group(1)) == payload                # \uXXXX decodes back to the real chars
 
 
 def _serve(tmp_path):

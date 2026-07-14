@@ -182,7 +182,12 @@ def render_review_page(payload: dict, *, post_url: Optional[str] = None) -> str:
     """Render the self-contained review page. `post_url` set → the Finish button POSTs there (server
     mode); None → static-export mode (Finish is inert, Export downloads decisions.json). The payload
     is embedded as an inert JSON blob and rendered client-side with textContent only (XSS-safe)."""
-    payload_json = html.escape(json.dumps(payload), quote=False)  # escape </script> etc. inside the blob
+    # Safe JSON-in-<script> embedding: escape <, >, & as JSON \uXXXX. `<script type="application/json">`
+    # content is raw text the browser does NOT entity-decode, so html.escape would be WRONG — its
+    # &lt;/&amp; would reach JSON.parse verbatim and corrupt any payload containing <, > or &. The \u
+    # escapes both (a) parse back to the real chars via JSON.parse and (b) can never form `</script>`.
+    payload_json = (json.dumps(payload)
+                    .replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026"))
     script = _PAGE_SCRIPT.replace("%POST_URL%", json.dumps(post_url) if post_url else "null")
     return _PAGE_TEMPLATE.format(
         count=len(payload["findings"]),
