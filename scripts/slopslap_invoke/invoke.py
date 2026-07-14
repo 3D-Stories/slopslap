@@ -111,13 +111,19 @@ def _model_confirmed(requested: str, reported: list) -> bool:
     req = requested.lower()
     for r in reported:
         rl = r.lower()
-        if req == rl or req in rl.replace("-", " ").split() or req in rl:
+        # exact, or the alias as a whole TOKEN of the canonical id ("sonnet" ~ "claude-sonnet-5").
+        # #31e: NO loose substring fallback — a distinct model whose id merely CONTAINS the alias
+        # (e.g. requesting "opus" against "claude-opusx-9") must not be wrongly confirmed.
+        if req == rl or req in rl.replace("-", " ").replace("_", " ").split():
             return True
     return False
 
 
-def _drain(stream, chunks: list, over_cap: threading.Event, pgid: int) -> None:
-    """Read a pipe to EOF, appending chunks; if the cap is exceeded, kill the group and stop."""
+def _drain(stream, chunks: list, over_cap: threading.Event, pgid: int, ring: Optional[int] = None) -> None:
+    """Read a pipe to EOF, appending chunks; if the cap is exceeded, kill the group and stop. With
+    ``ring`` set (stderr: we only keep a short tail for diagnostics, #31e), retain just the last
+    ``ring`` bytes so a runaway stderr costs O(ring) memory, not O(_MAX_STDOUT_BYTES) — the total-byte
+    cap kill still fires, so the DoS guard is unchanged."""
     total = 0
     # read1: return whatever is available now (one underlying read), never block for a full
     # buffer — otherwise a slow/oversized producer would only trip the cap at EOF/kill.
@@ -133,6 +139,9 @@ def _drain(stream, chunks: list, over_cap: threading.Event, pgid: int) -> None:
                 _killpg(pgid, signal.SIGKILL)
                 break
             chunks.append(chunk)
+            if ring is not None and total > ring:
+                # collapse to the last `ring` bytes; memory stays bounded regardless of stderr volume.
+                chunks[:] = [b"".join(chunks)[-ring:]]
     except (ValueError, OSError):
         pass
 
@@ -193,7 +202,8 @@ def _run_claude(request: str, *, model: str, timeout_s: float, executable: str) 
         out_chunks: list = []
         err_chunks: list = []
         t_out = threading.Thread(target=_drain, args=(proc.stdout, out_chunks, over_cap, pgid))
-        t_err = threading.Thread(target=_drain, args=(proc.stderr, err_chunks, over_cap, pgid))
+        t_err = threading.Thread(target=_drain, args=(proc.stderr, err_chunks, over_cap, pgid),
+                                 kwargs={"ring": _STDERR_TAIL_BYTES * 4})  # #31e: keep only a tail
         t_out.start()
         t_err.start()
 

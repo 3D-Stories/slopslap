@@ -216,10 +216,18 @@ def _hunks_for_range(edits: List[Edit], start: int, end: int) -> List[str]:
     return out
 
 
-def normalize_semantic(output) -> dict:
+def normalize_semantic(output, valid_ranges=None, id_to_range=None) -> dict:
     """Validate the Layer-3 callable's output; ANY malformed shape => ambiguous, never clean
     (design R7 / WF5-diff H3). Every concern is validated to a closed dict shape so downstream
-    processing cannot crash on a stray string/int."""
+    processing cannot crash on a stray string/int. When ``valid_ranges`` (a set of
+    ``(start_byte, end_byte)`` from the ledger) is supplied, an ``original_range`` not among them is
+    an INVENTED range => ambiguous (never clean) — the #31d defense so a semantic_fn wired STRAIGHT
+    into verify (no contract adapter) still cannot smuggle a fabricated attribution range. When
+    ``id_to_range`` (``{entry_id: (start,end)}``) is also supplied, a concern that pairs an entry_id
+    with a range belonging to a DIFFERENT entry => ambiguous — the same 31c pairing check
+    ``contract._validate`` enforces, mirrored here so the straight-wired path has parity (not just the
+    contract adapter). ``valid_ranges=None`` disables the 31d/31c checks ENTIRELY — intended only for
+    replay/shape tests; every security-relevant caller (``verify``) MUST pass both sets."""
     if not isinstance(output, dict):
         return {"verdict": "ambiguous", "concerns": [], "note": "non-dict output"}
     verdict = output.get("verdict")
@@ -238,17 +246,29 @@ def normalize_semantic(output) -> dict:
         oranges = c.get("original_ranges", [])
         if not isinstance(eids, list) or not isinstance(oranges, list):
             return {"verdict": "ambiguous", "concerns": [], "note": "bad concern fields"}
+        # stringify before any set/membership use (an element may be an unhashable dict/list).
+        str_eids = [str(x) for x in eids]
         norm_ranges = []
         for rng in oranges:
-            if (isinstance(rng, dict) and isinstance(rng.get("start_byte"), int)
+            if not (isinstance(rng, dict) and isinstance(rng.get("start_byte"), int)
                     and isinstance(rng.get("end_byte"), int)
                     and 0 <= rng["start_byte"] <= rng["end_byte"]):
-                norm_ranges.append({"start_byte": rng["start_byte"], "end_byte": rng["end_byte"]})
-            else:
                 return {"verdict": "ambiguous", "concerns": [], "note": "bad range"}
+            pair = (rng["start_byte"], rng["end_byte"])
+            if valid_ranges is not None and pair not in valid_ranges:
+                return {"verdict": "ambiguous", "concerns": [], "note": "invented range (not in ledger)"}
+            norm_ranges.append({"start_byte": pair[0], "end_byte": pair[1]})
+        # #31c parity: a range paired with a recognized entry_id must be THAT entry's own range.
+        if id_to_range is not None:
+            paired = {id_to_range[i] for i in str_eids if i in id_to_range}
+            if str_eids and norm_ranges and paired:
+                for nr in norm_ranges:
+                    if (nr["start_byte"], nr["end_byte"]) not in paired:
+                        return {"verdict": "ambiguous", "concerns": [],
+                                "note": "original_range does not belong to a paired entry_id"}
         clean_concerns.append({
             "code": str(c.get("code", "semantic")), "message": str(c.get("message", "")),
-            "entry_ids": [str(x) for x in eids], "original_ranges": norm_ranges,
+            "entry_ids": str_eids, "original_ranges": norm_ranges,
         })
     return {"verdict": verdict, "concerns": clean_concerns}
 
@@ -334,7 +354,10 @@ def verify(
     if semantic_fn is not None:
         try:
             raw = semantic_fn(original, revision, ledger.canonical_obj())
-            sem = normalize_semantic(raw)
+            sem = normalize_semantic(
+                raw,
+                valid_ranges={(e.start_byte, e.end_byte) for e in ledger.entries},
+                id_to_range={e.id: (e.start_byte, e.end_byte) for e in ledger.entries})
         except Exception as err:  # noqa: BLE001 - a failing/hanging injector => ambiguous, never clean
             sem = {"verdict": "ambiguous", "concerns": [], "note": f"exception: {err!r}"}
         semantic_status = sem["verdict"]
