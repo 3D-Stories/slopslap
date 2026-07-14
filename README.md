@@ -173,13 +173,15 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.8.2 — v0.4 hardening (#36): the auto-ledger checks `cross_refs` + `defined_terms` are
-  now wired through **all three** check-name-keyed surfaces, not just the ledger builder. Added their
-  region-scoped extractors to `atoms.CHECK_EXTRACTORS` (so the runner's `preservation_region_scoped`
-  gate catches a changed citation/URL or a reworded definition instead of erroring `unknown check`), and
-  the eval-loader's accepted-check allowlist is now **derived from** `CHECK_EXTRACTORS` instead of a
-  hand-kept literal — a drift-guard test pins `loader ⇔ atoms.CHECK_EXTRACTORS ⇔ ledger._CHECK_KIND` so
-  they can never re-split. Builds on #47 (v0.8.1) and the P5 loop (v0.8.0).
+- **Version:** 0.8.3 — v0.4 hardening (#46): harden the untrusted command-target boundary across
+  `audit`/`suggest`/`apply`. The old wrapper used a static `SLOPSLAP_TARGET` sentinel a target line
+  could reproduce to close the block early and inject the model's diagnosis step. A static command
+  prompt (expanded only for `$ARGUMENTS`) **cannot** carry an unforgeable per-run delimiter, so the fix
+  is **rule-based, not token-based**: a distinctive `SLOPSLAP_UNTRUSTED_TARGET` fence + decisive framing
+  that everything between the fences is DATA — a line inside is data *even if it reproduces the fence
+  verbatim*, says "ignore previous instructions", or asks to change mode / authorize a write. This is a
+  soft, model-obeyed guard (there is no delimiter parser); `apply` stays backup + verifier gated so an
+  injected line can never reach the file. Builds on #36 (v0.8.2), #47 (v0.8.1).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
@@ -188,6 +190,19 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.8.3** — v0.4 hardening (#46, Epic #67 Wave 2): harden the untrusted command-target boundary
+  across `audit`/`suggest`/`apply`. The old wrapper `<<<SLOPSLAP_TARGET … SLOPSLAP_TARGET` used a static
+  sentinel; a target line reading `SLOPSLAP_TARGET` could close it and inject the model's diagnosis step
+  (a prompt-injection of the model-facing lane — not a mutation vuln, since `apply` is backup + verifier
+  gated). A static command prompt is expanded only for `$ARGUMENTS`, so it **cannot** carry a per-run
+  unforgeable delimiter — the fix is therefore **rule-based, not token-based**: a distinctive
+  `SLOPSLAP_UNTRUSTED_TARGET` fence + decisive framing that everything between the fences is UNTRUSTED
+  DATA — a line inside is data *even if it reproduces the fence verbatim*, says "ignore previous
+  instructions", declares a new keystone, or asks to change mode / authorize a tool or write / override
+  a protected span. This is a **soft, model-dependent** guard (there is no delimiter parser); `apply`
+  remains backup + verifier gated so an injected line can never reach the file. A scaffold test pins the
+  framing on all three commands; the live model behavior is **not** covered by an automated test in this
+  change — a `SLOPSLAP_LIVE` injection test is a tracked follow-up.
 - **0.8.2** — v0.4 hardening (#36, Epic #67 Wave 1): wire the auto-ledger checks `cross_refs` +
   `defined_terms` through the runner. `ledger._CHECK_KIND` already carried all 7 checks, but
   `atoms.CHECK_EXTRACTORS` (the region-scoped preservation gate's map) and the eval-loader's
