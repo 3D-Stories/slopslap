@@ -196,7 +196,7 @@ no edit. *When in doubt, it changes nothing.*
   match, with an `EditError` the apply/run entry points already surface as a clean invalid-input
   failure (never a crash). Backward-compatible: absent preimage = no check, byte-identical to pre-#43;
   the whole-doc `source_sha256` binding on the apply path is unchanged, so the per-range preimage is the
-  finer-grained guard for scripts that lack a whole-doc binding. +7 tests; suite 620 → 627.
+  finer-grained guard for scripts that lack a whole-doc binding. +9 tests; suite 620 → 629.
 - **0.8.3** — v0.4 hardening (#46, Epic #67 Wave 2): harden the untrusted command-target boundary
   across `audit`/`suggest`/`apply`. The old wrapper `<<<SLOPSLAP_TARGET … SLOPSLAP_TARGET` used a static
   sentinel; a target line reading `SLOPSLAP_TARGET` could close it and inject the model's diagnosis step

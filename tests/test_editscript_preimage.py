@@ -65,6 +65,20 @@ def test_right_offset_wrong_bytes_caught_even_when_in_bounds():
         apply_edits(drifted, edits)
 
 
+def test_multi_edit_one_bad_preimage_rejects_the_whole_script():
+    good = base64.b64encode(_DOC[4:10]).decode()          # "client" — correct
+    bad = base64.b64encode(b"XXX").decode()               # wrong at [21,24)
+    edits = parse_edits([_raw(4, 10, b"user", preimage_b64=good),
+                         _raw(21, 24, b"300", preimage_b64=bad)])
+    with pytest.raises(EditError, match="preimage"):
+        apply_edits(_DOC, edits)
+
+
+def test_uppercase_preimage_sha256_is_normalized():
+    edits = parse_edits([_raw(4, 10, b"user", preimage_sha256=sha256_hex(_DOC[4:10]).upper())])
+    assert apply_edits(_DOC, edits) == b"the user MUST wait 200 ms.\n"
+
+
 def test_apply_from_decisions_rejects_a_preimage_mismatch_cleanly(tmp_path):
     # integration: a mismatching preimage surfaces as a clean invalid-input failure (exit-classable),
     # never an uncaught traceback — run_candidate's public validator catches the EditError.
