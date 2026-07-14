@@ -14,9 +14,15 @@ from typing import List, Tuple
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from slopslap_verification.atoms import CHECK_EXTRACTORS  # noqa: E402
 from slopslap_verification.editscript import sha256_hex  # noqa: E402
 
 SCHEMA_VERSION = 1
+
+# #36: the accepted invariant-region checks are EXACTLY those with a region-scoped extractor — derived
+# from the single source of truth (atoms.CHECK_EXTRACTORS), never a hand-kept literal that drifts from
+# it and from ledger._CHECK_KIND (a drift-guard test pins all three together).
+_ALLOWED_CHECKS = frozenset(CHECK_EXTRACTORS)
 
 VALID_GENRES = {"personal", "spec", "prd", "marketing", "technical", "general"}
 INVARIANT_KINDS = {
@@ -144,7 +150,7 @@ def validate_manifest(original: bytes, manifest: dict) -> List[str]:
         if not (isinstance(s, int) and isinstance(e, int) and 0 <= s <= e <= n):
             problems.append(f"invariant_region {region.get('id','?')} out of bounds")
         for check in region.get("checks", []):
-            if check not in {"numbers", "units", "modality", "negation", "conditions"}:
+            if check not in _ALLOWED_CHECKS:
                 problems.append(
                     f"invariant_region {region.get('id','?')} unknown check '{check}'"
                 )

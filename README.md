@@ -173,11 +173,13 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.8.1 — v0.4 hardening (#47): a dry-run (`run` / `apply --dry-run`, `write=False`) no
-  longer writes a backup file. `create_verified_backup` ran before the dry-run short-circuit, so every
-  preview left an orphaned `.bak` behind; the backup now runs only when actually mutating (`write=True`)
-  — the real apply still writes exactly one verified backup before the atomic replace. Builds on the
-  P5 learning loop (v0.8.0) and keystone v2.
+- **Version:** 0.8.2 — v0.4 hardening (#36): the auto-ledger checks `cross_refs` + `defined_terms` are
+  now wired through **all three** check-name-keyed surfaces, not just the ledger builder. Added their
+  region-scoped extractors to `atoms.CHECK_EXTRACTORS` (so the runner's `preservation_region_scoped`
+  gate catches a changed citation/URL or a reworded definition instead of erroring `unknown check`), and
+  the eval-loader's accepted-check allowlist is now **derived from** `CHECK_EXTRACTORS` instead of a
+  hand-kept literal — a drift-guard test pins `loader ⇔ atoms.CHECK_EXTRACTORS ⇔ ledger._CHECK_KIND` so
+  they can never re-split. Builds on #47 (v0.8.1) and the P5 loop (v0.8.0).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
@@ -186,6 +188,16 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.8.2** — v0.4 hardening (#36, Epic #67 Wave 1): wire the auto-ledger checks `cross_refs` +
+  `defined_terms` through the runner. `ledger._CHECK_KIND` already carried all 7 checks, but
+  `atoms.CHECK_EXTRACTORS` (the region-scoped preservation gate's map) and the eval-loader's
+  accepted-check allowlist only knew 5 — so an auto-derived manifest routing either check through the
+  runner hit `unknown check '…'` instead of actually verifying it. Added `cross_refs` (citations + URLs,
+  matching `ledger._L2_EXTRACT['cross_reference']`) and `defined_terms` (whitespace-normalized region
+  text) extractors, and made `loader`'s allowlist `frozenset(CHECK_EXTRACTORS)` (single source of truth).
+  A drift-guard test asserts `set(ledger._CHECK_KIND) == set(atoms.CHECK_EXTRACTORS) == loader
+  allowlist`, so a future check added to one surface and not the others fails the suite. Dormant-defect
+  fix; no behavior change for existing 5-check manifests. +6 tests; suite 613 → 619.
 - **0.8.1** — v0.4 hardening (#47, Epic #67 Wave 1): a dry-run no longer creates a backup. In
   `slopslap_apply/apply.py`, `create_verified_backup` ran unconditionally *before* the `if not write:`
   dry-run short-circuit, so every `run`/`--dry-run` preview wrote (and orphaned) a `.bak`. The backup

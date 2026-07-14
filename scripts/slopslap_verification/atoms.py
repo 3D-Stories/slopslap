@@ -158,12 +158,27 @@ def proper_nouns(text: str) -> Counter:
 
 
 # check-name -> extractor, used for region-scoped preservation.
+def cross_refs(text: str) -> Counter:
+    """#36: cross-references = citations + urls. A change to EITHER (a cite renumbered, a URL edited)
+    breaks the multiset — mirrors ledger._L2_EXTRACT['cross_reference'] (cites + urls)."""
+    return citations(text) + urls(text)
+
+
+def defined_terms(text: str) -> Counter:
+    """#36: a defined-term region's whitespace-normalized text as a single atom, so ANY wording change
+    to the definition is caught — mirrors ledger._L2_EXTRACT['defined_term'] ({'text': ' '.join(split)})."""
+    norm = " ".join(text.split())
+    return Counter({norm: 1}) if norm else Counter()
+
+
 CHECK_EXTRACTORS = {
     "numbers": numbers,
     "units": quantities,  # value+unit tuple, so a unit change is caught (WF5-diff F4)
     "modality": modality,
     "negation": negation,
     "conditions": conditions,
+    "cross_refs": cross_refs,        # #36: wired through the runner region gate (was ledger-only)
+    "defined_terms": defined_terms,  # #36
 }
 
 # HARD claim-atom categories (low false-positive). proper_nouns intentionally excluded
