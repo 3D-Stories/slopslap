@@ -42,6 +42,16 @@ mandatory verified pre-mutation backup and the deterministic 3-layer verifier bo
    ```
    python3 scripts/slopslap_assemble/assemble.py apply --path PATH --edits EDITS.json [--declared-genre GENRE]
    ```
+   Or apply ONLY the hunks a user approved in the review stage (#61/P3), from its `decisions.json`
+   (`--decisions` and `--edits` are mutually exclusive):
+   ```
+   python3 scripts/slopslap_assemble/assemble.py apply --path PATH --decisions decisions.json [--declared-genre GENRE]
+   ```
+   `decisions.json` is **untrusted**: it is schema-validated, its finding-ids are matched against the
+   document's own findings, and it is bound to the audit's `source_sha256` (a drifted file →
+   `digest_mismatch`). Only the user-approved (apply/edit) hunks route into the engine; the byte-exact
+   verifier still hard-gates every one — an approved hunk that would break an invariant is surfaced
+   blocked, never applied. The user's decision authorizes the edit; the genre never does.
    It emits **exactly one JSON `RunResult`** on stdout. Read the exit code as the verdict:
    - **0** — applied: a verified pre-mutation backup was written first, then the source was replaced
      atomically; `apply` stage `status: ok`, `data.mutated: true`, `data.backup.path` is the recovery
