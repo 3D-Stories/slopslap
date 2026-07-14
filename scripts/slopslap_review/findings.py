@@ -32,7 +32,7 @@ from slopslap_verification.ledger import verify
 _DELETE_B64 = base64.b64encode(b"").decode("ascii")
 
 # short human-readable snippet keys a scanner location may carry (first present wins).
-_EVIDENCE_KEYS = ("match", "phrase", "opener", "prefix", "cluster", "adjective")
+_EVIDENCE_KEYS = ("match", "phrase", "opener", "prefix", "cluster", "adjective", "word")
 
 
 class FindingsError(ValueError):

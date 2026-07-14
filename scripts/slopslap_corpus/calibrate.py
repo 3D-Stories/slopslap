@@ -39,6 +39,7 @@ DEFAULT_METRIC_TELL_MAP = {
     "vague_attribution": "genericness",
     "stock_lexical_clusters": "lexical_structural",
     "bold_label_density": "lexical_structural",
+    "generic_diction": "genericness",
 }
 
 

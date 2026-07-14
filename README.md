@@ -173,11 +173,10 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.4.0 — de-slop pivot P1. Universal detection (genre no longer zeroes a metric's
-  `locations` — suppression is now a per-finding recommendation via `recommend(genre, metric)`), a
-  findings-with-recommendations envelope with verifier-prechecked strip rewrites, and the keystone v2
-  rewrite (the user's review decision authorizes; recommendations may learn, authorization never does).
-  Builds on v0.3.0 (P0): frozen review-loop data contracts + slop→clean golden pair fixtures.
+- **Version:** 0.5.0 — de-slop pivot P2. Adds the generic-diction / filler detector (`generic_diction`):
+  corporate-slop buzzwords (robust · scalable · best-in-class · leverage · empower · …) and empty
+  intensifiers (incredibly · extremely · truly · …), measure-only and feeding the P1 recommendation
+  layer (filler class). Builds on P1 (v0.4.0): universal detection, the findings envelope, and keystone v2.
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
@@ -186,6 +185,14 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.5.0** — de-slop pivot P2: the generic-diction / filler detector (the "finds more" payload).
+  New `generic_diction` scanner metric (`scripts/slopslap_scan/metrics.py` + pinned `CORPORATE_BUZZWORDS`
+  / `EMPTY_INTENSIFIERS` tables): flags corporate-slop buzzwords and empty intensifiers as escaped
+  word-boundary literals (no ReDoS), measure-only with a calibratable `GENERIC_DICTION_FLAG_AT` threshold.
+  Classified into the `filler` metric-class, so it feeds the P1 genre recommendation layer (strip under
+  general/prd/technical; the user's review decision still authorizes, the verifier still hard-gates) and
+  is registered in the `calibrate.py` tell map (`genericness`) for threshold fitting once P5 review-decision
+  labels arrive. Existing `pair-corporate-adjective-pile` / `pair-generic-diction` golden fixtures exercise it.
 - **0.4.0** — de-slop pivot P1: universal detection + findings-with-recommendations + keystone v2.
   `GENRE_SUPPRESS` polarity flips — genre never empties a metric's `locations`; suppression survives
   only as a per-finding `recommendation` (a new per-(genre, metric-class) `recommend()` table whose
