@@ -171,6 +171,20 @@ def _scan_metrics(doc: bytes, fmt: str, genre: Optional[str]) -> dict:
     raise DiagnosisError(f"unknown format {fmt!r}; expected 'markdown' or 'text'")
 
 
+def _has_strip_candidate(metrics: dict, genre: str) -> bool:
+    """True iff some metric the genre RECOMMENDS ``strip`` carries a location or a doc-level
+    ``soft_flag`` — i.e. the doc has an ACTIONABLE tell (something to strip), as opposed to being
+    flagged only by genre-KEPT tells (keystone v2 / #59). The empty-candidate 'flagged' block keys on
+    THIS, not on bare ``audit_status``: adv A1's intent is "never silently pass actionable slop", and
+    after the #59 flip a genre-kept-only doc stays ``audit_status="flagged"`` (locations survive) even
+    though its genre-correct answer is 'no edits'. Gating on a strip candidate keeps that a legitimate
+    no-op while still blocking an empty candidate whenever there is real slop to strip."""
+    for name, res in metrics.items():
+        if met.recommend(genre, name) == "strip" and (res.get("locations") or res.get("soft_flag")):
+            return True
+    return False
+
+
 def _audit_status(metrics: dict) -> str:
     """"flagged" iff ANY metric emitted a location OR any doc-level ``soft_flag`` is true (adv A1);
     else "clean". This distinction survives the ``reject_all`` authorization overload."""
@@ -390,19 +404,24 @@ def run_candidate(audit: AuditResult, edits, *, semantic_fn=None, write: bool = 
     except (ValueError, TypeError, KeyError) as err:  # EditError/binascii.Error subclass ValueError
         return _abort_after_candidate(_stage_fail("candidate", "invalid_edits", str(err)))
 
-    # --- candidate: empty-candidate policy, keyed on audit_status NOT authorization (adv A1) ---
+    # --- candidate: empty-candidate policy (adv A1 + keystone v2 #59). Block an empty candidate only
+    #     when the audit is flagged AND the genre RECOMMENDS stripping at least one detected tell — a
+    #     missing model output on actionable slop is never a silent pass. A doc flagged only by
+    #     genre-KEPT tells (post-#59 its locations survive) has nothing to strip, so its empty
+    #     candidate is a legitimate no-op, exactly like a clean audit. ---
     if not parsed:
-        if audit.audit_status == "flagged":
+        if audit.audit_status == "flagged" and _has_strip_candidate(audit.metrics, audit.genre):
             return _build_run(audit.run_id, [
                 audit_stage,
                 StageResult("candidate", "blocked", "candidate_empty",
-                            "empty candidate on a flagged audit: a missing model output is never a "
-                            "silent pass", data=[]),
+                            "empty candidate on a flagged audit with strip-recommended tells: a "
+                            "missing model output is never a silent pass", data=[]),
             ] + _aborted(["verify", "apply"], "candidate"))
-        # clean audit + empty candidate: a legitimate no-op — nothing to verify or apply
+        # clean audit, OR flagged only by genre-kept tells: nothing to strip -> a legitimate no-op
         return _build_run(audit.run_id, [
             audit_stage,
-            StageResult("candidate", "ok", "ok", "empty candidate on a clean audit: no-op", data=[]),
+            StageResult("candidate", "ok", "ok",
+                        "empty candidate with no strip-recommended tells: no-op", data=[]),
         ])
     candidate_stage = StageResult("candidate", "ok", "ok", "candidate validated", data=parsed)
 

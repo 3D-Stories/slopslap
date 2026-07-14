@@ -326,11 +326,12 @@ def recommend(genre, metric_name: str) -> str:
     ``genre`` (issue #59, keystone v2). Genre NEVER authorizes an edit; this only SETS the
     recommendation the user reviews, and the byte-exact verifier still hard-gates every applied edit.
 
-    ``genre=None`` threads as ``"general"`` (the scanner treats genre=None == general). An unknown
-    genre STRING is a caller error (``ValueError``): ``classify_genre`` only ever emits the 4-genre
-    enum, so a value outside the forward-compat table is a bug, not untrusted input. An unmapped
-    (new/unknown) metric preserves (``"keep"``) — the asymmetric-failure-safe direction — until it is
-    deliberately classified in ``METRIC_CLASS``.
+    ``genre`` None or empty threads as ``"general"`` (the scanner treats genre=None/"" == general, via
+    ``compute_all``'s ``if genre:`` guard — kept consistent here). A non-empty genre string outside the
+    forward-compat table is a caller error (``ValueError``): ``classify_genre`` only ever emits the
+    4-genre enum, so such a value is a bug, not untrusted input. An unmapped (new/unknown) metric
+    preserves (``"keep"``) — the asymmetric-failure-safe direction — until it is deliberately
+    classified in ``METRIC_CLASS``.
     """
     g = genre or "general"
     keep_classes = _GENRE_KEEP_CLASSES.get(g)

@@ -235,6 +235,16 @@ def test_recommend_unclassified_metric_preserves():
     assert recommend("general", "some_future_metric_not_yet_classified") == "keep"
 
 
+def test_scanner_classifier_schema_genre_sets_agree():
+    # the scanner (_apply_genre) accepts EXACTLY what the classifier emits — else a doc classified as
+    # a genre the scanner rejects would raise ValueError uncaught -> a hard crash on a live doc.
+    from slopslap_scan.metrics import _GENRE_KEEP_CLASSES, _SCANNER_GENRES
+    from eval.loader import VALID_GENRES
+    assert set(GENRE_ENUM) == set(_SCANNER_GENRES)
+    # the recommendation table is keyed over the feedback schema's genre enum (forward-compat rows).
+    assert set(_GENRE_KEEP_CLASSES) == set(VALID_GENRES)
+
+
 # ================= part (b): reaches verify via authorized ranges =================
 def test_genre_constrains_authorized_ranges_end_to_end():
     from slopslap_scan.diagnoses import authorized_ranges_from_diagnoses
