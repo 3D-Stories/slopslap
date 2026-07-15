@@ -440,3 +440,20 @@ def test_editbox_autoresizes_instead_of_scrolling(tmp_path):
     assert "field-sizing:content" in page.replace(" ", "")   # native auto-size where supported
     assert "autosize" in page and "scrollHeight" in page     # JS fallback + programmatic seeding
     assert "overflow:hidden" in page.replace(" ", "")        # no scrollbar on the grown box
+
+
+def test_distribution_finding_has_no_delete_candidate(tmp_path):
+    # #92: a uniform-cadence run (numberless) must NOT yield a green whole-span delete candidate.
+    # After the fix: recommendation 'keep', proposed_rewrite None (no auto-delete footgun).
+    p = tmp_path / "cadence.md"
+    p.write_text("Intro line here.\n\n"
+                 "The system stays fast under load.\n\n"
+                 "The system stays simple to reason about.\n\n"
+                 "The system stays pleasant to maintain.\n", encoding="utf-8")
+    audit = audit_document(str(p), declared_genre="general").data
+    doc = p.read_bytes()
+    runs = [f for f in build_findings(audit, doc) if f.category == "paragraph_sentence_count_runs"]
+    assert runs, "the uniform run should still be DETECTED"
+    for f in runs:
+        assert f.recommendation == "keep", f
+        assert f.proposed_rewrite is None, f.proposed_rewrite   # no whole-span delete candidate

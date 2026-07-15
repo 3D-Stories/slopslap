@@ -158,3 +158,21 @@ def test_generic_diction_registered_and_classified():
     assert "generic_diction" in METRIC_CLASS
     # a filler-class tell: stripped under general, never authorizing on its own.
     assert recommend("general", "generic_diction") == "strip"
+
+
+def test_distribution_class_always_keeps_across_genres():
+    # #92: distribution-class tells (paragraph_sentence_count_runs, sentence_length_*) are a
+    # STRUCTURAL property of a run — no span-local strippable token, so the engine has no correct
+    # auto-strip candidate. recommend() must return "keep" for them in EVERY genre (genre-independent),
+    # so findings._precheck never builds a whole-span delete. The user can still hand-edit.
+    from slopslap_scan.metrics import METRIC_CLASS, recommend
+    distribution = [m for m, c in METRIC_CLASS.items() if c == "distribution"]
+    assert set(distribution) == {
+        "sentence_length_distribution", "sentence_length_dispersion", "paragraph_sentence_count_runs"
+    }
+    for genre in ("general", "prd", "marketing", "technical", "spec", "personal"):
+        for metric in distribution:
+            assert recommend(genre, metric) == "keep", (genre, metric)
+    # non-distribution recommendations unchanged (regression guard)
+    assert recommend("general", "generic_diction") == "strip"
+    assert recommend("general", "negative_parallelism") == "strip"

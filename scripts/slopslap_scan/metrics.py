@@ -343,6 +343,15 @@ _GENRE_KEEP_CLASSES = {
 # (genre.GENRE_ENUM). An unknown scanner genre is a caller error (fail loud).
 _SCANNER_GENRES = ("general", "spec", "prd", "personal")
 
+# Classes that ALWAYS keep, regardless of genre (#92). A distribution-class tell
+# (paragraph_sentence_count_runs, sentence_length_distribution/dispersion) is a STRUCTURAL
+# property of a *run* of units — there is no span-local strippable token, so the deterministic
+# engine has no correct auto-strip candidate (findings._precheck would emit a whole-span DELETE,
+# which is wrong-in-kind for cadence and, on numberless prose, a green one-click paragraph delete).
+# The honest recommendation is keep = informational; the user can still hand-edit (rewrite the
+# rhythm) and the verifier still gates. Genre-independent because the reason does not depend on genre.
+_ALWAYS_KEEP_CLASSES = frozenset({"distribution"})
+
 
 def recommend(genre, metric_name: str) -> str:
     """Advisory per-finding recommendation — ``"strip"`` or ``"keep"`` — for ``metric_name`` under
@@ -363,6 +372,8 @@ def recommend(genre, metric_name: str) -> str:
     cls = METRIC_CLASS.get(metric_name)
     if cls is None:
         return "keep"
+    if cls in _ALWAYS_KEEP_CLASSES:
+        return "keep"  # #92: structural run-property, no span-local strip — keep genre-independently
     return "keep" if cls in keep_classes else "strip"
 
 # Evaluative adjectives that, asserted as a requirement ("the UI must be fast"), are laundering
