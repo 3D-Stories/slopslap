@@ -278,3 +278,40 @@ def test_actions_empty_alternative_fails_closed(tmp_path):
     dec = decisions_from_actions(payload, {fid: {"action": "edit", "replacement_b64": b64, "alternative": ""}})
     assert dec["decisions"][0].get("alternative") == "", "empty value must be carried, not dropped"
     assert any("alternative" in p2 for p2 in validate_decisions(dec))
+
+
+def _payload_with_alternatives(tmp_path):
+    from dataclasses import replace
+    p = tmp_path / "d.md"
+    p.write_text(_DOC, encoding="utf-8")
+    audit = audit_document(str(p), declared_genre="general").data
+    doc = p.read_bytes()
+    findings = build_findings(audit, doc)
+    alts = [
+        {"id": "subjectivize", "text": "we stand behind it", "claim_status": "none",
+         "label": "no external claim"},
+        {"id": "lateral", "text": "industry-leading results", "claim_status": "banned",
+         "label": "BLOCKED - lateral swap"},
+    ]
+    enriched = [replace(findings[0], alternatives=alts)] + list(findings[1:])
+    return build_review_payload(audit, doc, enriched)
+
+
+def test_page_renders_alternatives_machinery(tmp_path):
+    # #83: the page script carries the alts rendering + selection flow.
+    payload = _payload_with_alternatives(tmp_path)
+    page = render_review_page(payload, post_url="http://127.0.0.1:9/finish?token=x")
+    assert "f.alternatives" in page                    # rendering keyed on the payload field
+    assert "claim_status" in page                      # chip per status
+    assert "banned" in page and "disabled" in page     # banned alternatives never selectable
+    assert ".alts" in page and ".altlbl" in page       # mockup block styles present
+    assert "alternative:" in page or "alternative =" in page or "alternative}" in page or "a.id" in page
+
+
+def test_page_decodes_proposed_rewrite_dict(tmp_path):
+    # #83 (defect from #81 run): proposed_rewrite is {start,end,replacement_b64}; the page
+    # must decode the b64 (empty = delete) instead of type-testing for a string.
+    payload = _payload_with_alternatives(tmp_path)
+    page = render_review_page(payload, post_url="http://127.0.0.1:9/finish?token=x")
+    assert "replacement_b64" in page                   # reads the real field
+    assert "typeof f.proposed_rewrite === 'string'" not in page
