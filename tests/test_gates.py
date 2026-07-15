@@ -138,16 +138,19 @@ def test_no_new_claim_atoms_fail_per_hard_kind():
     # #82 AC1: each HARD atom kind is individually caught, reason names the atom.
     man = {"allowed_claim_atoms": []}
     orig = b"The service handles requests."
-    cases = {
-        "date": b"The service handles requests since 2024-01-15.",
-        "url": b"The service handles requests (see https://example.com/bench).",
-        "citation": b"The service handles requests [1].",
-        "threshold": b"The service handles requests in at most 5 ms.",
-    }
-    for kind, rev in cases.items():
+    # (kind, revision, the atom value the evidence must NAME — adversarial F2)
+    cases = [
+        ("number", b"The service handles 12,000 requests.", "12000"),
+        ("date", b"The service handles requests since 2024-01-15.", "2024-01-15"),
+        ("url", b"The service handles requests (see https://example.com/bench).", "https://example.com/bench"),
+        ("citation", b"The service handles requests [1].", "[1]"),
+        ("threshold", b"The service handles requests in at most 5 ms.", "at most"),
+    ]
+    for kind, rev, atom in cases:
         r = G.no_new_claim_atoms(orig, rev, man)
         assert not r.passed, kind
-        assert r.evidence and any(kind in cat for cat in r.evidence[0]), (kind, r.evidence)
+        assert r.evidence and kind in r.evidence[0], (kind, r.evidence)
+        assert any(atom in a for a in r.evidence[0][kind]), (kind, r.evidence)
 
 
 def test_no_new_claim_atoms_fail_new_buzzword_named():

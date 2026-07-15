@@ -210,7 +210,11 @@ _BUZZWORD_RE = re.compile(
     re.IGNORECASE,
 )
 _AUTHORITY_RE = re.compile(
-    r"\b(?:" + "|".join(r"\s+".join(re.escape(w) for w in p.split()) for p in VAGUE_ATTRIBUTION) + r")\b",
+    # longest-first like the buzzword alternation: today's table has no prefix-overlapping
+    # phrases, but alternation is first-match — sorting keeps a future longer phrase from
+    # being shadowed by a shorter prefix (adversarial F1, defensive).
+    r"\b(?:" + "|".join(r"\s+".join(re.escape(w) for w in p.split())
+                        for p in sorted(VAGUE_ATTRIBUTION, key=len, reverse=True)) + r")\b",
     re.IGNORECASE,
 )
 
