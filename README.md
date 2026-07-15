@@ -173,7 +173,11 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.11.0 — no-new-claims lexeme tier (#82, epic #85 C2): `verify()` Layer 1 now also
+- **Version:** 0.12.0 — review-UI de-claim alternatives (#83, epic #85 C3): findings carrying
+  `alternatives` render the mockup's pick-buttons with claim-status chips (banned = disabled);
+  a pick seeds the edit textarea and rides into decisions as edit provenance; plus the
+  proposed-rewrite render fix (b64 dict decoded, empty = delete marker). Previous: 0.11.0 —
+  no-new-claims lexeme tier (#82, epic #85 C2): `verify()` Layer 1 now also
   rejects a replacement that INTRODUCES a corporate buzzword or borrowed-authority phrase absent
   from the original (token-boundary, case-insensitive; removals/reuse never trip) — the mockup's
   "lateral swap = banned" rule, deterministic. Previous: 0.10.0 — de-claim alternatives schema
@@ -197,6 +201,16 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.12.0** — review-UI de-claim alternatives (#83, epic #85 C3, 2026-07-15): a finding carrying
+  `alternatives` (#81 schema) renders the ratified mockup's `.alts` block — one pick-button per
+  alternative with its claim-status chip (`no external claim` / `claims what the doc supports` /
+  `kept` / `BLOCKED …`); `banned` alternatives render disabled and are never selectable. Picking
+  one seeds the inline edit textarea, sets the card to `edit`, and records the alternative id as
+  the edit's provenance (`decisions[].alternative`, bound server-side to what the finding actually
+  offered per #81). Selection authorizes nothing — Finish is the decision, the verifier the gate.
+  Also fixes the proposed-rewrite render: the page now decodes the real
+  `{start,end,replacement_b64}` shape (empty = "∅ span deleted" marker) instead of a never-true
+  string type-test, so strike→proposal rendering actually fires. Rendering stays textContent-only.
 - **0.11.0** — no-new-claims lexeme tier (#82, epic #85 C2, 2026-07-15): the deterministic
   no-new-claims gate (already live in `verify()` Layer 1 for hard atoms — numbers, dates, urls,
   citations, thresholds) gains the LEXEME tier: a replacement that introduces a corporate
