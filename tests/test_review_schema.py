@@ -313,3 +313,71 @@ def test_error_classes_are_value_errors():
 def test_schema_versions_frozen_at_1():
     assert DECISIONS_SCHEMA_VERSION == 1
     assert FEEDBACK_SCHEMA_VERSION == 1
+
+
+# --------------------------------------------------------------------------- #81 alternatives
+
+
+def _canonical_alternatives():
+    return [
+        {"id": "subjectivize", "text": "delivers results we stand behind", "claim_status": "none"},
+        {"id": "scope-verifiable", "text": "passes the full 3-layer suite",
+         "claim_status": "scoped", "label": "claims what the doc supports"},
+    ]
+
+
+def test_decisions_alternative_only_allowed_with_edit():
+    # #81 AC2: alternative labels an edit's provenance; on apply/discard it is rejected.
+    payload = _canonical_decisions()
+    payload["decisions"][0]["alternative"] = "subjectivize"  # user_action: apply
+    problems = validate_decisions(payload)
+    assert any("alternative is only allowed with user_action 'edit'" in p for p in problems)
+
+
+def test_decisions_alternative_with_edit_still_valid():
+    assert validate_decisions(_canonical_decisions()) == []
+
+
+def test_feedback_alternative_optional_and_edit_only():
+    from slopslap_review.schema import validate_feedback_line as v
+    line = _canonical_feedback()
+    line["user_action"] = "edit"
+    line["replacement"] = REPLACEMENT_B64
+    line["alternative"] = "subjectivize"
+    assert v(line) == []
+    bad = _canonical_feedback()
+    bad["user_action"] = "discard"
+    del bad["replacement"]
+    bad["alternative"] = "subjectivize"
+    assert any("alternative is only allowed with user_action 'edit'" in p for p in v(bad))
+    nonstr = _canonical_feedback()
+    nonstr["user_action"] = "edit"
+    nonstr["replacement"] = REPLACEMENT_B64
+    nonstr["alternative"] = 7
+    assert any("alternative" in p for p in v(nonstr))
+
+
+def test_validate_alternatives_canonical_clean():
+    from slopslap_review.schema import validate_alternatives
+    assert validate_alternatives(_canonical_alternatives()) == []
+
+
+def test_validate_alternatives_rejects_bad_shapes():
+    from slopslap_review.schema import validate_alternatives
+    assert validate_alternatives("nope") == ["alternatives must be a list"]
+    assert any("must be an object" in p for p in validate_alternatives(["x"]))
+    bad_enum = _canonical_alternatives()
+    bad_enum[0]["claim_status"] = "amazing"
+    assert any("claim_status" in p for p in validate_alternatives(bad_enum))
+    unhashable = _canonical_alternatives()
+    unhashable[0]["claim_status"] = ["none"]  # must be a problem, never a TypeError
+    assert any("claim_status" in p for p in validate_alternatives(unhashable))
+    dup = _canonical_alternatives()
+    dup[1]["id"] = dup[0]["id"]
+    assert any("duplicate" in p for p in validate_alternatives(dup))
+    unknown = _canonical_alternatives()
+    unknown[0]["surprise"] = True
+    assert any("unknown key" in p for p in validate_alternatives(unknown))
+    nolabel = _canonical_alternatives()
+    nolabel[1]["label"] = ""
+    assert any("label" in p for p in validate_alternatives(nolabel))
