@@ -173,12 +173,13 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.8.4 — v0.4 hardening (#43): a **self-checking edit-script**. The wire shape
-  `{start_byte,end_byte,replacement_b64}` had no preimage, so an in-bounds offset at the WRONG bytes (a
-  stale script against a drifted doc) could pass bounds/overlap while editing the wrong text. `Edit`
-  now carries an optional `preimage_sha256` (parsed from `preimage_b64` or `preimage_sha256` in the
-  script); `apply_edits` rejects a range whose doc bytes don't match. Backward-compatible — absent
-  preimage = no check, byte-identical to before. Builds on #46 (v0.8.3), #36 (v0.8.2), #47 (v0.8.1).
+- **Version:** 0.9.0 — review page rebuilt in the ratified pivot design language
+  (`docs/planning/2026-07-13-deslop-pivot-design.html` §02): cream/dark editorial theme, serif
+  passages with strike→proposal rendering, mono category/recommendation chips, ✂/✎/✋ outcome
+  buttons with a `· rec` marker, inline edit textarea, live tally + progress, theme toggle. The
+  server startup line now prints the `ssh -L` tunnel command for remote browsers
+  (`SLOPSLAP_TUNNEL_HOST`, default `claude-code`). Engine behavior unchanged. Builds on #43
+  (v0.8.4), #46 (v0.8.3), #36 (v0.8.2), #47 (v0.8.1).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
@@ -187,6 +188,20 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.9.0** — review page rebuilt to the ratified mockup (UAT feedback, 2026-07-15): the interactive
+  review page now carries the pivot design language from
+  `docs/planning/2026-07-13-deslop-pivot-design.html` §02 — cream/dark editorial paper (grid
+  background, serif display header), per-finding cards with mono category + recommendation chips,
+  serif passage rendering that strikes the original and shows the engine's proposal in green,
+  ✂ apply / ✎ edit / ✋ keep outcome buttons (the recommended one carries a `· rec` marker), an
+  inline edit textarea pre-filled with the visible span (replacing the old `window.prompt`; an empty
+  replacement never emits — Finish refuses and points at the finding), re-click to unset, tinted
+  card states, a live `N strip · N edited · N keep · N undecided` tally + progress counter, a theme
+  toggle, and blocked findings showing the verifier reason with feedback-only buttons. The server
+  startup message now also prints the exact `ssh -L <port>:127.0.0.1:<port> <host>` tunnel command
+  for reviewing from a remote browser — host from `SLOPSLAP_TUNNEL_HOST` (default `claude-code`);
+  the server itself stays loopback-only by design. Rendering stays `textContent`-only (XSS-safe);
+  no engine, schema, or authorization change.
 - **0.8.4** — v0.4 hardening (#43, Epic #67 Wave 3): a self-checking edit-script. The wire shape
   `{start_byte,end_byte,replacement_b64}` carried no expected preimage, so an in-bounds offset at the
   WRONG bytes — a stale/drifted script whose offsets happened to stay valid, and that still preserved
