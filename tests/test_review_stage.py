@@ -324,3 +324,43 @@ def test_page_alternatives_state_machine_guards(tmp_path):
     assert "!blocked && Array.isArray(f.alternatives)" in page          # F3
     assert "a.text === ''" in page and "action:'apply', picked:" in page  # F2
     assert "a.alternative || a.picked" in page                           # F1
+
+
+def test_finish_handler_rejects_forged_alternative_id(tmp_path):
+    # #83 adv F1: end-to-end — the REAL finish handler rejects an alternative id the finding
+    # never offered (binding enforced via #81's alternative_ids map), and accepts an offered one.
+    import base64
+    from dataclasses import replace
+    from slopslap_review.review import serve_review
+    p = tmp_path / "d.md"
+    p.write_text(_DOC, encoding="utf-8")
+    audit = audit_document(str(p), declared_genre="general").data
+    doc = p.read_bytes()
+    findings = build_findings(audit, doc)
+    alts = [{"id": "subjectivize", "text": "we stand behind it", "claim_status": "none"}]
+    enriched = [replace(findings[0], alternatives=alts)] + list(findings[1:])
+    payload = build_review_payload(audit, doc, enriched)
+    out = tmp_path / "decisions.json"
+    srv = serve_review(payload, str(out), idle_timeout=0)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        host, port = srv.server_address
+        fid = payload["findings"][0]["id"]
+        b64 = base64.b64encode(b"we stand behind it").decode("ascii")
+
+        def post(dec):
+            c = http.client.HTTPConnection(host, port, timeout=5)
+            c.request("POST", "/finish?token=" + srv.review_token, json.dumps(dec),
+                      {"Content-Type": "application/json"})
+            return c.getresponse().status
+
+        forged = decisions_from_actions(
+            payload, {fid: {"action": "edit", "replacement_b64": b64, "alternative": "fabricated"}})
+        assert post(forged) != 200, "forged alternative id must be rejected"
+        assert not out.exists()
+        ok = decisions_from_actions(
+            payload, {fid: {"action": "edit", "replacement_b64": b64, "alternative": "subjectivize"}})
+        assert post(ok) == 200
+        assert out.exists()
+    finally:
+        srv.shutdown()

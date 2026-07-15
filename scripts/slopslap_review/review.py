@@ -300,6 +300,11 @@ PAYLOAD.findings.forEach(f => {
     ms.appendChild(mk('span','to', proposal === '' ? '∅ (span deleted)' : proposal));
   } else {
     ms.appendChild(mk('span', null, f.span_text || ''));
+    // #83 adv F3: an undecodable proposal is surfaced, never silently rendered as "no proposal".
+    if(f.proposed_rewrite && typeof f.proposed_rewrite.replacement_b64 === 'string' && proposal === null){
+      ms.appendChild(document.createTextNode(' '));
+      ms.appendChild(mk('span','strike','⚠ proposal payload undecodable — showing original only'));
+    }
   }
   box.appendChild(ms);
 
@@ -370,7 +375,10 @@ PAYLOAD.findings.forEach(f => {
     altSpot.appendChild(mk('p','altlbl','alternatives — each pre-checked by the no-new-claims gate'));
     const alts = mk('div','alts');
     f.alternatives.forEach(a => {
-      const isBanned = a.claim_status === 'banned';
+      // #83 adv F4: selectable is an explicit allowlist — an unknown/missing claim_status
+      // renders disabled like banned (fail-closed client-side, verifier still gates server-side).
+      const selectable = ['none','scoped','kept'].includes(a.claim_status);
+      const isBanned = !selectable;
       const btnA = mk('button','alt'+(isBanned?' banned':''));
       btnA.type = 'button';
       btnA.appendChild(mk('span','txt', a.text));
@@ -427,7 +435,9 @@ function decisions(){
         document.getElementById('status').textContent='An edited finding has an empty replacement — type the replacement text, or use ✂ apply strip to delete the span.';
         return null; }
       d.replacement=b64utf8(t);
-      if(a.alternative)d.alternative=a.alternative;   // #83: provenance of an alternative-seeded edit
+      // #83 adv F2: serialize on presence, not truthiness — an (unreachable-today) empty
+      // provenance value must reach the server validator and be rejected there, not vanish.
+      if('alternative' in a)d.alternative=a.alternative;
     }
     if(a.reason)d.reason=a.reason;
     out.push(d);
