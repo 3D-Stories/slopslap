@@ -217,7 +217,8 @@ h1 .slap{{color:var(--red);font-style:italic}}
 .editbox{{display:none;margin:0 0 12px}}
 .editbox.show{{display:block}}
 .editbox textarea{{width:100%;min-height:46px;font-family:var(--disp);font-size:15px;color:var(--ink);
-  background:var(--card);border:1px solid var(--amber);border-radius:2px;padding:8px 10px;line-height:1.6}}
+  background:var(--card);border:1px solid var(--amber);border-radius:2px;padding:8px 10px;line-height:1.6;
+  field-sizing:content;overflow:hidden;resize:none}}
 .editbox textarea:focus-visible{{outline:2px solid var(--amber);outline-offset:1px}}
 .editbox .hint{{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:5px}}
 .altlbl{{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:0 0 7px}}
@@ -280,6 +281,9 @@ const boxes = {};     // finding_id -> {box, stateEl, ta}
 function mk(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
 function b64utf8(s){ return btoa(unescape(encodeURIComponent(s))); }  // UTF-8-safe base64 for edits
 function b64dec(s){ try{ return decodeURIComponent(escape(atob(s))); }catch(e){ return null; } }
+// grow the edit box with its content (UAT feedback: auto-resize, never an inner scrollbar).
+// field-sizing:content does this natively where supported; this covers the rest + programmatic fills.
+function autosize(ta){ ta.style.height='auto'; ta.style.height=(ta.scrollHeight+2)+'px'; }
 
 // theme toggle (mock behavior: explicit data-theme wins over prefers-color-scheme)
 document.getElementById('tg').onclick = () => {
@@ -348,6 +352,7 @@ PAYLOAD.findings.forEach(f => {
   const ta = document.createElement('textarea');
   ta.value = f.span_text || '';
   ta.setAttribute('aria-label','Edit replacement for '+f.id);
+  ta.addEventListener('input', () => autosize(ta));
   eb.appendChild(ta);
   eb.appendChild(mk('div','hint','your text replaces the whole span — verifier-gated exactly like the proposal; to delete the span use ✂ apply strip'));
   box.appendChild(eb);
@@ -356,7 +361,7 @@ PAYLOAD.findings.forEach(f => {
   function refreshOne(){
     const s = box.dataset.state;
     stateEl.textContent = s==='apply' ? '✂ will apply' : (s==='edit' ? '✎ will apply (edited)' : (s==='discard' ? '✓ kept original' : ''));
-    if(s==='edit'){ eb.classList.add('show'); } else { eb.classList.remove('show'); }
+    if(s==='edit'){ eb.classList.add('show'); autosize(ta); } else { eb.classList.remove('show'); }
     // #83 review F1: the .sel highlight must track the SUBMITTED action — clear it whenever
     // the current action no longer carries an alternative provenance.
     const a = actions[f.id];

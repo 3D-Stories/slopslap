@@ -431,3 +431,12 @@ def test_payload_derives_claim_status_server_side(tmp_path):
     assert out["sneaky"]["claim_status"] == "banned", out["sneaky"]
     assert "no_new_claim_atoms" in out["sneaky"].get("label", ""), out["sneaky"]
     assert out["honest"]["claim_status"] == "scoped"
+
+
+def test_editbox_autoresizes_instead_of_scrolling(tmp_path):
+    # UAT feedback 2026-07-15: the edit textarea grows with its content — no inner scrollbar.
+    payload, _, _ = _payload(tmp_path)
+    page = render_review_page(payload, post_url=None)
+    assert "field-sizing:content" in page.replace(" ", "")   # native auto-size where supported
+    assert "autosize" in page and "scrollHeight" in page     # JS fallback + programmatic seeding
+    assert "overflow:hidden" in page.replace(" ", "")        # no scrollbar on the grown box
