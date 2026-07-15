@@ -635,7 +635,8 @@ def apply_from_decisions(path: str, decisions_path: str, *, fmt: str = "markdown
         return _cand_fail("invalid_decisions", f"cannot read --decisions: {err}")
     # UNTRUSTED boundary: both replay bindings REQUIRED (finding-ids matched + source_sha256 bound).
     problems = validate_decisions_for_apply(
-        decisions_obj, audit_finding_ids=set(by_id), expected_source_sha256=audit.source_sha256)
+        decisions_obj, audit_finding_ids=set(by_id), expected_source_sha256=audit.source_sha256,
+        alternative_ids={fid: {a["id"] for a in f.alternatives or []} for fid, f in by_id.items()})
     if problems:
         return _cand_fail("invalid_decisions", "; ".join(problems)[:400],
                           errors=[{"code": "invalid_decisions", "detail": problems}])

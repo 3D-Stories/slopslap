@@ -109,6 +109,7 @@ def validate_decisions(
     *,
     audit_finding_ids: Optional[Set[str]] = None,
     expected_source_sha256: Optional[str] = None,
+    alternative_ids: Optional[dict] = None,
 ) -> List[str]:
     """Return problems (empty == valid) for a parsed ``decisions.json`` payload.
 
@@ -117,6 +118,10 @@ def validate_decisions(
     findings-envelope producer exists yet), only structural validity is checked.
     ``expected_source_sha256`` — when given, ``source_sha256`` must equal it (the decisions-layer
     analogue of assemble.py's ``digest_mismatch`` replay guard).
+    ``alternative_ids`` — when given, a ``{finding_id: set-of-offered-alternative-ids}`` map from
+    the audit's findings; a decision's ``alternative`` must be one its finding actually offered
+    (#81 — a stale/fabricated label would otherwise corrupt learning attribution). A finding
+    absent from the map offered none, so any label on it is rejected.
     """
     problems: List[str] = []
     if not isinstance(obj, dict):
@@ -188,6 +193,9 @@ def validate_decisions(
                 # #81: an alternative pick IS an edit (its text seeds the replacement) — on any
                 # other action the label has no referent, so it is rejected like `replacement`.
                 problems.append(at + "alternative is only allowed with user_action 'edit'")
+            elif alternative_ids is not None and _is_nonempty_str(fid) \
+                    and alt not in (alternative_ids.get(fid) or set()):
+                problems.append(at + f"unknown alternative '{alt}' for finding '{fid}'")
 
         reason = d.get("reason")
         if reason is not None and not _in_enum(reason, REASONS):
@@ -201,6 +209,7 @@ def validate_decisions_for_apply(
     *,
     audit_finding_ids: Set[str],
     expected_source_sha256: str,
+    alternative_ids: Optional[dict] = None,
 ) -> List[str]:
     """Apply-facing validation: BOTH replay bindings are REQUIRED (no keyword default).
 
@@ -215,6 +224,7 @@ def validate_decisions_for_apply(
         obj,
         audit_finding_ids=audit_finding_ids,
         expected_source_sha256=expected_source_sha256,
+        alternative_ids=alternative_ids,
     )
 
 

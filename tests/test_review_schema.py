@@ -381,3 +381,18 @@ def test_validate_alternatives_rejects_bad_shapes():
     nolabel = _canonical_alternatives()
     nolabel[1]["label"] = ""
     assert any("label" in p for p in validate_alternatives(nolabel))
+
+
+def test_decisions_alternative_id_bound_to_finding_when_map_given():
+    # Adversarial F2 (#81): a fabricated/stale alternative id must not pass when the
+    # validator is given the audit's alternative-id map.
+    payload = _canonical_decisions()
+    ids = {d["finding_id"] for d in payload["decisions"]}
+    amap = {"adjective_pile:40": {"subjectivize"}}
+    assert validate_decisions(payload, audit_finding_ids=ids, alternative_ids=amap) == []
+    bad_map = {"adjective_pile:40": {"scope-verifiable"}}  # label not offered on this finding
+    problems = validate_decisions(payload, audit_finding_ids=ids, alternative_ids=bad_map)
+    assert any("unknown alternative" in p for p in problems)
+    none_map = {}  # finding offered NO alternatives -> any label is fabricated
+    problems = validate_decisions(payload, audit_finding_ids=ids, alternative_ids=none_map)
+    assert any("unknown alternative" in p for p in problems)

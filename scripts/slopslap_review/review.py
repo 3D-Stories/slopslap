@@ -34,7 +34,8 @@ from typing import Optional
 # `scripts/` parent, is on sys.path[0] when run directly). Harmless/idempotent when imported.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from slopslap_review.schema import validate_decisions  # noqa: E402
+from slopslap_review.findings import FindingsError  # noqa: E402
+from slopslap_review.schema import validate_alternatives, validate_decisions  # noqa: E402
 
 REVIEW_SCHEMA_VERSION = 1
 DECISIONS_SCHEMA_VERSION = 1
@@ -59,12 +60,21 @@ def build_review_payload(audit, doc: bytes, findings) -> dict:
                 "recommendation": f.recommendation, "rationale": f.rationale,
                 "confidence": f.confidence, "proposed_rewrite": f.proposed_rewrite,
                 "verifier_precheck": f.verifier_precheck,
-                # #81: emitted ONLY when present so alternative-less payloads stay byte-identical
-                **({"alternatives": f.alternatives} if f.alternatives is not None else {}),
+                # #81: emitted ONLY when present so alternative-less payloads stay byte-identical;
+                # shape enforced at THIS boundary (adversarial F1) — a malformed list from any
+                # producer fails loud here, never reaches the review UI.
+                **({"alternatives": _checked_alternatives(f)} if f.alternatives is not None else {}),
             }
             for f in findings
         ],
     }
+
+
+def _checked_alternatives(f):
+    problems = validate_alternatives(f.alternatives)
+    if problems:
+        raise FindingsError(f"finding '{f.id}' carries invalid alternatives: {problems}")
+    return f.alternatives
 
 
 def decisions_from_actions(payload: dict, actions: dict) -> dict:
@@ -81,8 +91,9 @@ def decisions_from_actions(payload: dict, actions: dict) -> dict:
         entry = {"finding_id": fid, "user_action": action}
         if action == "edit" and act.get("replacement_b64"):
             entry["replacement"] = act["replacement_b64"]
-        if action == "edit" and act.get("alternative"):
-            # #81: provenance label of an alternative-seeded edit (edit-only per schema)
+        if "alternative" in act:
+            # #81 (adversarial F3): copy on PRESENCE, not truthiness — a supplied-but-empty
+            # value must reach the validator and fail closed, never silently vanish.
             entry["alternative"] = act["alternative"]
         if act.get("reason"):
             entry["reason"] = act["reason"]
@@ -474,6 +485,10 @@ class _ReviewServer(http.server.HTTPServer):
         self._idle_timeout = idle_timeout
         self._timer: Optional[threading.Timer] = None
         self._ids = {f["id"] for f in payload["findings"]}
+        # #81 (adversarial F2): what each finding actually OFFERED — a decision's alternative
+        # label must be a member, so a stale/fabricated label can't corrupt learning attribution.
+        self._alt_ids = {f["id"]: {a["id"] for a in f.get("alternatives") or []}
+                         for f in payload["findings"]}
         self._sha = payload["source_sha256"]
         post_url = f"http://127.0.0.1:{self.server_address[1]}/finish?token={self.review_token}"
         self.review_page = render_review_page(payload, post_url=post_url)
@@ -485,7 +500,8 @@ class _ReviewServer(http.server.HTTPServer):
     def on_decisions(self, data):
         """Validate the posted decisions against THIS audit (finding-ids + source_sha256 bound) and,
         if clean, write decisions.json. Returns (accepted, problems)."""
-        problems = validate_decisions(data, audit_finding_ids=self._ids, expected_source_sha256=self._sha)
+        problems = validate_decisions(data, audit_finding_ids=self._ids, expected_source_sha256=self._sha,
+                                      alternative_ids=self._alt_ids)
         if problems:
             return False, problems
         with open(self.out_path, "w", encoding="utf-8") as fh:
