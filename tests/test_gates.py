@@ -129,3 +129,74 @@ def test_idempotence_states():
 def test_material_equal_trailing_newline_policy():
     assert G.material_equal(b"x", b"x\n", {"trailing_newline": "normalize"})
     assert not G.material_equal(b"x", b"x\n", {"trailing_newline": "preserve"})
+
+
+# --------------------------------------------------------------------------- #82 lexeme tier
+
+
+def test_no_new_claim_atoms_fail_per_hard_kind():
+    # #82 AC1: each HARD atom kind is individually caught, reason names the atom.
+    man = {"allowed_claim_atoms": []}
+    orig = b"The service handles requests."
+    cases = {
+        "date": b"The service handles requests since 2024-01-15.",
+        "url": b"The service handles requests (see https://example.com/bench).",
+        "citation": b"The service handles requests [1].",
+        "threshold": b"The service handles requests in at most 5 ms.",
+    }
+    for kind, rev in cases.items():
+        r = G.no_new_claim_atoms(orig, rev, man)
+        assert not r.passed, kind
+        assert r.evidence and any(kind in cat for cat in r.evidence[0]), (kind, r.evidence)
+
+
+def test_no_new_claim_atoms_fail_new_buzzword_named():
+    # #82 AC2: a buzzword absent from the original is an introduced claim-lexeme.
+    man = {"allowed_claim_atoms": []}
+    orig = b"Our parser handles every supported grammar."
+    rev = b"Our best-in-class parser handles every supported grammar."
+    r = G.no_new_claim_atoms(orig, rev, man)
+    assert not r.passed
+    assert "buzzword" in r.evidence[0] and "best-in-class" in str(r.evidence[0]["buzzword"])
+
+
+def test_no_new_claim_atoms_fail_new_borrowed_authority_named():
+    # #82 AC2: introducing borrowed authority ("experts agree") is a new claim.
+    man = {"allowed_claim_atoms": []}
+    orig = b"Microservices can reduce coupling."
+    rev = b"Experts agree that microservices reduce coupling."
+    r = G.no_new_claim_atoms(orig, rev, man)
+    assert not r.passed
+    assert "borrowed_authority" in r.evidence[0]
+
+
+def test_no_new_claim_atoms_pass_on_removal_and_reuse():
+    # #82 AC3: removing or reusing existing claims never trips the gate.
+    man = {"allowed_claim_atoms": []}
+    orig = b"Our robust, best-in-class parser processes 10,000 docs/s (see https://x.io) [1]."
+    rev = b"Our parser processes 10,000 docs/s (see https://x.io) [1]."
+    r = G.no_new_claim_atoms(orig, rev, man)
+    assert r.passed, r.reason
+    reuse = b"Our best-in-class parser processes 10,000 docs/s; truly best-in-class [1] (https://x.io)."
+    assert G.no_new_claim_atoms(orig, reuse, man).passed
+
+
+def test_no_new_claim_atoms_lexeme_word_boundary():
+    # "robustness" is not the buzzword "robust" — token-boundary match only.
+    man = {"allowed_claim_atoms": []}
+    orig = b"The design is sound."
+    rev = b"The design favors robustness."
+    assert G.no_new_claim_atoms(orig, rev, man).passed
+
+
+def test_verify_blocks_buzzword_introducing_edit_end_to_end():
+    # #82: the lexeme tier is live inside verify() L1 (ledger.py wiring), not just the gate fn.
+    from slopslap_verification.editscript import Edit, sha256_hex
+    from slopslap_verification.ledger import Ledger, verify
+    orig = b"Our parser handles every supported grammar."
+    led = Ledger(sha256_hex(orig))
+    r = verify(orig, [Edit(0, 10, b"Our best-in-class parser")], led,
+               authorized_ranges=[{"start_byte": 0, "end_byte": 10}],
+               semantic_fn=None, allow_two_layer=True)
+    assert r["decision"] != "ACCEPT"
+    assert any(f.get("code") == "no_new_claim_atoms" for f in r["findings"])
