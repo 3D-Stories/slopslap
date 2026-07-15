@@ -173,7 +173,7 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.13.0 — alternatives authoring contract + learning (#84, epic #85 C4, closes the
+- **Version:** 0.13.1 — edit textarea auto-resizes with its content (UAT feedback; field-sizing + JS fallback, no inner scrollbar). Previous: 0.13.0 — alternatives authoring contract + learning (#84, epic #85 C4, closes the
   epic): the model lane authors alternatives for `simulation`-class findings in three sanctioned
   shapes, every candidate pre-checked via the new `findings.precheck_replacement`; the
   no-new-claims gate stays exemption-free by design; alternative-pick provenance rides the
@@ -205,6 +205,8 @@ no edit. *When in doubt, it changes nothing.*
   a licensed calibration corpus with verbatim text clears the validation bar.
 
 ## Changelog
+
+- **0.13.1** — review-page edit textarea auto-resizes to its content instead of scrolling (UAT feedback 2026-07-15): native `field-sizing: content` plus a JS fallback that also fires on programmatic fills (alternative picks, edit-open); `overflow: hidden`, no manual resize handle.
 
 - **0.13.0** — alternatives authoring contract + learning (#84, epic #85 C4, 2026-07-15): the
   authoring contract lands in `skills/slopslap/SKILL.md` (`anchor:alternatives-authoring`, drift-
