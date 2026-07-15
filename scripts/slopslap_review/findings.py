@@ -152,21 +152,8 @@ def _precheck(recommendation: str, doc: bytes, start: int, end: int, ledger):
     if recommendation != "strip":
         return None, {"status": "n/a", "decision": None, "proposal_status": None,
                       "semantic_status": None, "reason": "keep recommendation: no rewrite proposed"}
-    result = verify(doc, [Edit(start, end, b"")], ledger,
-                    authorized_ranges=[{"start_byte": start, "end_byte": end}],
-                    semantic_fn=None, allow_two_layer=True)
-    decision = result["decision"]
-    if decision == "ACCEPT":
-        status = "deterministic_pass"
-        reason = ("verifier Layers 1+2 (deterministic) find no violation; semantic layer NOT run "
-                  "here — this is NOT a shippable verdict")
-    else:
-        status = "blocked"
-        reason = "; ".join(f"{f.get('code')}: {f.get('message')}" for f in result.get("findings", [])) \
-            or f"verifier decision {decision}"
-    precheck = {"status": status, "decision": decision,
-                "proposal_status": result.get("proposal_status"),
-                "semantic_status": result.get("semantic_status"), "reason": reason}
+    # #84: the strip candidate IS a delete-shaped replacement — one copy of the decode logic.
+    precheck = precheck_replacement(doc, start, end, b"", ledger)
     proposed = {"start": start, "end": end, "replacement_b64": _DELETE_B64}
     return proposed, precheck
 

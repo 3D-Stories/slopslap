@@ -213,10 +213,12 @@ no edit. *When in doubt, it changes nothing.*
   pre-checks every candidate through the new `findings.precheck_replacement` (a `blocked` verdict
   naming `no_new_claim_atoms` ⇒ `claim_status: banned`). Deliberate decision: the no-new-claims
   gate keeps NO exemption path (`allowed_claim_atoms` stays unplumbed through `verify()`) —
-  alternatives compose from claims the original span already carries. Learning: alternative-pick
-  provenance (already on the ledger line since #81) is consumed by `learn_from_feedback` with the
-  keep-only overlay proven un-flippable (a new test shows no volume of alternative-labeled edits
-  can turn a keep into a strip). Recommendations may learn; authorization never does.
+  alternatives compose from claims the original span already carries. Learning:
+  alternative-labeled ledger lines (label on the line since #81) are consumed by
+  `learn_from_feedback` as ordinary edits — the provenance is a record, not a distinct learning
+  signal — and keep-only is STRUCTURAL: the overlay exposes only `keep_classes`, so no feedback
+  volume can turn a keep into a strip (tested: 20 alternative-labeled edits soften a strip base
+  to keep; nothing can move the other way). Recommendations may learn; authorization never does.
 - **0.12.0** — review-UI de-claim alternatives (#83, epic #85 C3, 2026-07-15): a finding carrying
   `alternatives` (#81 schema) renders the ratified mockup's `.alts` block — one pick-button per
   alternative with its claim-status chip (`no external claim` / `claims what the doc supports` /

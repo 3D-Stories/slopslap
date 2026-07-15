@@ -103,7 +103,10 @@ def test_alternative_labeled_lines_never_flip_toward_strip():
         "alternative": "subjectivize", "doc_sha": "a" * 64,
     } for i in range(20)]
     overlay = learn_from_feedback(lines)
-    # whatever the overlay learned, it can only ever soften toward keep:
+    # the alternative-labeled edits WERE consumed: 20 edits clear min_evidence, so the strip
+    # base actually softens to keep (an empty/broken overlay would leave it "strip")
+    assert apply_overlay("strip", "marketing", "generic_diction", overlay) == "keep"
+    # keep-only is STRUCTURAL: the overlay exposes only keep_classes — there is no field or
+    # mechanism through which any feedback volume could force a keep base toward strip
+    assert set(vars(overlay)) == {"keep_classes"}, vars(overlay)
     assert apply_overlay("keep", "marketing", "generic_diction", overlay) == "keep"
-    strip_out = apply_overlay("strip", "marketing", "generic_diction", overlay)
-    assert strip_out in ("strip", "keep")
