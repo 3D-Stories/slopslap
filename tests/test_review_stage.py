@@ -364,3 +364,40 @@ def test_finish_handler_rejects_forged_alternative_id(tmp_path):
         assert out.exists()
     finally:
         srv.shutdown()
+
+
+def test_precheck_replacement_banned_and_pass(tmp_path):
+    # #84 (AC4 from #82): the authoring lane's precheck — a claim-adding replacement comes back
+    # blocked with the lexeme named; a claim-free one passes deterministically.
+    from slopslap_review.findings import precheck_replacement
+    from slopslap_assemble.assemble import audit_document as _ad
+    p = tmp_path / "d.md"
+    p.write_text(_DOC, encoding="utf-8")
+    audit = _ad(str(p), declared_genre="general").data
+    doc = p.read_bytes()
+    findings = build_findings(audit, doc)
+    f = findings[0]
+    s, e = f.span["start"], f.span["end"]
+    led = audit.ledger  # same ledger build_findings prechecks with
+    # introduce a buzzword ABSENT from the whole doc ("world-class"; the doc already carries
+    # "best-in-class", whose reuse is allowed by design)
+    banned = precheck_replacement(doc, s, e, doc[s:e] + b" A world-class rewrite.", led)
+    assert banned["status"] == "blocked"
+    assert "no_new_claim_atoms" in banned["reason"]
+    # an invariant-free span (the intro paragraph carries no ledger entries) with a
+    # claim-free rewrite clears Layers 1+2
+    intro_end = doc.index(b"\n\n")
+    ok = precheck_replacement(doc, 0, intro_end, b"A tidy intro paragraph here.", led)
+    assert ok["status"] == "deterministic_pass", ok["reason"]
+
+
+def test_alternatives_authoring_contract_doc_anchor():
+    # #84 drift guard — anchored to ONE canonical sentence (workspace lesson: never corpus-regex).
+    import pathlib
+    root = pathlib.Path(__file__).resolve().parents[1]
+    skill = (root / "skills" / "slopslap" / "SKILL.md").read_text(encoding="utf-8")
+    assert "<!-- anchor:alternatives-authoring -->" in skill
+    assert "Author alternatives only for `simulation`-class findings" in skill
+    assert "precheck_replacement" in skill
+    review_cmd = (root / "commands" / "review.md").read_text(encoding="utf-8")
+    assert "anchor:alternatives-authoring" in review_cmd

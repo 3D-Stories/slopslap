@@ -89,3 +89,21 @@ def test_per_genre_isolation():
     ov = learn_from_feedback([_line("personal", _M, "strip", "discard") for _ in range(3)], min_evidence=3)
     assert apply_overlay("strip", "personal", _M, ov) == "keep"    # learned in personal
     assert apply_overlay("strip", "general", _M, ov) == "strip"    # NOT leaked to general
+
+
+def test_alternative_labeled_lines_never_flip_toward_strip():
+    # #84 AC3: alternative-labeled feedback consumes cleanly and the overlay stays KEEP-ONLY —
+    # no volume of alternative-pick edits can flip a keep recommendation to strip.
+    from slopslap_corpus.learn import learn_from_feedback, apply_overlay
+    lines = [{
+        "schema_version": 1, "ts": "2026-07-15T09:00:00Z",
+        "finding_id": f"generic_diction:{i:016x}", "category": "diction",
+        "metric": "generic_diction", "genre": "marketing", "recommendation": "strip",
+        "user_action": "edit", "replacement": "d2Ugc3RhbmQgYmVoaW5kIGl0",
+        "alternative": "subjectivize", "doc_sha": "a" * 64,
+    } for i in range(20)]
+    overlay = learn_from_feedback(lines)
+    # whatever the overlay learned, it can only ever soften toward keep:
+    assert apply_overlay("keep", "marketing", "generic_diction", overlay) == "keep"
+    strip_out = apply_overlay("strip", "marketing", "generic_diction", overlay)
+    assert strip_out in ("strip", "keep")

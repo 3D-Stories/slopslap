@@ -37,3 +37,8 @@ Review stage contract:
   `source_sha256`) and exits. **--static** / **Export decisions.json** hands the same file back for a
   no-server browser; feed it to `slopslap apply --decisions decisions.json` (#62).
 - The review stage NEVER mutates the document — it only records the user's decisions.
+- **De-claim alternatives (#84):** before serving the page, the model lane MAY author alternatives
+  onto `simulation`-class findings per the authoring contract in `skills/slopslap/SKILL.md`
+  (`anchor:alternatives-authoring`) — three sanctioned shapes, every candidate pre-checked through
+  `findings.precheck_replacement`, lateral swaps banned by the no-new-claims gate. A pick renders
+  as a pre-filled edit; the user's decision authorizes, the verifier gates.
