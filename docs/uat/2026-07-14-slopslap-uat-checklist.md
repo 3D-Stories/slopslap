@@ -287,3 +287,35 @@ test, consider dropping in a sample of **your own** writing.
    code intact.
 3. **`provenance-contract.md`** as `--declared-genre spec`** (densest spec) — the byte-exact keystone
    test (§5): zero drift in any number, MUST, negation, regex, or code block.
+
+---
+
+## 9. ALTERNATIVES — de-claim menu, gate-derived safety, provenance  *(P0 — epic #85, v0.10.0–v0.13.0)*
+
+Requires a findings payload carrying `alternatives` (the model lane authors them —
+`skills/slopslap/SKILL.md` `anchor:alternatives-authoring`; the deterministic engine never
+invents prose). For a scriptable repro, inject alternatives onto a finding exactly as
+`tests/test_review_stage.py::test_payload_derives_claim_status_server_side` does.
+
+- [ ] **9.1** A finding with alternatives renders the pick-buttons block ("alternatives — each
+      pre-checked by the no-new-claims gate"), one button per alternative with its claim-status
+      chip; a `banned` (or unknown-status) alternative renders **disabled** and cannot be selected.
+- [ ] **9.2** Picking a non-banned alternative seeds the edit textarea with its text, sets the card
+      to **edit**, highlights the pick; hand-tuning the textarea afterwards keeps the highlight.
+- [ ] **9.3** Switching to ✂ apply or ✋ keep (or toggling ✎ edit off) **clears** the pick highlight —
+      what is highlighted always matches what Finish will submit.
+- [ ] **9.4 — Server-derived safety:** author an alternative that ADDS a claim (e.g. a buzzword the
+      doc never carries, "world-class") with `claim_status: "none"` — the served payload flips it to
+      **banned** with the gate's reason on the label (`build_review_payload` re-runs the precheck;
+      any blocked verdict ⇒ banned).
+- [ ] **9.5 — Forged provenance rejected:** POST a decision whose `alternative` id the finding never
+      offered (see `test_finish_handler_rejects_forged_alternative_id`) → the finish handler rejects
+      it; no `decisions.json` is written.
+- [ ] **9.6** A delete-shaped (empty-text) alternative pick submits as **apply strip**, never a
+      dead-end empty edit; blocked findings render **no** pick-buttons at all.
+- [ ] **9.7** After apply with an alternative-seeded edit, the feedback ledger line carries the
+      `alternative` label (`python3 scripts/slopslap_review/feedback.py show` — overlay stays
+      keep-only; no volume of picks can flip a keep to a strip).
+
+**Expected:** the menu recommends, the gate bans lateral swaps deterministically, the user's click
+authorizes, the verifier still hard-gates, provenance feeds only learning. **PASS / FAIL: ___**

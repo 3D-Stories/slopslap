@@ -333,6 +333,17 @@ const SCEN = [
    items:[
      ["8.1","<b>Dry-run makes no backup (#47):</b> <code>python3 scripts/slopslap_assemble/assemble.py run --path &lt;doc&gt; --edits &lt;edits.json&gt;</code> gives <code>mutated:false</code> and <b>no .bak</b> created; doc byte-identical."],
      ["8.2","<b>Replay against a drifted doc rejected:</b> apply a <code>decisions.json</code>, hand-edit the doc, re-apply the same file &mdash; rejected (<code>invalid_decisions</code>/<code>digest_mismatch</code>), doc untouched."]
+   ]},
+  {n:"9",title:"Alternatives &mdash; de-claim menu, gate-derived safety, provenance",pri:"p0",
+   goal:"Epic #85 (v0.10.0–v0.13.0). The menu recommends, the gate bans lateral swaps deterministically, the user's click authorizes, the verifier still hard-gates, provenance feeds only learning. Needs a payload carrying alternatives (model-lane authored; scriptable repro: test_payload_derives_claim_status_server_side).",
+   items:[
+     ["9.1","Finding with alternatives renders pick-buttons with claim-status chips; <code>banned</code>/unknown-status render <b>disabled</b>, never selectable."],
+     ["9.2","Picking seeds the edit textarea, sets <b>edit</b> state, highlights the pick; hand-tuning keeps the highlight."],
+     ["9.3","Switching to apply/keep (or toggling edit off) <b>clears</b> the highlight &mdash; the highlight always matches what Finish submits."],
+     ["9.4","<b>Server-derived safety:</b> a claim-adding alternative authored as <code>none</code> is served as <b>banned</b> with the gate's reason on its label (payload builder re-runs the precheck; any blocked verdict &rArr; banned)."],
+     ["9.5","<b>Forged provenance rejected:</b> a POSTed decision with an alternative id the finding never offered is rejected by the finish handler; no decisions.json written."],
+     ["9.6","Delete-shaped (empty-text) pick submits as <b>apply strip</b>; blocked findings render <b>no</b> pick-buttons."],
+     ["9.7","An alternative-seeded applied edit lands its <code>alternative</code> label on the feedback ledger line (<code>python3 scripts/slopslap_review/feedback.py show</code>); overlay stays keep-only."]
    ]}
 ];
 
