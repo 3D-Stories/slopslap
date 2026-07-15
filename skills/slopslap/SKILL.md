@@ -128,6 +128,28 @@ axes. Never a single "AI %" or "sloppiness score" — those invite normalization
   the byte-exact verifier still hard-gates every applied edit. This is where keystone v2's "the user's
   review decision authorizes the edit" is operationalized.
 
+<!-- anchor:alternatives-authoring -->
+## De-claim alternatives — the authoring contract (#84, epic #85)
+The MODEL lane (you, preparing a review) authors alternatives; the deterministic engine never
+invents prose — it only validates. **Author alternatives only for `simulation`-class findings, in
+exactly three sanctioned shapes: subjectivize ("we stand behind it"), describe-intent ("built to
+deliver fast parses"), or scope-verifiable ("passes the full 3-layer suite" — only when the doc
+supports it), and pre-check every candidate through `findings.precheck_replacement` before serving
+it — ANY `blocked` verdict sets that alternative's `claim_status: banned` (the reason explains the
+block, it never decides it).** A lateral swap (one unsupported claim traded for another) is exactly
+what the gate bans. This is enforced structurally, not by promise: `build_review_payload` re-runs
+the precheck per alternative and OVERRIDES the authored status to `banned` on any blocked verdict —
+an unprechecked claim-adding alternative can never be served selectable; the authored status is
+trusted only for the none/scoped/kept distinction the engine cannot judge. Shape rules:
+`schema.validate_alternatives` owns the entry shape, also enforced at `build_review_payload` — a
+malformed list fails loud before any UI sees it. The no-new-claims gate has NO exemption path by
+design (`verify()` runs `allowed_claim_atoms: []`): compose alternatives from claims and lexemes
+the ORIGINAL DOCUMENT already carries (reuse is judged document-wide, matching the gate), never
+new ones.
+Alternatives set the MENU; the user's pick is still just an edit — the decision authorizes, the
+verifier gates, and the pick's provenance (`decisions[].alternative`) feeds only the learning
+ledger.
+
 <!-- anchor:mode-feedback -->
 - **feedback** (`/slopslap:feedback {path|show|reset}` → `scripts/slopslap_review/feedback.py`) — the
   **learn** arrow. Each review→apply decision appends one span-hashed, local, purgeable line to

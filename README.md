@@ -173,7 +173,12 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.12.0 — review-UI de-claim alternatives (#83, epic #85 C3): findings carrying
+- **Version:** 0.13.0 — alternatives authoring contract + learning (#84, epic #85 C4, closes the
+  epic): the model lane authors alternatives for `simulation`-class findings in three sanctioned
+  shapes, every candidate pre-checked via the new `findings.precheck_replacement`; the
+  no-new-claims gate stays exemption-free by design; alternative-pick provenance rides the
+  feedback ledger and the keep-only learning overlay is proven un-flippable. Previous: 0.12.0 —
+  review-UI de-claim alternatives (#83, epic #85 C3): findings carrying
   `alternatives` render the mockup's pick-buttons with claim-status chips (banned = disabled);
   a pick seeds the edit textarea and rides into decisions as edit provenance; plus the
   proposed-rewrite render fix (b64 dict decoded, empty = delete marker). Previous: 0.11.0 —
@@ -201,6 +206,19 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.13.0** — alternatives authoring contract + learning (#84, epic #85 C4, 2026-07-15): the
+  authoring contract lands in `skills/slopslap/SKILL.md` (`anchor:alternatives-authoring`, drift-
+  guarded by one anchored test) — the MODEL lane authors alternatives only for `simulation`-class
+  findings, in three sanctioned shapes (subjectivize / describe-intent / scope-verifiable), and
+  pre-checks every candidate through the new `findings.precheck_replacement` (a `blocked` verdict
+  naming `no_new_claim_atoms` ⇒ `claim_status: banned`). Deliberate decision: the no-new-claims
+  gate keeps NO exemption path (`allowed_claim_atoms` stays unplumbed through `verify()`) —
+  alternatives compose from claims the original span already carries. Learning:
+  alternative-labeled ledger lines (label on the line since #81) are consumed by
+  `learn_from_feedback` as ordinary edits — the provenance is a record, not a distinct learning
+  signal — and keep-only is STRUCTURAL: the overlay exposes only `keep_classes`, so no feedback
+  volume can turn a keep into a strip (tested: 20 alternative-labeled edits soften a strip base
+  to keep; nothing can move the other way). Recommendations may learn; authorization never does.
 - **0.12.0** — review-UI de-claim alternatives (#83, epic #85 C3, 2026-07-15): a finding carrying
   `alternatives` (#81 schema) renders the ratified mockup's `.alts` block — one pick-button per
   alternative with its claim-status chip (`no external claim` / `claims what the doc supports` /

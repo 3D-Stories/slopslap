@@ -63,18 +63,33 @@ def build_review_payload(audit, doc: bytes, findings) -> dict:
                 # #81: emitted ONLY when present so alternative-less payloads stay byte-identical;
                 # shape enforced at THIS boundary (adversarial F1) — a malformed list from any
                 # producer fails loud here, never reaches the review UI.
-                **({"alternatives": _checked_alternatives(f)} if f.alternatives is not None else {}),
+                **({"alternatives": _checked_alternatives(f, doc, audit.ledger)}
+                   if f.alternatives is not None else {}),
             }
             for f in findings
         ],
     }
 
 
-def _checked_alternatives(f):
+def _checked_alternatives(f, doc: bytes, ledger):
+    """Validate shape AND derive each alternative's safety server-side (#84 adversarial F1/F2):
+    the payload builder runs the deterministic precheck itself — ANY blocked verdict overrides the
+    authored ``claim_status`` to ``banned`` (the reason rides the label; codes explain, never
+    decide). A model-authored status is trusted only for the none/scoped/kept distinction the
+    engine cannot judge, never for safety."""
+    from slopslap_review.findings import precheck_replacement  # noqa: PLC0415 (lazy: avoids cycle)
     problems = validate_alternatives(f.alternatives)
     if problems:
         raise FindingsError(f"finding '{f.id}' carries invalid alternatives: {problems}")
-    return f.alternatives
+    out = []
+    for a in f.alternatives:
+        pre = precheck_replacement(doc, f.span["start"], f.span["end"],
+                                   a["text"].encode("utf-8"), ledger)
+        if pre["status"] != "deterministic_pass":
+            a = dict(a, claim_status="banned",
+                     label=f"BLOCKED · {pre['reason'][:160]}")
+        out.append(a)
+    return out
 
 
 def decisions_from_actions(payload: dict, actions: dict) -> dict:

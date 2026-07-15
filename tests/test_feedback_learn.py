@@ -89,3 +89,24 @@ def test_per_genre_isolation():
     ov = learn_from_feedback([_line("personal", _M, "strip", "discard") for _ in range(3)], min_evidence=3)
     assert apply_overlay("strip", "personal", _M, ov) == "keep"    # learned in personal
     assert apply_overlay("strip", "general", _M, ov) == "strip"    # NOT leaked to general
+
+
+def test_alternative_labeled_lines_never_flip_toward_strip():
+    # #84 AC3: alternative-labeled feedback consumes cleanly and the overlay stays KEEP-ONLY —
+    # no volume of alternative-pick edits can flip a keep recommendation to strip.
+    from slopslap_corpus.learn import learn_from_feedback, apply_overlay
+    lines = [{
+        "schema_version": 1, "ts": "2026-07-15T09:00:00Z",
+        "finding_id": f"generic_diction:{i:016x}", "category": "diction",
+        "metric": "generic_diction", "genre": "marketing", "recommendation": "strip",
+        "user_action": "edit", "replacement": "d2Ugc3RhbmQgYmVoaW5kIGl0",
+        "alternative": "subjectivize", "doc_sha": "a" * 64,
+    } for i in range(20)]
+    overlay = learn_from_feedback(lines)
+    # the alternative-labeled edits WERE consumed: 20 edits clear min_evidence, so the strip
+    # base actually softens to keep (an empty/broken overlay would leave it "strip")
+    assert apply_overlay("strip", "marketing", "generic_diction", overlay) == "keep"
+    # keep-only is STRUCTURAL: the overlay exposes only keep_classes — there is no field or
+    # mechanism through which any feedback volume could force a keep base toward strip
+    assert set(vars(overlay)) == {"keep_classes"}, vars(overlay)
+    assert apply_overlay("keep", "marketing", "generic_diction", overlay) == "keep"
