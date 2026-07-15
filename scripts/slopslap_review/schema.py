@@ -35,6 +35,8 @@ USER_ACTIONS = {"apply", "edit", "discard"}
 RECOMMENDATIONS = {"strip", "keep"}
 # One shared reason enum across decisions.json and feedback.jsonl (a discard captures WHY).
 REASONS = {"false_positive", "keep_voice", "genre_wrong", "other"}
+# #81: claim-status enum for de-claim alternatives (design §02: none/scoped/kept/banned).
+ALT_CLAIM_STATUS = {"none", "scoped", "kept", "banned"}
 
 _HEX64 = re.compile(r"\A[0-9a-f]{64}\Z")
 
@@ -50,9 +52,11 @@ _FEEDBACK_KEYS = {
     "recommendation",
     "user_action",
     "replacement",
+    "alternative",  # optional (#81): provenance label of an alternative-seeded edit
     "reason",
     "doc_sha",
 }
+_ALTERNATIVE_KEYS = {"id", "text", "claim_status", "label"}
 
 
 class DecisionsError(ValueError):
@@ -105,6 +109,7 @@ def validate_decisions(
     *,
     audit_finding_ids: Optional[Set[str]] = None,
     expected_source_sha256: Optional[str] = None,
+    alternative_ids: Optional[dict] = None,
 ) -> List[str]:
     """Return problems (empty == valid) for a parsed ``decisions.json`` payload.
 
@@ -113,6 +118,10 @@ def validate_decisions(
     findings-envelope producer exists yet), only structural validity is checked.
     ``expected_source_sha256`` — when given, ``source_sha256`` must equal it (the decisions-layer
     analogue of assemble.py's ``digest_mismatch`` replay guard).
+    ``alternative_ids`` — when given, a ``{finding_id: set-of-offered-alternative-ids}`` map from
+    the audit's findings; a decision's ``alternative`` must be one its finding actually offered
+    (#81 — a stale/fabricated label would otherwise corrupt learning attribution). A finding
+    absent from the map offered none, so any label on it is rejected.
     """
     problems: List[str] = []
     if not isinstance(obj, dict):
@@ -177,8 +186,16 @@ def validate_decisions(
             problems.append(at + "replacement is only allowed with user_action 'edit'")
 
         alt = d.get("alternative")
-        if alt is not None and not _is_nonempty_str(alt):
-            problems.append(at + "alternative must be a non-empty string when present")
+        if alt is not None:
+            if not _is_nonempty_str(alt):
+                problems.append(at + "alternative must be a non-empty string when present")
+            elif action != "edit":
+                # #81: an alternative pick IS an edit (its text seeds the replacement) — on any
+                # other action the label has no referent, so it is rejected like `replacement`.
+                problems.append(at + "alternative is only allowed with user_action 'edit'")
+            elif alternative_ids is not None and _is_nonempty_str(fid) \
+                    and alt not in (alternative_ids.get(fid) or set()):
+                problems.append(at + f"unknown alternative '{alt}' for finding '{fid}'")
 
         reason = d.get("reason")
         if reason is not None and not _in_enum(reason, REASONS):
@@ -192,6 +209,7 @@ def validate_decisions_for_apply(
     *,
     audit_finding_ids: Set[str],
     expected_source_sha256: str,
+    alternative_ids: Optional[dict] = None,
 ) -> List[str]:
     """Apply-facing validation: BOTH replay bindings are REQUIRED (no keyword default).
 
@@ -206,6 +224,7 @@ def validate_decisions_for_apply(
         obj,
         audit_finding_ids=audit_finding_ids,
         expected_source_sha256=expected_source_sha256,
+        alternative_ids=alternative_ids,
     )
 
 
@@ -265,8 +284,51 @@ def validate_feedback_line(obj) -> List[str]:
     elif rep is not None:
         problems.append("replacement is only allowed with user_action 'edit'")
 
+    alt = obj.get("alternative")
+    if alt is not None:
+        if not _is_nonempty_str(alt):
+            problems.append("alternative must be a non-empty string when present")
+        elif action != "edit":
+            problems.append("alternative is only allowed with user_action 'edit'")
+
     reason = obj.get("reason")
     if reason is not None and not _in_enum(reason, REASONS):
         problems.append(f"reason must be one of {sorted(REASONS)}")
 
+    return problems
+
+
+def validate_alternatives(alts) -> List[str]:
+    """Return problems (empty == valid) for a finding's ``alternatives`` list (#81).
+
+    Shape: ``[{id, text, claim_status, label?}]`` — ``id`` non-empty and unique within the list,
+    ``text`` a string (may be empty for a delete-shaped alternative), ``claim_status`` in
+    ``ALT_CLAIM_STATUS``, ``label`` optional non-empty string. Pure over a parsed object, same
+    loader idiom as the other validators; producers (the model lane, #84) and the review UI
+    (#83) share this as the single source of the shape.
+    """
+    problems: List[str] = []
+    if not isinstance(alts, list):
+        return ["alternatives must be a list"]
+    seen: Set[str] = set()
+    for i, a in enumerate(alts):
+        at = f"alternatives[{i}] "
+        if not isinstance(a, dict):
+            problems.append(at + "must be an object")
+            continue
+        problems += _unknown_keys(a, _ALTERNATIVE_KEYS, at)
+        aid = a.get("id")
+        if not _is_nonempty_str(aid):
+            problems.append(at + "id must be a non-empty string")
+        else:
+            if aid in seen:
+                problems.append(at + f"duplicate id '{aid}'")
+            seen.add(aid)
+        if not isinstance(a.get("text"), str):
+            problems.append(at + "text must be a string")
+        if not _in_enum(a.get("claim_status"), ALT_CLAIM_STATUS):
+            problems.append(at + f"claim_status must be one of {sorted(ALT_CLAIM_STATUS)}")
+        label = a.get("label")
+        if label is not None and not _is_nonempty_str(label):
+            problems.append(at + "label must be a non-empty string when present")
     return problems

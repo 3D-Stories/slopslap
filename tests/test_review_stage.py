@@ -223,3 +223,58 @@ def test_server_rejects_finish_with_wrong_sha(tmp_path):
     finally:
         srv.shutdown()
     assert not out.exists()
+
+
+def test_payload_emits_alternatives_only_when_present(tmp_path):
+    # #81 T2: absent alternatives -> payload byte-identical to today; present -> emitted verbatim.
+    import json as _json
+    from dataclasses import replace
+    p = tmp_path / "d.md"
+    p.write_text(_DOC, encoding="utf-8")
+    audit = audit_document(str(p), declared_genre="general").data
+    doc = p.read_bytes()
+    findings = build_findings(audit, doc)
+    base = build_review_payload(audit, doc, findings)
+    for f in base["findings"]:
+        assert "alternatives" not in f, "absent alternatives must not appear in the payload"
+    alts = [{"id": "subjectivize", "text": "we stand behind it", "claim_status": "none"}]
+    enriched = [replace(findings[0], alternatives=alts)] + list(findings[1:])
+    p2 = build_review_payload(audit, doc, enriched)
+    assert p2["findings"][0]["alternatives"] == alts
+    for f in p2["findings"][1:]:
+        assert "alternatives" not in f
+    _json.dumps(p2)  # payload stays JSON-serializable
+
+
+def test_payload_rejects_malformed_alternatives(tmp_path):
+    # Adversarial F1 (#81): the payload boundary enforces the shape guard itself.
+    from dataclasses import replace
+    import pytest
+    from slopslap_review.findings import FindingsError
+    p = tmp_path / "d.md"
+    p.write_text(_DOC, encoding="utf-8")
+    audit = audit_document(str(p), declared_genre="general").data
+    doc = p.read_bytes()
+    findings = build_findings(audit, doc)
+    bad = [replace(findings[0], alternatives=[{"id": "x", "text": "y", "claim_status": "amazing"}])]
+    with pytest.raises(FindingsError, match="claim_status"):
+        build_review_payload(audit, doc, bad + list(findings[1:]))
+
+
+def test_actions_empty_alternative_fails_closed(tmp_path):
+    # Adversarial F3 (#81): a present-but-empty alternative must reach the validator and be
+    # rejected there — never silently dropped by a truthiness check.
+    import base64
+    from slopslap_review.review import decisions_from_actions
+    from slopslap_review.schema import validate_decisions
+    p = tmp_path / "d.md"
+    p.write_text(_DOC, encoding="utf-8")
+    audit = audit_document(str(p), declared_genre="general").data
+    doc = p.read_bytes()
+    findings = build_findings(audit, doc)
+    payload = build_review_payload(audit, doc, findings)
+    fid = payload["findings"][0]["id"]
+    b64 = base64.b64encode(b"x").decode("ascii")
+    dec = decisions_from_actions(payload, {fid: {"action": "edit", "replacement_b64": b64, "alternative": ""}})
+    assert dec["decisions"][0].get("alternative") == "", "empty value must be carried, not dropped"
+    assert any("alternative" in p2 for p2 in validate_decisions(dec))

@@ -63,6 +63,10 @@ class Finding:
     #  "semantic_status", "reason"} — status is NON-authorizing (see _precheck): deterministic_pass
     #  means Layers 1+2 clear, NOT shippable (semantic layer not run).
     verifier_precheck: dict
+    # #81: optional de-claim alternatives, shape guarded by schema.validate_alternatives.
+    # This deterministic producer never authors them (the model lane does, #84); default None
+    # keeps every existing payload byte-identical.
+    alternatives: Optional[List[dict]] = None
 
 
 def _evidence(loc: dict) -> str:
