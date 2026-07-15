@@ -184,11 +184,12 @@ def test_server_oversized_body_is_413(tmp_path):
 def test_page_shows_span_text_so_edits_are_not_blind(tmp_path):
     payload, _, _ = _payload(tmp_path)
     page = render_review_page(payload, post_url="http://127.0.0.1:9/finish?token=x")
-    assert "this passage" in page and "span_text" in page  # span source shown + carried for Edit pre-fill
-    # Bug1 fix: an emptied Edit prompt cancels (does not emit an invalid empty-replacement edit)
-    assert "t!==''" in page or "t !== ''" in page
+    assert "span_text" in page                    # span source rendered in the passage block
+    assert "ta.value = f.span_text" in page       # edit textarea pre-filled with the visible span text
+    # Bug1 fix: an empty edit replacement never emits — Finish/Export refuse and report instead
+    assert "t===''" in page or "t === ''" in page
     # Bug2 fix: blocked findings hide only apply/edit — the false-positive feedback button stays visible
-    assert ".blocked .apply" in page and ".blocked .act{display:none}" not in page
+    assert ".f.blocked .btn.apply" in page and "mark false positive" in page
 
 
 def test_cli_main_static_writes_page_and_findings(tmp_path):

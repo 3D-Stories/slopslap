@@ -96,72 +96,128 @@ _PAGE_TEMPLATE = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>slopslap review</title>
 <style>
+/* Design language: docs/planning/2026-07-13-deslop-pivot-design.html §02 (the ratified mockup). */
 :root{{color-scheme:light dark;
-  --bg:#f4f6f9; --card:#ffffff; --ink:#1c2230; --muted:#5d6a7d; --line:#d7deea;
-  --accent:#0f766e; --accent-soft:#0f766e14;
-  --strip:#b42318; --strip-soft:#b4231814;
-  --keep:#15803d; --keep-soft:#15803d14;
-  --editc:#b45309; --edit-soft:#b4530914;
-  --block:#6d28d9; --block-soft:#6d28d914;
-  --c-emptiness:#b45309; --c-laundering:#b42318; --c-simulation:#be185d;
-  --c-lexical:#0369a1; --c-voice:#6d28d9; --c-epistemic:#0f766e;
+  --paper:#F6F1E7; --card:#FCF9F2; --card2:#FFFDF8; --ink:#1E1B16; --soft:#5C554A; --faint:#8A8377;
+  --hair:#E0D6C2; --hair2:#CDBFA6; --grid:rgba(51,85,110,.06);
+  --red:#C0362C; --red-soft:rgba(192,54,44,.08); --blue:#33556E; --blue-soft:rgba(51,85,110,.09);
+  --green:#3E7A52; --green-soft:rgba(62,122,82,.12); --amber:#9A6B12; --amber-soft:rgba(154,107,18,.13);
+  --disp:Georgia,'Iowan Old Style Text','Times New Roman',serif;
+  --sans:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,'SF Mono','IBM Plex Mono',Menlo,Consolas,monospace;
+  --shadow:0 1px 0 rgba(30,27,22,.04),0 10px 30px -14px rgba(51,85,110,.30);
 }}
 @media (prefers-color-scheme:dark){{:root{{
-  --bg:#12151c; --card:#1b202b; --ink:#e7eaf1; --muted:#9aa5b5; --line:#2d3646;
-  --accent:#2dd4bf; --accent-soft:#2dd4bf1f;
-  --strip:#f87171; --strip-soft:#f871711f;
-  --keep:#4ade80; --keep-soft:#4ade801f;
-  --editc:#fbbf24; --edit-soft:#fbbf241f;
-  --block:#c4b5fd; --block-soft:#c4b5fd1f;
-  --c-emptiness:#fbbf24; --c-laundering:#f87171; --c-simulation:#f472b6;
-  --c-lexical:#7dd3fc; --c-voice:#c4b5fd; --c-epistemic:#2dd4bf;
+  --paper:#15130F; --card:#1E1A15; --card2:#241F18; --ink:#EEE7D8; --soft:#A79E8C; --faint:#6E665A;
+  --hair:#332C22; --hair2:#463C2E; --grid:rgba(143,178,203,.06);
+  --red:#E27567; --red-soft:rgba(226,117,103,.13); --blue:#8FB2CB; --blue-soft:rgba(143,178,203,.12);
+  --green:#77B58C; --green-soft:rgba(119,181,140,.14); --amber:#D6A24E; --amber-soft:rgba(214,162,78,.15);
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 14px 34px -14px rgba(0,0,0,.7);
 }}}}
-body{{font:15px/1.55 system-ui,sans-serif;max-width:52rem;margin:2rem auto;padding:0 1rem;
-  background:var(--bg);color:var(--ink)}}
-h1{{font-size:1.5rem}} h1 small{{color:var(--muted);font-weight:400}}
-#status{{color:var(--muted)}}
-.f{{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line);
-  border-radius:10px;padding:.8rem 1rem;margin:.8rem 0;box-shadow:0 1px 3px #0002}}
-.f[data-cat="emptiness"]{{border-left-color:var(--c-emptiness)}}
-.f[data-cat="laundering"]{{border-left-color:var(--c-laundering)}}
-.f[data-cat="simulation"]{{border-left-color:var(--c-simulation)}}
-.f[data-cat="lexical_structural"]{{border-left-color:var(--c-lexical)}}
-.f[data-cat="voice_discontinuity"]{{border-left-color:var(--c-voice)}}
-.f[data-cat="epistemic_distortion"]{{border-left-color:var(--c-epistemic)}}
-.f[data-state="apply"]{{border-color:var(--strip);background:var(--strip-soft)}}
-.f[data-state="edit"]{{border-color:var(--editc);background:var(--edit-soft)}}
-.f[data-state="discard"]{{border-color:var(--keep);background:var(--keep-soft)}}
-.cat{{font-weight:650}}
-.f[data-cat="emptiness"] .cat{{color:var(--c-emptiness)}}
-.f[data-cat="laundering"] .cat{{color:var(--c-laundering)}}
-.f[data-cat="simulation"] .cat{{color:var(--c-simulation)}}
-.f[data-cat="lexical_structural"] .cat{{color:var(--c-lexical)}}
-.f[data-cat="voice_discontinuity"] .cat{{color:var(--c-voice)}}
-.f[data-cat="epistemic_distortion"] .cat{{color:var(--c-epistemic)}}
-.rec{{font-size:.8em;border:1px solid;border-radius:999px;padding:.05em .5em;margin-left:.4em}}
-.rec-strip{{color:var(--strip);background:var(--strip-soft)}}
-.rec-keep{{color:var(--keep);background:var(--keep-soft)}}
-.ev{{background:var(--accent-soft);border:1px solid var(--line);border-radius:4px;
-  padding:.15em .35em;font-family:ui-monospace,monospace;font-size:.9em}}
-.src{{font-size:.9em;margin:.4em 0;color:var(--muted)}}
-.srctext{{background:var(--accent-soft);color:var(--ink);border-radius:4px;padding:.1em .3em;white-space:pre-wrap}}
-.blocked{{border-left-color:var(--block)!important;background:var(--block-soft)}}
-.blocked .apply,.blocked .edit{{display:none}}
-.act{{margin-top:.5em}} .act button{{margin-right:.4em}}
-button{{cursor:pointer;border-radius:7px;border:1px solid var(--line);background:var(--card);
-  color:var(--ink);padding:.25em .7em}}
-button:hover{{border-color:var(--accent)}}
-.recbtn{{border-color:var(--accent);color:var(--accent);font-weight:650;
-  box-shadow:0 0 0 1px var(--accent);background:var(--accent-soft)}}
-.done{{margin:1.5rem 0;font-weight:600}}
-#finish{{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:650;padding:.4em 1em}}
+:root[data-theme="light"]{{
+  --paper:#F6F1E7; --card:#FCF9F2; --card2:#FFFDF8; --ink:#1E1B16; --soft:#5C554A; --faint:#8A8377;
+  --hair:#E0D6C2; --hair2:#CDBFA6; --grid:rgba(51,85,110,.06);
+  --red:#C0362C; --red-soft:rgba(192,54,44,.08); --blue:#33556E; --blue-soft:rgba(51,85,110,.09);
+  --green:#3E7A52; --green-soft:rgba(62,122,82,.12); --amber:#9A6B12; --amber-soft:rgba(154,107,18,.13);
+  --shadow:0 1px 0 rgba(30,27,22,.04),0 10px 30px -14px rgba(51,85,110,.30);
+}}
+:root[data-theme="dark"]{{
+  --paper:#15130F; --card:#1E1A15; --card2:#241F18; --ink:#EEE7D8; --soft:#A79E8C; --faint:#6E665A;
+  --hair:#332C22; --hair2:#463C2E; --grid:rgba(143,178,203,.06);
+  --red:#E27567; --red-soft:rgba(226,117,103,.13); --blue:#8FB2CB; --blue-soft:rgba(143,178,203,.12);
+  --green:#77B58C; --green-soft:rgba(119,181,140,.14); --amber:#D6A24E; --amber-soft:rgba(214,162,78,.15);
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 14px 34px -14px rgba(0,0,0,.7);
+}}
+*{{box-sizing:border-box}}
+body{{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:26px 26px}}
+.wrap{{max-width:880px;margin:0 auto;padding:26px 24px 60px}}
+code{{font-family:var(--mono);font-size:.84em;background:var(--blue-soft);color:var(--blue);padding:1px 5px;border-radius:2px;word-break:break-word}}
+.toggle{{position:fixed;top:14px;right:14px;z-index:20;font-family:var(--mono);font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;background:var(--card);color:var(--soft);border:1px solid var(--hair2);border-radius:2px;padding:7px 11px;cursor:pointer}}
+.toggle:hover{{color:var(--ink);border-color:var(--red)}} .toggle:focus-visible{{outline:2px solid var(--red);outline-offset:2px}}
+.kicker{{font-family:var(--mono);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--red);
+  display:flex;gap:14px;align-items:center;padding:10px 0;flex-wrap:wrap;border-bottom:2px solid var(--ink);margin-bottom:18px}}
+.kicker .dot{{width:5px;height:5px;background:var(--red);border-radius:50%;display:inline-block}}
+.kicker .muted{{color:var(--faint)}}
+h1{{font-family:var(--disp);font-weight:700;letter-spacing:-.02em;line-height:1;font-size:clamp(30px,6vw,44px);margin:0 0 6px}}
+h1 .slap{{color:var(--red);font-style:italic}}
+#status{{color:var(--soft);font-size:14.5px;margin:6px 0 20px}}
+.demo{{background:var(--card2);border:1px solid var(--hair2);border-left:3px solid var(--red);border-radius:3px;
+  box-shadow:var(--shadow);overflow:hidden}}
+.demo .bar{{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;
+  border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}}
+.demo .bar b{{color:var(--red)}}
+.f{{padding:16px 18px;border-bottom:1px dashed var(--hair2)}}
+.f:last-of-type{{border-bottom:none}}
+.f .top{{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}}
+.f .cat{{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--red);
+  background:var(--red-soft);border:1px solid var(--red);border-radius:2px;padding:2px 7px}}
+.f .gen{{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);
+  background:var(--blue-soft);border:1px solid var(--blue);border-radius:2px;padding:2px 7px}}
+.f .rec{{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;border-radius:2px;padding:2px 7px}}
+.f .rec.strip{{color:var(--red);border:1px solid var(--red);background:var(--red-soft)}}
+.f .rec.keep{{color:var(--green);border:1px solid var(--green);background:var(--green-soft)}}
+.f .rec.blockedchip{{color:var(--amber);border:1px solid var(--amber);background:var(--amber-soft)}}
+.f .ms{{font-family:var(--disp);font-size:16.5px;line-height:1.8;margin:0 0 6px;white-space:pre-wrap}}
+.f .ms .strike{{text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:2px;color:var(--faint)}}
+.f .ms .to{{color:var(--green)}}
+.f .why{{font-size:13px;color:var(--soft);margin:0 0 12px}}
+.f .why .ev{{font-family:var(--mono);font-size:.92em;background:var(--blue-soft);color:var(--blue);border-radius:2px;padding:1px 5px}}
+.btns{{display:flex;gap:8px;flex-wrap:wrap;align-items:center}}
+.btn{{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;padding:7px 14px;
+  border-radius:2px;cursor:pointer;border:1.5px solid var(--hair2);background:var(--card);color:var(--soft)}}
+.btn:focus-visible{{outline:2px solid var(--red);outline-offset:2px}}
+.btn.apply:hover{{border-color:var(--red);color:var(--red)}}
+.btn.edit:hover{{border-color:var(--amber);color:var(--amber)}}
+.btn.discard:hover{{border-color:var(--blue);color:var(--blue)}}
+.btn.recd{{border-color:var(--green);color:var(--green)}}
+.btn.recd::after{{content:"· rec";margin-left:6px;font-size:9.5px;letter-spacing:.1em;opacity:.8}}
+.btn.recd:hover{{background:var(--green);border-color:var(--green);color:var(--paper)}}
+.f[data-state="apply"]{{background:var(--red-soft)}}
+.f[data-state="apply"] .btn.apply{{background:var(--red);border-color:var(--red);color:var(--paper)}}
+.f[data-state="edit"]{{background:var(--amber-soft)}}
+.f[data-state="edit"] .btn.edit{{background:var(--amber);border-color:var(--amber);color:var(--paper)}}
+.f[data-state="discard"]{{background:var(--blue-soft)}}
+.f[data-state="discard"] .btn.discard{{background:var(--blue);border-color:var(--blue);color:var(--paper)}}
+.f .state{{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-left:auto}}
+.editbox{{display:none;margin:0 0 12px}}
+.editbox.show{{display:block}}
+.editbox textarea{{width:100%;min-height:46px;font-family:var(--disp);font-size:15px;color:var(--ink);
+  background:var(--card);border:1px solid var(--amber);border-radius:2px;padding:8px 10px;line-height:1.6}}
+.editbox textarea:focus-visible{{outline:2px solid var(--amber);outline-offset:1px}}
+.editbox .hint{{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:5px}}
+.f.blocked .btn.apply,.f.blocked .btn.edit{{display:none}}
+.f.blocked .ms{{opacity:.85}}
+.demo .foot{{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 16px;
+  border-top:1px solid var(--hair);background:var(--card)}}
+.tally{{font-family:var(--mono);font-size:12px;color:var(--soft)}}
+.btn.finish{{border-color:var(--red);color:var(--red)}}
+.btn.finish:hover{{background:var(--red);color:var(--paper)}}
+.btn.export{{border-color:var(--green);color:var(--green)}}
+.btn.export:hover{{background:var(--green);color:var(--paper)}}
+footer{{padding:22px 0 0;color:var(--faint);font-family:var(--mono);font-size:12px}}
+@media (prefers-reduced-motion:reduce){{*{{transition:none!important;animation:none!important}}}}
 </style></head><body>
-<h1>slopslap review <small>{count} findings · genre {genre}</small></h1>
-<p id="status">Choose an action per finding, then Finish.</p>
-<div id="findings"></div>
-<div class="done">
-  <button id="finish">{finish_label}</button>
-  <button id="export">Export decisions.json</button>
+<button class="toggle" id="tg" aria-label="Toggle light or dark theme">◐ theme</button>
+<div class="wrap">
+<div class="kicker"><span class="dot"></span> slopslap · review <span class="muted">you hold the pen</span></div>
+<h1>Review. <span class="slap">You</span> decide.</h1>
+<p id="status">Apply, edit, or keep each finding — your click is the only authorization. Then Finish.</p>
+<div class="demo">
+  <div class="bar"><span>Review · <b>{doc_label}</b> · {count} findings · genre {genre}</span><span id="prog">0 / {count} decided</span></div>
+  <div id="findings"></div>
+  <div class="foot">
+    <span class="tally" id="tally"></span>
+    <div class="btns">
+      <button class="btn finish" id="finish">{finish_label}</button>
+      <button class="btn export" id="export">⇩ export decisions.json</button>
+    </div>
+  </div>
+</div>
+<footer>loopback only · per-run token · decisions bind to source_sha256 · the verifier still gates every applied edit</footer>
 </div>
 <script id="payload" type="application/json">{payload_json}</script>
 <script>{script}</script>
@@ -173,61 +229,140 @@ button:hover{{border-color:var(--accent)}}
 _PAGE_SCRIPT = r"""
 const PAYLOAD = JSON.parse(document.getElementById('payload').textContent);
 const POST_URL = %POST_URL%;
-const actions = {};
+const actions = {};   // finding_id -> {action, reason?} ; edit replacements read live from the textarea
+const boxes = {};     // finding_id -> {box, stateEl, ta}
 function mk(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
 function b64utf8(s){ return btoa(unescape(encodeURIComponent(s))); }  // UTF-8-safe base64 for edits
+
+// theme toggle (mock behavior: explicit data-theme wins over prefers-color-scheme)
+document.getElementById('tg').onclick = () => {
+  const root=document.documentElement;
+  const cur=root.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  root.setAttribute('data-theme', cur==='dark'?'light':'dark');
+};
+
 const root = document.getElementById('findings');
 PAYLOAD.findings.forEach(f => {
-  const box = mk('div','f'); box.dataset.state=''; box.dataset.cat=f.category;
-  const h = mk('div');
-  h.appendChild(mk('span','cat', f.category));
-  h.appendChild(mk('span','rec rec-'+f.recommendation, 'rec: '+f.recommendation));
   const blocked = f.verifier_precheck && f.verifier_precheck.status === 'blocked';
-  if(blocked){ box.classList.add('blocked'); h.appendChild(mk('span','rec','blocked')); }
-  box.appendChild(h);
-  if(f.evidence){ const ev=mk('div'); ev.appendChild(mk('span','ev', f.evidence)); box.appendChild(ev); }
-  box.appendChild(mk('div', null, f.rationale));
-  // show the SPAN's source text (what an apply/edit acts on) so the user is never editing blind.
-  if(f.span_text){ const s=mk('div','src'); s.appendChild(mk('span',null,'this passage: ')); s.appendChild(mk('span','srctext', f.span_text)); box.appendChild(s); }
-  if(blocked && f.verifier_precheck.reason){ box.appendChild(mk('div', null, 'Blocked: '+f.verifier_precheck.reason)); }
-  const act = mk('div','act');
-  function choose(action, extra){ actions[f.id]=Object.assign({action}, extra||{}); box.dataset.state=action; }
-  // one labeled button per outcome; the one matching the recommendation carries the rec marker.
-  function outcomeBtn(cls, label, action, extra){
-    const rec = (f.recommendation==='strip' && action==='apply') || (f.recommendation==='keep' && action==='discard');
-    const b = mk('button','btn '+cls, (rec?'★ ':'')+label);
-    if(rec) b.classList.add('recbtn');
+  const box = mk('div','f'+(blocked?' blocked':'')); box.dataset.state='';
+
+  // top row: category / genre / recommendation chips + live state label
+  const top = mk('div','top');
+  top.appendChild(mk('span','cat', f.category));
+  if(f.genre) top.appendChild(mk('span','gen', f.genre));
+  top.appendChild(mk('span','rec '+(f.recommendation==='strip'?'strip':'keep'),
+    'recommend: '+f.recommendation+(f.confidence==='low'?' (low conf)':'')));
+  if(blocked) top.appendChild(mk('span','rec blockedchip','blocked'));
+  const stateEl = mk('span','state','');
+  top.appendChild(stateEl);
+  box.appendChild(top);
+
+  // the passage: strike the original; show the engine's proposal in green when it differs.
+  const ms = mk('p','ms');
+  const proposal = (typeof f.proposed_rewrite === 'string') ? f.proposed_rewrite : null;
+  if(f.recommendation==='strip' && proposal !== null && proposal !== f.span_text){
+    ms.appendChild(mk('span','strike', f.span_text));
+    ms.appendChild(document.createTextNode(' '));
+    ms.appendChild(mk('span','to', proposal === '' ? '∅ (span deleted)' : proposal));
+  } else {
+    ms.appendChild(mk('span', null, f.span_text || ''));
+  }
+  box.appendChild(ms);
+
+  // why: rationale + evidence + verifier precheck
+  const why = mk('p','why');
+  why.appendChild(document.createTextNode(f.rationale+' '));
+  if(f.evidence){ why.appendChild(mk('span','ev', f.evidence)); why.appendChild(document.createTextNode(' ')); }
+  if(blocked){
+    why.appendChild(mk('b', null, 'Verifier precheck: BLOCKED'));
+    if(f.verifier_precheck.reason) why.appendChild(document.createTextNode(' — '+f.verifier_precheck.reason));
+    why.appendChild(document.createTextNode(' Selecting feedback only — this edit can never apply.'));
+  } else {
+    why.appendChild(document.createTextNode('Verifier precheck: safe.'));
+  }
+  box.appendChild(why);
+
+  // inline edit box (mock: hand-tune of visible text; empty = delete is NOT allowed — use apply strip)
+  const eb = mk('div','editbox');
+  const ta = document.createElement('textarea');
+  ta.value = f.span_text || '';
+  ta.setAttribute('aria-label','Edit replacement for '+f.id);
+  eb.appendChild(ta);
+  eb.appendChild(mk('div','hint','your text replaces the whole span — verifier-gated exactly like the proposal; to delete the span use ✂ apply strip'));
+  box.appendChild(eb);
+
+  const act = mk('div','btns');
+  function refreshOne(){
+    const s = box.dataset.state;
+    stateEl.textContent = s==='apply' ? '✂ will apply' : (s==='edit' ? '✎ will apply (edited)' : (s==='discard' ? '✓ kept original' : ''));
+    if(s==='edit'){ eb.classList.add('show'); } else { eb.classList.remove('show'); }
+    refreshTally();
+  }
+  function choose(action, extra){
+    if(box.dataset.state===action){ delete actions[f.id]; box.dataset.state=''; }   // re-click = unset (mock)
+    else { actions[f.id]=Object.assign({action:action}, extra||{}); box.dataset.state=action; }
+    refreshOne();
+  }
+  function btn(cls, label, action, extra, recd){
+    const b = mk('button','btn '+cls+(recd?' recd':''), label);
     b.onclick=()=>choose(action, extra);
     return b;
   }
   if(!blocked){
-    act.appendChild(outcomeBtn('apply','Apply strip','apply'));
-    const ed = mk('button','btn edit','Edit…');
-    // pre-fill with the FULL span text (what gets replaced) so an edit is a hand-tune of visible text.
-    ed.onclick=()=>{ const t=window.prompt('Edit this passage — your text replaces the whole shown span (to delete it, use Apply strip):', f.span_text||''); if(t!==null && t!==''){ choose('edit',{replacement_b64:b64utf8(t)}); } };
-    act.appendChild(ed);
+    act.appendChild(btn('apply','✂ apply strip','apply', null, f.recommendation==='strip'));
+    act.appendChild(btn('edit','✎ edit','edit', null, false));
   }
   // agreeing with a keep recommendation is not a voice-override; only tag keep_voice when overriding a strip.
-  act.appendChild(outcomeBtn('discard','Keep original','discard', f.recommendation==='keep' ? {} : {reason:'keep_voice'}));
-  if(blocked){ const fb=mk('button','btn','Mark false positive'); fb.onclick=()=>choose('discard',{reason:'false_positive'}); act.appendChild(fb); }
+  act.appendChild(btn('discard', (f.recommendation==='keep'?'✓ keep original':'✋ keep original'), 'discard',
+    f.recommendation==='keep' ? {} : {reason:'keep_voice'}, f.recommendation==='keep'));
+  if(blocked){ act.appendChild(btn('discard','⚑ mark false positive','discard',{reason:'false_positive'}, false)); }
   box.appendChild(act);
+  boxes[f.id] = {box:box, stateEl:stateEl, ta:ta};
   root.appendChild(box);
 });
+
+function refreshTally(){
+  let a=0,e=0,d=0;
+  PAYLOAD.findings.forEach(f=>{ const x=actions[f.id]; if(!x) return;
+    if(x.action==='apply')a++; else if(x.action==='edit')e++; else if(x.action==='discard')d++; });
+  const total=PAYLOAD.findings.length, u=total-a-e-d;
+  document.getElementById('tally').textContent = a+' strip · '+e+' edited · '+d+' keep · '+u+' undecided';
+  document.getElementById('prog').textContent = (a+e+d)+' / '+total+' decided';
+}
+
+// decisions are assembled at Finish/Export time so edits reflect the textarea's CURRENT text.
+// Returns null (and reports) when an edit has an empty replacement — empty means "delete", which is
+// the apply-strip action, never a silent empty edit.
 function decisions(){
   const out=[];
-  PAYLOAD.findings.forEach(f=>{ const a=actions[f.id]; if(a){ const d={finding_id:f.id, user_action:a.action}; if(a.action==='edit'&&a.replacement_b64)d.replacement=a.replacement_b64; if(a.reason)d.reason=a.reason; out.push(d); } });
+  for(const f of PAYLOAD.findings){
+    const a=actions[f.id]; if(!a) continue;
+    const d={finding_id:f.id, user_action:a.action};
+    if(a.action==='edit'){
+      const t=boxes[f.id].ta.value;
+      if(t===''){ boxes[f.id].box.scrollIntoView({block:'center'});
+        document.getElementById('status').textContent='An edited finding has an empty replacement — type the replacement text, or use ✂ apply strip to delete the span.';
+        return null; }
+      d.replacement=b64utf8(t);
+    }
+    if(a.reason)d.reason=a.reason;
+    out.push(d);
+  }
   return {schema_version:1, doc:PAYLOAD.doc, source_sha256:PAYLOAD.source_sha256, decisions:out};
 }
 document.getElementById('export').onclick=()=>{
-  const blob=new Blob([JSON.stringify(decisions(),null,2)],{type:'application/json'});
+  const dec=decisions(); if(!dec) return;
+  const blob=new Blob([JSON.stringify(dec,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='decisions.json'; a.click();
 };
 document.getElementById('finish').onclick=()=>{
+  const dec=decisions(); if(!dec) return;
   if(!POST_URL){ document.getElementById('status').textContent='No server — use Export decisions.json.'; return; }
-  fetch(POST_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(decisions())})
+  fetch(POST_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(dec)})
     .then(r=>{ document.getElementById('status').textContent = r.ok ? 'Decisions saved. You can close this tab.' : 'Save failed (invalid decisions).'; })
     .catch(()=>{ document.getElementById('status').textContent='Save failed (server closed?).'; });
 };
+refreshTally();
 """
 
 
@@ -245,6 +380,7 @@ def render_review_page(payload: dict, *, post_url: Optional[str] = None) -> str:
     return _PAGE_TEMPLATE.format(
         count=len(payload["findings"]),
         genre=html.escape(str(payload.get("genre", ""))),
+        doc_label=html.escape(os.path.basename(str(payload.get("doc", ""))) or "document"),
         finish_label="Finish review" if post_url else "Finish (static — use Export)",
         payload_json=payload_json,
         script=script,
