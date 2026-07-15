@@ -205,6 +205,21 @@ h1 .slap{{color:var(--red);font-style:italic}}
   background:var(--card);border:1px solid var(--amber);border-radius:2px;padding:8px 10px;line-height:1.6}}
 .editbox textarea:focus-visible{{outline:2px solid var(--amber);outline-offset:1px}}
 .editbox .hint{{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:5px}}
+.altlbl{{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:0 0 7px}}
+.alts{{display:grid;gap:7px;margin:0 0 12px}}
+.alt{{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:9px 12px;background:var(--card);
+  border:1.5px solid var(--hair2);border-radius:2px;cursor:pointer;width:100%;text-align:left;font:inherit;color:inherit}}
+.alt:hover{{border-color:var(--amber)}}
+.alt:focus-visible{{outline:2px solid var(--amber);outline-offset:2px}}
+.alt.sel{{border-color:var(--green);background:var(--green-soft)}}
+.alt .txt{{font-family:var(--disp);font-size:15px;flex:1 1 auto;min-width:200px}}
+.alt .cs{{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;border-radius:2px;padding:2px 6px;white-space:nowrap}}
+.alt .cs.none{{color:var(--green);border:1px solid var(--green);background:var(--green-soft)}}
+.alt .cs.scoped{{color:var(--blue);border:1px solid var(--blue);background:var(--blue-soft)}}
+.alt .cs.kept{{color:var(--amber);border:1px solid var(--amber);background:var(--amber-soft)}}
+.alt .cs.banned{{color:var(--red);border:1px solid var(--red);background:var(--red-soft)}}
+.alt.banned{{opacity:.6;cursor:not-allowed}}
+.alt.banned:hover{{border-color:var(--hair2)}}
 .f.blocked .btn.apply,.f.blocked .btn.edit{{display:none}}
 .f.blocked .ms{{opacity:.85}}
 .demo .foot{{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 16px;
@@ -249,6 +264,7 @@ const actions = {};   // finding_id -> {action, reason?} ; edit replacements rea
 const boxes = {};     // finding_id -> {box, stateEl, ta}
 function mk(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
 function b64utf8(s){ return btoa(unescape(encodeURIComponent(s))); }  // UTF-8-safe base64 for edits
+function b64dec(s){ try{ return decodeURIComponent(escape(atob(s))); }catch(e){ return null; } }
 
 // theme toggle (mock behavior: explicit data-theme wins over prefers-color-scheme)
 document.getElementById('tg').onclick = () => {
@@ -274,14 +290,21 @@ PAYLOAD.findings.forEach(f => {
   box.appendChild(top);
 
   // the passage: strike the original; show the engine's proposal in green when it differs.
+  // #83: proposed_rewrite is {start,end,replacement_b64} — decode the b64 ("" = delete).
   const ms = mk('p','ms');
-  const proposal = (typeof f.proposed_rewrite === 'string') ? f.proposed_rewrite : null;
+  const proposal = (f.proposed_rewrite && typeof f.proposed_rewrite.replacement_b64 === 'string')
+    ? b64dec(f.proposed_rewrite.replacement_b64) : null;
   if(f.recommendation==='strip' && proposal !== null && proposal !== f.span_text){
     ms.appendChild(mk('span','strike', f.span_text));
     ms.appendChild(document.createTextNode(' '));
     ms.appendChild(mk('span','to', proposal === '' ? '∅ (span deleted)' : proposal));
   } else {
     ms.appendChild(mk('span', null, f.span_text || ''));
+    // #83 adv F3: an undecodable proposal is surfaced, never silently rendered as "no proposal".
+    if(f.proposed_rewrite && typeof f.proposed_rewrite.replacement_b64 === 'string' && proposal === null){
+      ms.appendChild(document.createTextNode(' '));
+      ms.appendChild(mk('span','strike','⚠ proposal payload undecodable — showing original only'));
+    }
   }
   box.appendChild(ms);
 
@@ -298,6 +321,13 @@ PAYLOAD.findings.forEach(f => {
   }
   box.appendChild(why);
 
+  // #83: de-claim alternatives (mockup .alts) — each a labeled pick with a claim-status chip;
+  // banned ones render disabled and are never selectable. Picking seeds the edit textarea and
+  // records the alternative id as the edit's provenance. Selection AUTHORIZES nothing — the
+  // user's Finish is the decision, the verifier the gate.
+  const altSpot = mk('div');
+  box.appendChild(altSpot);
+
   // inline edit box (mock: hand-tune of visible text; empty = delete is NOT allowed — use apply strip)
   const eb = mk('div','editbox');
   const ta = document.createElement('textarea');
@@ -312,6 +342,10 @@ PAYLOAD.findings.forEach(f => {
     const s = box.dataset.state;
     stateEl.textContent = s==='apply' ? '✂ will apply' : (s==='edit' ? '✎ will apply (edited)' : (s==='discard' ? '✓ kept original' : ''));
     if(s==='edit'){ eb.classList.add('show'); } else { eb.classList.remove('show'); }
+    // #83 review F1: the .sel highlight must track the SUBMITTED action — clear it whenever
+    // the current action no longer carries an alternative provenance.
+    const a = actions[f.id];
+    if(!(a && (a.alternative || a.picked))){ altSpot.querySelectorAll('.alt.sel').forEach(x => x.classList.remove('sel')); }
     refreshTally();
   }
   function choose(action, extra){
@@ -333,6 +367,47 @@ PAYLOAD.findings.forEach(f => {
     f.recommendation==='keep' ? {} : {reason:'keep_voice'}, f.recommendation==='keep'));
   if(blocked){ act.appendChild(btn('discard','⚑ mark false positive','discard',{reason:'false_positive'}, false)); }
   box.appendChild(act);
+
+  // populate the alternatives block (needs ta + refreshOne, defined above).
+  // #83 review F3: never on a blocked finding — its card says "this edit can never apply",
+  // so offering pick-buttons there would contradict the blocked UI (feedback-only).
+  if(!blocked && Array.isArray(f.alternatives) && f.alternatives.length){
+    altSpot.appendChild(mk('p','altlbl','alternatives — each pre-checked by the no-new-claims gate'));
+    const alts = mk('div','alts');
+    f.alternatives.forEach(a => {
+      // #83 adv F4: selectable is an explicit allowlist — an unknown/missing claim_status
+      // renders disabled like banned (fail-closed client-side, verifier still gates server-side).
+      const selectable = ['none','scoped','kept'].includes(a.claim_status);
+      const isBanned = !selectable;
+      const btnA = mk('button','alt'+(isBanned?' banned':''));
+      btnA.type = 'button';
+      btnA.appendChild(mk('span','txt', a.text));
+      btnA.appendChild(mk('span','cs '+a.claim_status, a.label || a.claim_status));
+      if(isBanned){ btnA.disabled = true; }
+      else {
+        btnA.onclick = () => {
+          alts.querySelectorAll('.alt').forEach(x => x.classList.remove('sel'));
+          btnA.classList.add('sel');
+          if(a.text === ''){
+            // #83 review F2: a delete-shaped alternative IS the strip — submit it as apply
+            // (an empty edit is refused at Finish, and the schema binds `alternative` to
+            // edits only, so the provenance label cannot ride a delete). `picked` is a
+            // UI-only highlight marker; decisions() never reads it.
+            actions[f.id] = {action:'apply', picked:a.id};
+            box.dataset.state = 'apply';
+          } else {
+            ta.value = a.text;
+            actions[f.id] = {action:'edit', alternative:a.id};   // provenance label rides the edit
+            box.dataset.state = 'edit';
+          }
+          refreshOne();
+        };
+      }
+      alts.appendChild(btnA);
+    });
+    altSpot.appendChild(alts);
+  }
+
   boxes[f.id] = {box:box, stateEl:stateEl, ta:ta};
   root.appendChild(box);
 });
@@ -360,6 +435,9 @@ function decisions(){
         document.getElementById('status').textContent='An edited finding has an empty replacement — type the replacement text, or use ✂ apply strip to delete the span.';
         return null; }
       d.replacement=b64utf8(t);
+      // #83 adv F2: serialize on presence, not truthiness — an (unreachable-today) empty
+      // provenance value must reach the server validator and be rejected there, not vanish.
+      if('alternative' in a)d.alternative=a.alternative;
     }
     if(a.reason)d.reason=a.reason;
     out.push(d);

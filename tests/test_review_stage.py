@@ -278,3 +278,89 @@ def test_actions_empty_alternative_fails_closed(tmp_path):
     dec = decisions_from_actions(payload, {fid: {"action": "edit", "replacement_b64": b64, "alternative": ""}})
     assert dec["decisions"][0].get("alternative") == "", "empty value must be carried, not dropped"
     assert any("alternative" in p2 for p2 in validate_decisions(dec))
+
+
+def _payload_with_alternatives(tmp_path):
+    from dataclasses import replace
+    p = tmp_path / "d.md"
+    p.write_text(_DOC, encoding="utf-8")
+    audit = audit_document(str(p), declared_genre="general").data
+    doc = p.read_bytes()
+    findings = build_findings(audit, doc)
+    alts = [
+        {"id": "subjectivize", "text": "we stand behind it", "claim_status": "none",
+         "label": "no external claim"},
+        {"id": "lateral", "text": "industry-leading results", "claim_status": "banned",
+         "label": "BLOCKED - lateral swap"},
+    ]
+    enriched = [replace(findings[0], alternatives=alts)] + list(findings[1:])
+    return build_review_payload(audit, doc, enriched)
+
+
+def test_page_renders_alternatives_machinery(tmp_path):
+    # #83: the page script carries the alts rendering + selection flow.
+    payload = _payload_with_alternatives(tmp_path)
+    page = render_review_page(payload, post_url="http://127.0.0.1:9/finish?token=x")
+    assert "f.alternatives" in page                    # rendering keyed on the payload field
+    assert "claim_status" in page                      # chip per status
+    assert "banned" in page and "disabled" in page     # banned alternatives never selectable
+    assert ".alts" in page and ".altlbl" in page       # mockup block styles present
+    assert "alternative:" in page or "alternative =" in page or "alternative}" in page or "a.id" in page
+
+
+def test_page_decodes_proposed_rewrite_dict(tmp_path):
+    # #83 (defect from #81 run): proposed_rewrite is {start,end,replacement_b64}; the page
+    # must decode the b64 (empty = delete) instead of type-testing for a string.
+    payload = _payload_with_alternatives(tmp_path)
+    page = render_review_page(payload, post_url="http://127.0.0.1:9/finish?token=x")
+    assert "replacement_b64" in page                   # reads the real field
+    assert "typeof f.proposed_rewrite === 'string'" not in page
+
+
+def test_page_alternatives_state_machine_guards(tmp_path):
+    # #83 review findings: F1 sel-tracking, F2 delete-shaped pick -> apply, F3 no alts on blocked.
+    payload = _payload_with_alternatives(tmp_path)
+    page = render_review_page(payload, post_url=None)
+    assert "!blocked && Array.isArray(f.alternatives)" in page          # F3
+    assert "a.text === ''" in page and "action:'apply', picked:" in page  # F2
+    assert "a.alternative || a.picked" in page                           # F1
+
+
+def test_finish_handler_rejects_forged_alternative_id(tmp_path):
+    # #83 adv F1: end-to-end — the REAL finish handler rejects an alternative id the finding
+    # never offered (binding enforced via #81's alternative_ids map), and accepts an offered one.
+    import base64
+    from dataclasses import replace
+    from slopslap_review.review import serve_review
+    p = tmp_path / "d.md"
+    p.write_text(_DOC, encoding="utf-8")
+    audit = audit_document(str(p), declared_genre="general").data
+    doc = p.read_bytes()
+    findings = build_findings(audit, doc)
+    alts = [{"id": "subjectivize", "text": "we stand behind it", "claim_status": "none"}]
+    enriched = [replace(findings[0], alternatives=alts)] + list(findings[1:])
+    payload = build_review_payload(audit, doc, enriched)
+    out = tmp_path / "decisions.json"
+    srv = serve_review(payload, str(out), idle_timeout=0)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        host, port = srv.server_address
+        fid = payload["findings"][0]["id"]
+        b64 = base64.b64encode(b"we stand behind it").decode("ascii")
+
+        def post(dec):
+            c = http.client.HTTPConnection(host, port, timeout=5)
+            c.request("POST", "/finish?token=" + srv.review_token, json.dumps(dec),
+                      {"Content-Type": "application/json"})
+            return c.getresponse().status
+
+        forged = decisions_from_actions(
+            payload, {fid: {"action": "edit", "replacement_b64": b64, "alternative": "fabricated"}})
+        assert post(forged) != 200, "forged alternative id must be rejected"
+        assert not out.exists()
+        ok = decisions_from_actions(
+            payload, {fid: {"action": "edit", "replacement_b64": b64, "alternative": "subjectivize"}})
+        assert post(ok) == 200
+        assert out.exists()
+    finally:
+        srv.shutdown()
