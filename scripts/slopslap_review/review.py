@@ -59,6 +59,8 @@ def build_review_payload(audit, doc: bytes, findings) -> dict:
                 "recommendation": f.recommendation, "rationale": f.rationale,
                 "confidence": f.confidence, "proposed_rewrite": f.proposed_rewrite,
                 "verifier_precheck": f.verifier_precheck,
+                # #81: emitted ONLY when present so alternative-less payloads stay byte-identical
+                **({"alternatives": f.alternatives} if f.alternatives is not None else {}),
             }
             for f in findings
         ],
