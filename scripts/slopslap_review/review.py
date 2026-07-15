@@ -96,19 +96,65 @@ _PAGE_TEMPLATE = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>slopslap review</title>
 <style>
-:root{{color-scheme:light dark}}
-body{{font:15px/1.5 system-ui,sans-serif;max-width:52rem;margin:2rem auto;padding:0 1rem}}
-.f{{border:1px solid #8884;border-radius:8px;padding:.75rem 1rem;margin:.75rem 0}}
-.f[data-state="apply"]{{border-color:#c0392b}}
-.f[data-state="edit"]{{border-color:#d68910}}
-.f[data-state="discard"]{{border-color:#2874a6}}
-.cat{{font-weight:600}} .rec{{font-size:.8em;border:1px solid;border-radius:6px;padding:0 .35em;margin-left:.4em}}
-.ev{{background:#8881;border-radius:4px;padding:.15em .35em;font-family:ui-monospace,monospace;font-size:.9em}}
-.src{{font-size:.9em;margin:.35em 0}} .srctext{{background:#8881;border-radius:4px;padding:.1em .3em;white-space:pre-wrap}}
-.blocked{{opacity:.7}} .blocked .apply,.blocked .edit{{display:none}}
-.act button{{margin-right:.35em}} button{{cursor:pointer;border-radius:6px;border:1px solid #8886;padding:.2em .6em}}
-.recbtn{{border-color:currentColor;font-weight:600;box-shadow:0 0 0 1px currentColor}}
+:root{{color-scheme:light dark;
+  --bg:#f4f6f9; --card:#ffffff; --ink:#1c2230; --muted:#5d6a7d; --line:#d7deea;
+  --accent:#0f766e; --accent-soft:#0f766e14;
+  --strip:#b42318; --strip-soft:#b4231814;
+  --keep:#15803d; --keep-soft:#15803d14;
+  --editc:#b45309; --edit-soft:#b4530914;
+  --block:#6d28d9; --block-soft:#6d28d914;
+  --c-emptiness:#b45309; --c-laundering:#b42318; --c-simulation:#be185d;
+  --c-lexical:#0369a1; --c-voice:#6d28d9; --c-epistemic:#0f766e;
+}}
+@media (prefers-color-scheme:dark){{:root{{
+  --bg:#12151c; --card:#1b202b; --ink:#e7eaf1; --muted:#9aa5b5; --line:#2d3646;
+  --accent:#2dd4bf; --accent-soft:#2dd4bf1f;
+  --strip:#f87171; --strip-soft:#f871711f;
+  --keep:#4ade80; --keep-soft:#4ade801f;
+  --editc:#fbbf24; --edit-soft:#fbbf241f;
+  --block:#c4b5fd; --block-soft:#c4b5fd1f;
+  --c-emptiness:#fbbf24; --c-laundering:#f87171; --c-simulation:#f472b6;
+  --c-lexical:#7dd3fc; --c-voice:#c4b5fd; --c-epistemic:#2dd4bf;
+}}}}
+body{{font:15px/1.55 system-ui,sans-serif;max-width:52rem;margin:2rem auto;padding:0 1rem;
+  background:var(--bg);color:var(--ink)}}
+h1{{font-size:1.5rem}} h1 small{{color:var(--muted);font-weight:400}}
+#status{{color:var(--muted)}}
+.f{{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line);
+  border-radius:10px;padding:.8rem 1rem;margin:.8rem 0;box-shadow:0 1px 3px #0002}}
+.f[data-cat="emptiness"]{{border-left-color:var(--c-emptiness)}}
+.f[data-cat="laundering"]{{border-left-color:var(--c-laundering)}}
+.f[data-cat="simulation"]{{border-left-color:var(--c-simulation)}}
+.f[data-cat="lexical_structural"]{{border-left-color:var(--c-lexical)}}
+.f[data-cat="voice_discontinuity"]{{border-left-color:var(--c-voice)}}
+.f[data-cat="epistemic_distortion"]{{border-left-color:var(--c-epistemic)}}
+.f[data-state="apply"]{{border-color:var(--strip);background:var(--strip-soft)}}
+.f[data-state="edit"]{{border-color:var(--editc);background:var(--edit-soft)}}
+.f[data-state="discard"]{{border-color:var(--keep);background:var(--keep-soft)}}
+.cat{{font-weight:650}}
+.f[data-cat="emptiness"] .cat{{color:var(--c-emptiness)}}
+.f[data-cat="laundering"] .cat{{color:var(--c-laundering)}}
+.f[data-cat="simulation"] .cat{{color:var(--c-simulation)}}
+.f[data-cat="lexical_structural"] .cat{{color:var(--c-lexical)}}
+.f[data-cat="voice_discontinuity"] .cat{{color:var(--c-voice)}}
+.f[data-cat="epistemic_distortion"] .cat{{color:var(--c-epistemic)}}
+.rec{{font-size:.8em;border:1px solid;border-radius:999px;padding:.05em .5em;margin-left:.4em}}
+.rec-strip{{color:var(--strip);background:var(--strip-soft)}}
+.rec-keep{{color:var(--keep);background:var(--keep-soft)}}
+.ev{{background:var(--accent-soft);border:1px solid var(--line);border-radius:4px;
+  padding:.15em .35em;font-family:ui-monospace,monospace;font-size:.9em}}
+.src{{font-size:.9em;margin:.4em 0;color:var(--muted)}}
+.srctext{{background:var(--accent-soft);color:var(--ink);border-radius:4px;padding:.1em .3em;white-space:pre-wrap}}
+.blocked{{border-left-color:var(--block)!important;background:var(--block-soft)}}
+.blocked .apply,.blocked .edit{{display:none}}
+.act{{margin-top:.5em}} .act button{{margin-right:.4em}}
+button{{cursor:pointer;border-radius:7px;border:1px solid var(--line);background:var(--card);
+  color:var(--ink);padding:.25em .7em}}
+button:hover{{border-color:var(--accent)}}
+.recbtn{{border-color:var(--accent);color:var(--accent);font-weight:650;
+  box-shadow:0 0 0 1px var(--accent);background:var(--accent-soft)}}
 .done{{margin:1.5rem 0;font-weight:600}}
+#finish{{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:650;padding:.4em 1em}}
 </style></head><body>
 <h1>slopslap review <small>{count} findings · genre {genre}</small></h1>
 <p id="status">Choose an action per finding, then Finish.</p>
@@ -132,10 +178,10 @@ function mk(tag, cls, text){ const e=document.createElement(tag); if(cls)e.class
 function b64utf8(s){ return btoa(unescape(encodeURIComponent(s))); }  // UTF-8-safe base64 for edits
 const root = document.getElementById('findings');
 PAYLOAD.findings.forEach(f => {
-  const box = mk('div','f'); box.dataset.state='';
+  const box = mk('div','f'); box.dataset.state=''; box.dataset.cat=f.category;
   const h = mk('div');
   h.appendChild(mk('span','cat', f.category));
-  h.appendChild(mk('span','rec', 'rec: '+f.recommendation));
+  h.appendChild(mk('span','rec rec-'+f.recommendation, 'rec: '+f.recommendation));
   const blocked = f.verifier_precheck && f.verifier_precheck.status === 'blocked';
   if(blocked){ box.classList.add('blocked'); h.appendChild(mk('span','rec','blocked')); }
   box.appendChild(h);
@@ -396,8 +442,15 @@ def main(argv=None) -> int:
     srv = serve_review(payload, args.out, idle_timeout=args.idle_timeout)
     # flush=True: the URL must appear immediately — serve_forever() blocks, so a buffered stdout
     # would never reach the user who needs to open the link.
+    port = srv.server_address[1]
+    # remote-browser hint: the server is loopback-only BY DESIGN, so a browser on another machine
+    # reaches it via an SSH -L tunnel. SLOPSLAP_TUNNEL_HOST names the ssh destination (an
+    # ~/.ssh/config alias or user@host) — override per environment; never a bind change.
+    tunnel_host = os.environ.get("SLOPSLAP_TUNNEL_HOST", "claude-code")
     print(f"review → {srv.url}\n(loopback only, per-run token; {len(payload['findings'])} findings; "
-          f"decisions → {args.out}; idle-timeout {args.idle_timeout:g}s)", flush=True)
+          f"decisions → {args.out}; idle-timeout {args.idle_timeout:g}s)\n"
+          f"remote browser? tunnel first:  ssh -L {port}:127.0.0.1:{port} {tunnel_host}\n"
+          f"then open the URL above on that machine.", flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
