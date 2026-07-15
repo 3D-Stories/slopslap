@@ -173,7 +173,12 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.9.0 — review page rebuilt in the ratified pivot design language
+- **Version:** 0.10.0 — de-claim alternatives schema (#81, epic #85 C1): findings MAY carry
+  `alternatives` (`{id,text,claim_status∈{none,scoped,kept,banned},label?}`, validated at the
+  payload boundary), a decision's `alternative` is edit-only and bound to what its finding
+  actually offered, and the provenance label rides into the feedback ledger. All
+  additive-optional — alternative-less payloads stay byte-identical. Previous: 0.9.0 — review
+  page rebuilt in the ratified pivot design language
   (`docs/planning/2026-07-13-deslop-pivot-design.html` §02): cream/dark editorial theme, serif
   passages with strike→proposal rendering, mono category/recommendation chips, ✂/✎/✋ outcome
   buttons with a `· rec` marker, inline edit textarea, live tally + progress, theme toggle. The
@@ -188,6 +193,16 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.10.0** — de-claim alternatives schema (#81, epic #85 C1, 2026-07-15): additive-optional
+  `alternatives` on findings (`{id, text, claim_status ∈ {none, scoped, kept, banned}, label?}`,
+  shape owned by `schema.validate_alternatives` and ENFORCED at the payload boundary — a malformed
+  list from any producer fails loud, never reaches the UI); a decision's `alternative` is edit-only
+  (it labels the provenance of an alternative-seeded edit) and, at the finish + apply boundaries, is
+  bound to the set its finding actually offered (a stale/fabricated label is rejected, protecting
+  learning attribution); `decisions_from_actions` copies the label on presence (an empty value fails
+  closed at the validator instead of vanishing); the label rides into the feedback ledger line.
+  Alternative-less payloads stay byte-identical. Cross-model adversarial diff review: 3 Medium
+  findings, all verified and applied red-before-green.
 - **0.9.0** — review page rebuilt to the ratified mockup (UAT feedback, 2026-07-15): the interactive
   review page now carries the pivot design language from
   `docs/planning/2026-07-13-deslop-pivot-design.html` §02 — cream/dark editorial paper (grid
