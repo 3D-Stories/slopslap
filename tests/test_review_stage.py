@@ -315,3 +315,12 @@ def test_page_decodes_proposed_rewrite_dict(tmp_path):
     page = render_review_page(payload, post_url="http://127.0.0.1:9/finish?token=x")
     assert "replacement_b64" in page                   # reads the real field
     assert "typeof f.proposed_rewrite === 'string'" not in page
+
+
+def test_page_alternatives_state_machine_guards(tmp_path):
+    # #83 review findings: F1 sel-tracking, F2 delete-shaped pick -> apply, F3 no alts on blocked.
+    payload = _payload_with_alternatives(tmp_path)
+    page = render_review_page(payload, post_url=None)
+    assert "!blocked && Array.isArray(f.alternatives)" in page          # F3
+    assert "a.text === ''" in page and "action:'apply', picked:" in page  # F2
+    assert "a.alternative || a.picked" in page                           # F1

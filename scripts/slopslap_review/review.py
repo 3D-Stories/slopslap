@@ -337,6 +337,10 @@ PAYLOAD.findings.forEach(f => {
     const s = box.dataset.state;
     stateEl.textContent = s==='apply' ? '✂ will apply' : (s==='edit' ? '✎ will apply (edited)' : (s==='discard' ? '✓ kept original' : ''));
     if(s==='edit'){ eb.classList.add('show'); } else { eb.classList.remove('show'); }
+    // #83 review F1: the .sel highlight must track the SUBMITTED action — clear it whenever
+    // the current action no longer carries an alternative provenance.
+    const a = actions[f.id];
+    if(!(a && (a.alternative || a.picked))){ altSpot.querySelectorAll('.alt.sel').forEach(x => x.classList.remove('sel')); }
     refreshTally();
   }
   function choose(action, extra){
@@ -359,8 +363,10 @@ PAYLOAD.findings.forEach(f => {
   if(blocked){ act.appendChild(btn('discard','⚑ mark false positive','discard',{reason:'false_positive'}, false)); }
   box.appendChild(act);
 
-  // populate the alternatives block (needs ta + refreshOne, defined above)
-  if(Array.isArray(f.alternatives) && f.alternatives.length){
+  // populate the alternatives block (needs ta + refreshOne, defined above).
+  // #83 review F3: never on a blocked finding — its card says "this edit can never apply",
+  // so offering pick-buttons there would contradict the blocked UI (feedback-only).
+  if(!blocked && Array.isArray(f.alternatives) && f.alternatives.length){
     altSpot.appendChild(mk('p','altlbl','alternatives — each pre-checked by the no-new-claims gate'));
     const alts = mk('div','alts');
     f.alternatives.forEach(a => {
@@ -374,9 +380,18 @@ PAYLOAD.findings.forEach(f => {
         btnA.onclick = () => {
           alts.querySelectorAll('.alt').forEach(x => x.classList.remove('sel'));
           btnA.classList.add('sel');
-          ta.value = a.text;
-          actions[f.id] = {action:'edit', alternative:a.id};   // provenance label rides the edit
-          box.dataset.state = 'edit';
+          if(a.text === ''){
+            // #83 review F2: a delete-shaped alternative IS the strip — submit it as apply
+            // (an empty edit is refused at Finish, and the schema binds `alternative` to
+            // edits only, so the provenance label cannot ride a delete). `picked` is a
+            // UI-only highlight marker; decisions() never reads it.
+            actions[f.id] = {action:'apply', picked:a.id};
+            box.dataset.state = 'apply';
+          } else {
+            ta.value = a.text;
+            actions[f.id] = {action:'edit', alternative:a.id};   // provenance label rides the edit
+            box.dataset.state = 'edit';
+          }
           refreshOne();
         };
       }
