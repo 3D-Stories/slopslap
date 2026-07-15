@@ -196,6 +196,43 @@ def hard_claim_atoms(text: str) -> Dict[str, Counter]:
     return {name: fn(text) for name, fn in HARD_CLAIM_EXTRACTORS.items()}
 
 
+# ---- claim lexemes (#82) ----------------------------------------------------
+# The LEXEME tier of the no-new-claims gate: introducing a corporate buzzword or a
+# borrowed-authority phrase that the original never carried is an invented claim, exactly
+# like an invented number. Lists live in slopslap_scan.tables (the scanner's single source
+# of truth — a leaf constants module, so this import creates no cycle). Token-boundary,
+# case-insensitive, no inflection matching ("robustness" is not "robust").
+
+from slopslap_scan.tables import CORPORATE_BUZZWORDS, VAGUE_ATTRIBUTION  # noqa: E402
+
+_BUZZWORD_RE = re.compile(
+    r"\b(?:" + "|".join(re.escape(w) for w in sorted(CORPORATE_BUZZWORDS, key=len, reverse=True)) + r")\b",
+    re.IGNORECASE,
+)
+_AUTHORITY_RE = re.compile(
+    # longest-first like the buzzword alternation: today's table has no prefix-overlapping
+    # phrases, but alternation is first-match — sorting keeps a future longer phrase from
+    # being shadowed by a shorter prefix (adversarial F1, defensive).
+    r"\b(?:" + "|".join(r"\s+".join(re.escape(w) for w in p.split())
+                        for p in sorted(VAGUE_ATTRIBUTION, key=len, reverse=True)) + r")\b",
+    re.IGNORECASE,
+)
+
+
+def claim_buzzwords(text: str) -> Counter:
+    return Counter(m.group(0).lower() for m in _BUZZWORD_RE.finditer(text))
+
+
+def borrowed_authority(text: str) -> Counter:
+    return Counter(re.sub(r"\s+", " ", m.group(0).lower()) for m in _AUTHORITY_RE.finditer(text))
+
+
+LEXEME_CLAIM_EXTRACTORS = {
+    "buzzword": claim_buzzwords,
+    "borrowed_authority": borrowed_authority,
+}
+
+
 def new_claim_atoms(original: str, revision: str, allowed: List[str] | None = None) -> Dict[str, List[str]]:
     """Return per-category atoms present in ``revision`` but absent from ``original``.
 
@@ -206,7 +243,12 @@ def new_claim_atoms(original: str, revision: str, allowed: List[str] | None = No
     out: Dict[str, List[str]] = {}
     orig = hard_claim_atoms(original)
     rev = hard_claim_atoms(revision)
-    for cat in HARD_CLAIM_EXTRACTORS:
+    # #82: the lexeme tier rides the same distinct-set rule — an introduced buzzword or
+    # borrowed-authority phrase is an invented claim exactly like an invented number.
+    for cat, fn in LEXEME_CLAIM_EXTRACTORS.items():
+        orig[cat] = fn(original)
+        rev[cat] = fn(revision)
+    for cat in list(HARD_CLAIM_EXTRACTORS) + list(LEXEME_CLAIM_EXTRACTORS):
         introduced = sorted(
             a for a in rev[cat] if a not in orig[cat] and a not in allowed_set
         )

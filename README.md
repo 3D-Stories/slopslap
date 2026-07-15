@@ -173,7 +173,11 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.10.0 — de-claim alternatives schema (#81, epic #85 C1): findings MAY carry
+- **Version:** 0.11.0 — no-new-claims lexeme tier (#82, epic #85 C2): `verify()` Layer 1 now also
+  rejects a replacement that INTRODUCES a corporate buzzword or borrowed-authority phrase absent
+  from the original (token-boundary, case-insensitive; removals/reuse never trip) — the mockup's
+  "lateral swap = banned" rule, deterministic. Previous: 0.10.0 — de-claim alternatives schema
+  (#81, epic #85 C1): findings MAY carry
   `alternatives` (`{id,text,claim_status∈{none,scoped,kept,banned},label?}`, validated at the
   payload boundary), a decision's `alternative` is edit-only and bound to what its finding
   actually offered, and the provenance label rides into the feedback ledger. All
@@ -193,6 +197,15 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Changelog
 
+- **0.11.0** — no-new-claims lexeme tier (#82, epic #85 C2, 2026-07-15): the deterministic
+  no-new-claims gate (already live in `verify()` Layer 1 for hard atoms — numbers, dates, urls,
+  citations, thresholds) gains the LEXEME tier: a replacement that introduces a corporate
+  buzzword (`tables.CORPORATE_BUZZWORDS`) or a borrowed-authority phrase
+  (`tables.VAGUE_ATTRIBUTION`) absent from the original span now fails Layer 1 with the lexeme
+  named — the mockup's "lateral swap = banned" rule (best-in-class → industry-leading), made
+  deterministic. Token-boundary + case-insensitive, no inflection matching ("robustness" is not
+  "robust"); removals and reuse of existing claims never trip; the gate only ever ADDS a
+  rejection reason. Tables stay single-sourced in `slopslap_scan.tables` (leaf module, no cycle).
 - **0.10.0** — de-claim alternatives schema (#81, epic #85 C1, 2026-07-15): additive-optional
   `alternatives` on findings (`{id, text, claim_status ∈ {none, scoped, kept, banned}, label?}`,
   shape owned by `schema.validate_alternatives` and ENFORCED at the payload boundary — a malformed
