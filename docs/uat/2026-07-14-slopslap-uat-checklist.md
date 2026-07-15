@@ -19,6 +19,15 @@ UAT **passes** only if every P0 scenario passes. A P0 failure blocks release.
 
 ## 0. Preconditions & safety
 
+> **Where commands run.** Every CLI command in this sheet is copy-pasteable **as written** after you
+> first do:
+> ```
+> cd /home/rocky00717/rawgentic/projects/slopslap
+> ```
+> The engine scripts are plain Python modules — **not on PATH, not executable, no shebang** — so they
+> only run as `python3 scripts/...`. A bare `feedback.py path` or `assemble.py audit` fails with
+> `command not found` from any directory.
+
 - [ ] **P0.1 — Never test against originals.** Copy each candidate doc into a throwaway scratch dir and
       run only against the copies (`apply` mutates files). Suggested:
       ```
@@ -54,7 +63,8 @@ UAT **passes** only if every P0 scenario passes. A P0 failure blocks release.
 
 Use a **slop-heavy** general doc (see §Candidates, "heavy").
 
-- [ ] **1.1** Run `/slopslap:audit <doc>` (or `assemble.py audit --path <doc>`).
+- [ ] **1.1** Run `/slopslap:audit <doc>` (or
+      `python3 scripts/slopslap_assemble/assemble.py audit --path <doc>`).
 - [ ] **1.2** Confirm it emits per-tell diagnosis records (category · evidence span · harm · ratings ·
       remedy kind), **no edits/diffs** (audit is read-only).
 - [ ] **1.3** Confirm the flagged spans are *real* tells you can see (em-dash overuse, rule-of-three,
@@ -62,7 +72,8 @@ Use a **slop-heavy** general doc (see §Candidates, "heavy").
 - [ ] **1.4 — Anti-slap (false-positive resistance):** run audit on a **clean/distinctive** doc
       (§Candidates, "clean"). Expect **no harm findings** — a distinctive-but-clean passage is a *pass*,
       not a target. **FAIL if it flags clean voice as slop.**
-- [ ] **1.5** (Path B) `assemble.py audit` exits **0**, emits one JSON `RunResult`; `audit_status` is
+- [ ] **1.5** (Path B) `python3 scripts/slopslap_assemble/assemble.py audit --path <doc>` exits
+      **0**, emits one JSON `RunResult`; `audit_status` is
       `flagged` on the heavy doc and `clean` on the clean doc; the raw document is **never** embedded
       (identity is `source_sha256` + `byte_length`).
 
@@ -74,9 +85,9 @@ Use a **slop-heavy** general doc (see §Candidates, "heavy").
 
 Use ONE invariant-dense **spec** doc (§Candidates, "spec").
 
-- [ ] **2.1** `assemble.py audit --path <spec> --declared-genre general` — note which findings recommend
-      **strip**.
-- [ ] **2.2** `assemble.py audit --path <spec> --declared-genre spec` — the SAME tells are still
+- [ ] **2.1** `python3 scripts/slopslap_assemble/assemble.py audit --path <spec> --declared-genre general`
+      — note which findings recommend **strip**.
+- [ ] **2.2** Same command with `--declared-genre spec` — the SAME tells are still
       *detected*, but cadence/correctness-style findings now recommend **keep**.
 - [ ] **2.3** Confirm genre changed the **recommendation** only — the detected span set is identical
       across genres (genre never hides a tell; it only advises keep vs strip).
@@ -90,7 +101,8 @@ genre's protected classes. **PASS / FAIL: ___**
 
 ## 3. REVIEW — the user decides, per finding  *(P0)*
 
-- [ ] **3.1** Run `/slopslap:review <doc>` (or `review.py <doc>`). A loopback review page opens on
+- [ ] **3.1** Run `/slopslap:review <doc>` (or `python3 scripts/slopslap_review/review.py <doc>`).
+      A loopback review page opens on
       `127.0.0.1:<random port>` with a per-run URL token.
 - [ ] **3.2** Each finding shows a genre-gated recommended action as a one-click button named by its
       **outcome** ("apply strip" / "keep original"), plus a **keep** option and (for a blocked precheck)
@@ -101,7 +113,8 @@ genre's protected classes. **PASS / FAIL: ___**
 - [ ] **3.4** A **blocked** finding (its strip would break an invariant/protected span) shows the
       verifier reason and is selectable only as feedback — **never applied**.
 - [ ] **3.5** Click **Finish** → a `decisions.json` is written, bound to the doc's `source_sha256`.
-      (Or `review.py --static out.html` → open it, Export decisions.json — the no-server fallback.)
+      (Or `python3 scripts/slopslap_review/review.py <doc> --static out.html` → open it, Export
+      decisions.json — the no-server fallback.)
 - [ ] **3.6** Confirm the review stage **never mutated** the document (hash unchanged from P0.5).
 
 **Expected:** every finding is the user's call; blocked findings are feedback-only; review never
@@ -113,7 +126,8 @@ writes the doc. **PASS / FAIL: ___**
 
 Use the `decisions.json` from §3, against the **copy**.
 
-- [ ] **4.1** `/slopslap:apply <doc>` or `assemble.py apply --path <doc> --decisions decisions.json`.
+- [ ] **4.1** `/slopslap:apply <doc>` or
+      `python3 scripts/slopslap_assemble/assemble.py apply --path <doc> --decisions decisions.json`.
 - [ ] **4.2** A **verified backup** is written **before** any mutation (note the backup path in the
       `RunResult`), then the revision is staged and atomically swapped in.
 - [ ] **4.3** Only the hunks you **approved** (apply/edit) changed; everything you **kept/discarded** is
@@ -150,16 +164,19 @@ FAIL.** **PASS / FAIL: ___**
 
 ## 6. LEARN — feedback tunes recommendations only, never authorization  *(P0)*
 
-- [ ] **6.1** `feedback show` → note the current learned overlay (should be empty after P0.4).
+- [ ] **6.1** `python3 scripts/slopslap_review/feedback.py show` → note the current learned overlay
+      (should be empty after P0.4).
 - [ ] **6.2** In several review→apply runs on similar docs, repeatedly **keep/override** a particular
       *strip*-recommended class (e.g. keep transition_clusters in the `general` genre).
-- [ ] **6.3** `feedback show` → that (genre, class) has flipped to **keep** in the overlay.
+- [ ] **6.3** `python3 scripts/slopslap_review/feedback.py show` → that (genre, class) has flipped to
+      **keep** in the overlay.
 - [ ] **6.4** Re-run `/slopslap:review` on a fresh doc — that class now shows **keep** as the
       recommendation (the tool grew *more* conservative).
 - [ ] **6.5 — Invariant:** confirm learning changed only the **recommendation**. Take a finding the
       overlay now recommends "keep" and **still choose apply** — the edit is authorized + applied (the
       verifier still gates). Learning never blocked your authorization and never relaxed the verifier.
-- [ ] **6.6 — Purge:** `feedback reset` → `feedback show` returns to empty; the next review reverts to
+- [ ] **6.6 — Purge:** `python3 scripts/slopslap_review/feedback.py reset` →
+      `python3 scripts/slopslap_review/feedback.py show` returns to empty; the next review reverts to
       genre defaults. Confirm the ledger file is span-hashed (open it: `finding_id` is `metric:<hex>`,
       no raw offsets / doc text).
 
@@ -182,7 +199,8 @@ untouched; ledger is local, span-hashed, purgeable. **PASS / FAIL: ___**
 
 ## 8. DRY-RUN & replay safety  *(P1)*
 
-- [ ] **8.1 — Dry-run makes no backup (#47):** `assemble.py run --path <doc> --edits <edits.json>` (a
+- [ ] **8.1 — Dry-run makes no backup (#47):**
+      `python3 scripts/slopslap_assemble/assemble.py run --path <doc> --edits <edits.json>` (a
       dry-run) → `RunResult` shows `mutated: false`, and **no `.bak` file** was created; the doc is
       byte-identical.
 - [ ] **8.2 — Replay against a drifted doc is rejected:** apply a `decisions.json`, then edit the doc by

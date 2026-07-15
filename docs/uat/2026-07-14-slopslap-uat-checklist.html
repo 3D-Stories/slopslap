@@ -1,0 +1,476 @@
+<title>SlopSlap UAT Checklist</title>
+<style>
+  :root{
+    --ground:#f6f7f9; --paper:#ffffff; --ink:#1b2029; --muted:#5c6675;
+    --rule:#e3e7ee; --rule-strong:#cfd6e0;
+    --accent:#1f6f6d; --accent-soft:#e3f1f0; --accent-ink:#0f4b49;
+    --pass:#2f8f5b; --pass-soft:#e4f3ea;
+    --fail:#cf3b2e; --fail-soft:#fbe7e4;
+    --p1:#b8862b; --p1-soft:#f7efdd;
+    --shadow:0 1px 2px rgba(20,30,45,.06),0 8px 24px rgba(20,30,45,.05);
+    --serif:Georgia,"Iowan Old Style",Charter,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --maxw:60rem;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ground:#14171d; --paper:#1c212a; --ink:#e8eaf0; --muted:#9aa4b2;
+      --rule:#2a313c; --rule-strong:#3a4350;
+      --accent:#4bb9b5; --accent-soft:#173634; --accent-ink:#8fe0dc;
+      --pass:#5cc38a; --pass-soft:#16301f;
+      --fail:#f0685b; --fail-soft:#3a1c19;
+      --p1:#dcae5a; --p1-soft:#332a15;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 26px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --ground:#f6f7f9; --paper:#ffffff; --ink:#1b2029; --muted:#5c6675;
+    --rule:#e3e7ee; --rule-strong:#cfd6e0;
+    --accent:#1f6f6d; --accent-soft:#e3f1f0; --accent-ink:#0f4b49;
+    --pass:#2f8f5b; --pass-soft:#e4f3ea; --fail:#cf3b2e; --fail-soft:#fbe7e4;
+    --p1:#b8862b; --p1-soft:#f7efdd; --shadow:0 1px 2px rgba(20,30,45,.06),0 8px 24px rgba(20,30,45,.05);
+  }
+  :root[data-theme="dark"]{
+    --ground:#14171d; --paper:#1c212a; --ink:#e8eaf0; --muted:#9aa4b2;
+    --rule:#2a313c; --rule-strong:#3a4350;
+    --accent:#4bb9b5; --accent-soft:#173634; --accent-ink:#8fe0dc;
+    --pass:#5cc38a; --pass-soft:#16301f; --fail:#f0685b; --fail-soft:#3a1c19;
+    --p1:#dcae5a; --p1-soft:#332a15; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 26px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  body{background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.55;
+       -webkit-font-smoothing:antialiased;margin:0;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:clamp(1.25rem,4vw,3rem) clamp(1rem,4vw,2rem) 5rem;}
+
+  a{color:var(--accent);text-underline-offset:2px}
+  code,.mono{font-family:var(--mono);font-size:.86em;}
+  code{background:var(--accent-soft);color:var(--accent-ink);padding:.08em .38em;border-radius:4px;
+       word-break:break-word;}
+
+  header.mast{border-bottom:2px solid var(--ink);padding-bottom:1.4rem;margin-bottom:2rem;}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;
+           color:var(--accent);margin:0 0 .5rem;font-weight:600;}
+  h1{font-family:var(--serif);font-weight:700;font-size:clamp(2rem,5.5vw,3.1rem);line-height:1.03;
+     letter-spacing:-.01em;margin:.1rem 0 .5rem;text-wrap:balance;}
+  h1 .slap{color:var(--accent);font-style:italic;}
+  .lede{color:var(--muted);max-width:46rem;margin:.4rem 0 1.2rem;font-size:1.02rem;}
+  .metarow{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;}
+  .chip{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.74rem;
+        border:1px solid var(--rule-strong);border-radius:999px;padding:.28rem .7rem;color:var(--muted);
+        background:var(--paper);}
+  .chip b{color:var(--ink);font-weight:600;}
+
+  .progress{margin-top:1.2rem;background:var(--paper);border:1px solid var(--rule);border-radius:12px;
+            padding:.9rem 1.1rem;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:1rem 1.5rem;
+            align-items:center;justify-content:space-between;}
+  .ptext{font-family:var(--mono);font-size:.82rem;color:var(--muted);}
+  .ptext b{color:var(--ink);font-size:1.05rem;}
+  .bar{flex:1 1 12rem;height:8px;border-radius:999px;background:var(--rule);overflow:hidden;min-width:8rem;}
+  .bar>span{display:block;height:100%;width:0;background:var(--accent);transition:width .35s ease;}
+  @media (prefers-reduced-motion:reduce){.bar>span{transition:none}}
+  .btn{font-family:var(--mono);font-size:.75rem;border:1px solid var(--rule-strong);background:var(--paper);
+       color:var(--muted);border-radius:8px;padding:.4rem .7rem;cursor:pointer;}
+  .btn:hover{border-color:var(--accent);color:var(--accent);}
+  .btn:focus-visible,input:focus-visible,.vbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  .keystone{font-family:var(--serif);font-size:1.06rem;line-height:1.5;border-left:3px solid var(--accent);
+            background:var(--accent-soft);color:var(--ink);padding:1rem 1.2rem;border-radius:0 10px 10px 0;
+            margin:1.6rem 0;}
+  .keystone b{color:var(--accent-ink);}
+
+  .pipe{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin:1.6rem 0 2.2rem;
+        font-family:var(--mono);font-size:.78rem;}
+  .pipe .stg{border:1px solid var(--rule-strong);background:var(--paper);border-radius:7px;
+             padding:.32rem .6rem;color:var(--ink);}
+  .pipe .stg.learn{border-style:dashed;color:var(--muted);}
+  .pipe .arw{color:var(--muted);padding:0 .1rem;}
+
+  h2.sec{font-family:var(--serif);font-size:1.5rem;margin:2.6rem 0 1rem;letter-spacing:-.01em;
+         padding-bottom:.4rem;border-bottom:1px solid var(--rule);}
+
+  .card{background:var(--paper);border:1px solid var(--rule);border-left:4px solid var(--rule-strong);
+        border-radius:12px;padding:1.15rem 1.3rem;margin:1rem 0;box-shadow:var(--shadow);}
+  .card[data-verdict="pass"]{border-left-color:var(--pass);}
+  .card[data-verdict="fail"]{border-left-color:var(--fail);}
+  .chead{display:flex;flex-wrap:wrap;gap:.6rem .8rem;align-items:baseline;}
+  .cnum{font-family:var(--serif);font-weight:700;font-size:1.5rem;color:var(--accent);line-height:1;}
+  .ctitle{font-family:var(--serif);font-weight:700;font-size:1.22rem;flex:1 1 12rem;letter-spacing:-.01em;}
+  .goal{color:var(--muted);font-size:.94rem;margin:.5rem 0 .9rem;}
+  .goal b{color:var(--ink);}
+
+  .pill{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;font-weight:600;text-transform:uppercase;
+        border-radius:999px;padding:.2rem .55rem;white-space:nowrap;}
+  .pill.p0{background:var(--fail-soft);color:var(--fail);border:1px solid var(--fail);}
+  .pill.p1{background:var(--p1-soft);color:var(--p1);border:1px solid var(--p1);}
+  .pill.setup{background:var(--accent-soft);color:var(--accent-ink);border:1px solid var(--accent);}
+
+  ul.checks{list-style:none;margin:.4rem 0 0;padding:0;display:flex;flex-direction:column;gap:.1rem;}
+  ul.checks li{display:flex;gap:.65rem;align-items:flex-start;padding:.4rem .3rem;border-radius:7px;}
+  ul.checks li:hover{background:var(--ground);}
+  ul.checks input[type="checkbox"]{appearance:none;-webkit-appearance:none;flex:0 0 auto;margin-top:.18rem;
+        width:1.12rem;height:1.12rem;border:1.5px solid var(--rule-strong);border-radius:5px;background:var(--paper);
+        cursor:pointer;display:grid;place-content:center;}
+  ul.checks input[type="checkbox"]:checked{background:var(--accent);border-color:var(--accent);}
+  ul.checks input[type="checkbox"]:checked::after{content:"";width:.34rem;height:.62rem;border:solid #fff;
+        border-width:0 2.5px 2.5px 0;transform:rotate(42deg) translateY(-1px);}
+  ul.checks label{cursor:pointer;font-size:.95rem;}
+  ul.checks input:checked + label{color:var(--muted);}
+  .tag{font-family:var(--mono);font-size:.7rem;color:var(--accent);font-weight:600;margin-right:.15rem;}
+
+  .vrow{display:flex;gap:.4rem;align-items:center;margin-top:1rem;padding-top:.9rem;border-top:1px dashed var(--rule);}
+  .vrow .vlbl{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:.3rem;}
+  .vbtn{font-family:var(--mono);font-size:.74rem;border:1px solid var(--rule-strong);background:var(--paper);
+        color:var(--muted);border-radius:7px;padding:.3rem .7rem;cursor:pointer;font-weight:600;}
+  .vbtn[aria-pressed="true"][data-v="pass"]{background:var(--pass-soft);color:var(--pass);border-color:var(--pass);}
+  .vbtn[aria-pressed="true"][data-v="fail"]{background:var(--fail-soft);color:var(--fail);border-color:var(--fail);}
+
+  .twrap{overflow-x:auto;border:1px solid var(--rule);border-radius:10px;margin:1rem 0 1.6rem;background:var(--paper);}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:38rem;}
+  caption{caption-side:top;text-align:left;font-family:var(--mono);font-size:.74rem;letter-spacing:.08em;
+          text-transform:uppercase;color:var(--muted);padding:.7rem .9rem .2rem;font-weight:600;}
+  th,td{text-align:left;padding:.55rem .8rem;border-bottom:1px solid var(--rule);vertical-align:top;}
+  th{font-family:var(--mono);font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);
+     background:var(--ground);position:sticky;top:0;}
+  tbody tr:last-child td{border-bottom:none;}
+  td.doc{font-family:var(--mono);font-size:.78rem;color:var(--ink);}
+  .lvl{font-family:var(--mono);font-size:.68rem;font-weight:600;border-radius:5px;padding:.12rem .45rem;white-space:nowrap;}
+  .lvl.heavy{background:var(--fail-soft);color:var(--fail);}
+  .lvl.moderate{background:var(--p1-soft);color:var(--p1);}
+  .lvl.clean{background:var(--pass-soft);color:var(--pass);}
+  .star{color:var(--accent);font-weight:700;}
+  .num{font-variant-numeric:tabular-nums;}
+
+  .note{background:var(--paper);border:1px dashed var(--rule-strong);border-radius:10px;padding:.9rem 1.1rem;
+        font-size:.92rem;color:var(--muted);margin:1.2rem 0;}
+  .note b{color:var(--ink);}
+  .fast{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:1rem 1.2rem;margin:1.4rem 0;}
+  .fast h3{margin:.1rem 0 .5rem;font-family:var(--serif);font-size:1.1rem;color:var(--accent-ink);}
+  .fast ol{margin:.3rem 0 0;padding-left:1.2rem;}
+  .fast li{margin:.25rem 0;font-size:.92rem;}
+
+  .verdict-final{background:var(--paper);border:2px solid var(--ink);border-radius:12px;padding:1.2rem 1.4rem;margin-top:2rem;}
+  .verdict-final .vopts{display:flex;flex-wrap:wrap;gap:.5rem;margin:.8rem 0;}
+  .vopt{display:inline-flex;align-items:center;gap:.45rem;font-family:var(--mono);font-size:.8rem;
+        border:1px solid var(--rule-strong);border-radius:8px;padding:.45rem .8rem;cursor:pointer;}
+  .vopt input{accent-color:var(--accent);}
+  footer{margin-top:3rem;padding-top:1.2rem;border-top:1px solid var(--rule);color:var(--muted);
+         font-family:var(--mono);font-size:.74rem;}
+  .themebtn{position:fixed;top:.9rem;right:.9rem;z-index:5;}
+</style>
+
+<button class="btn themebtn" id="themeToggle" aria-label="Toggle light/dark theme">theme</button>
+
+<div class="wrap">
+  <header class="mast">
+    <p class="eyebrow">User Acceptance Testing / v0.8.4</p>
+    <h1><span class="slap">SlopSlap</span> Acceptance Sheet</h1>
+    <p class="lede">Walk the whole loop on real documents and prove the one thing that matters: every
+      applied edit leaves numbers, requirements, negations, defined terms, and code <em>byte-exact</em>,
+      while the writer &mdash; never the scanner &mdash; authorizes the change.</p>
+    <div class="metarow">
+      <span class="chip">repo <b>3D-Stories/slopslap</b></span>
+      <span class="chip">main <b>57bebda</b></span>
+      <span class="chip">suite <b>629 pass / 2 skip</b></span>
+      <span class="chip">tester <b>___________</b></span>
+      <span class="chip">date <b>2026-07-14</b></span>
+    </div>
+
+    <div class="progress">
+      <div class="ptext"><b id="pcount">0</b> / <span id="ptotal">0</span> checks complete
+        &nbsp;/&nbsp; <span id="pverd">0</span> scenarios marked</div>
+      <div class="bar"><span id="pbar"></span></div>
+      <button class="btn" id="resetBtn">reset sheet</button>
+    </div>
+  </header>
+
+  <div class="keystone">Every tell is detected and prepared for removal; genre and learned feedback set
+    each finding's <em>recommendation</em>; <b>the user's review decision &mdash; not the scanner, not the
+    genre, not the learning &mdash; authorizes the edit</b>; and the byte-exact verifier guarantees no
+    applied edit changes a number, requirement, negation, condition, defined term, or protected span.
+    Recommendations may learn; authorization never does.</div>
+
+  <div class="pipe" aria-label="the loop under test">
+    <span class="stg">detect</span><span class="arw">&rarr;</span>
+    <span class="stg">recommend</span><span class="arw">&rarr;</span>
+    <span class="stg">review</span><span class="arw">&rarr;</span>
+    <span class="stg">apply</span><span class="arw">&rarr;</span>
+    <span class="stg learn">learn</span>
+  </div>
+
+  <p class="note"><b>Pass rule.</b> UAT passes only if every <span class="pill p0" style="padding:.05rem .4rem">P0</span>
+    scenario passes. A P0 failure blocks release. Run each scenario the way a real user would &mdash; the
+    slash commands <code>/slopslap:audit|suggest|review|apply|feedback</code> are the primary path; the
+    deterministic CLIs are the reproducible power-user lane. <b>CLI commands only run as
+    <code>python3 scripts/...</code> from the repo root</b> (<code>cd /home/rocky00717/rawgentic/projects/slopslap</code>
+    first) &mdash; the scripts are not on PATH and not executable, so a bare <code>feedback.py</code> /
+    <code>assemble.py</code> fails with "command not found".</p>
+
+  <h2 class="sec">Scenarios</h2>
+  <div id="scenarios"></div>
+
+  <h2 class="sec">Candidate documents</h2>
+  <p class="lede" style="margin-top:.2rem">From a workspace-wide survey &mdash; chosen to span genre x slop
+    x invariant-load. Copies are staged in <code>/tmp/slopslap-uat/</code>; run against those, never the
+    originals (<code>apply</code> mutates).</p>
+  <div id="candidates"></div>
+
+  <div class="fast">
+    <h3>Fast path &mdash; if you only run three</h3>
+    <ol>
+      <li><b>marketing-heavy--chorestory-briefing.md</b> &mdash; detect &rarr; review &rarr; apply; watch it
+        strip buzzwords &amp; rule-of-three.</li>
+      <li><b>marketing-clean--saystory-README.md</b> &mdash; the clean control: it should flag ~nothing and
+        leave the safety MUSTs + code intact.</li>
+      <li><b>spec-DENSEST--provenance-contract.md</b> as <code>--declared-genre spec</code> &mdash; the
+        byte-exact keystone test (&sect;5): zero drift in any number, MUST, negation, regex, or code block.</li>
+    </ol>
+  </div>
+
+  <p class="note"><b>Genre-coverage caveat (honest).</b> The workspace is thin on standalone
+    <em>personal / first-person</em> prose. The closest voice-y material is the investor briefing and a
+    meeting-transcript summary; for a true <code>personal</code>-genre / voice-floor test, drop in a
+    sample of <b>your own</b> writing.</p>
+
+  <h2 class="sec">Results</h2>
+  <div class="twrap">
+    <table id="resultsTable">
+      <caption>auto-fills from the PASS/FAIL toggles above</caption>
+      <thead><tr><th>#</th><th>Scenario</th><th>Priority</th><th>Verdict</th></tr></thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+
+  <div class="verdict-final">
+    <p class="eyebrow" style="margin-bottom:.3rem">Overall verdict</p>
+    <div class="vopts" role="radiogroup" aria-label="Overall verdict">
+      <label class="vopt"><input type="radio" name="final" value="accept"> ACCEPT</label>
+      <label class="vopt"><input type="radio" name="final" value="caveats"> ACCEPT with caveats</label>
+      <label class="vopt"><input type="radio" name="final" value="reject"> REJECT</label>
+    </div>
+    <p style="font-size:.9rem;color:var(--muted);margin:.3rem 0 0">This sheet persists your ticks locally
+      in the browser &mdash; export or screenshot before clearing.</p>
+  </div>
+
+  <footer>SlopSlap v0.8.4 / checklist source committed at
+    <code>docs/uat/2026-07-14-slopslap-uat-checklist.md</code> (main / #78) / generated 2026-07-14.</footer>
+</div>
+
+<script>
+const SCEN = [
+  {n:"0",title:"Preconditions & safety",pri:"setup",
+   goal:"Set up so UAT never touches your originals and starts from a clean learning ledger. Every command below is copy-pasteable AS WRITTEN once you are in the repo root: cd /home/rocky00717/rawgentic/projects/slopslap.",
+   items:[
+     ["P0.1","<b>Never test against originals.</b> Copies are staged in <code>/tmp/slopslap-uat/</code>; run only against those (<code>apply</code> mutates files)."],
+     ["P0.2","Version check: <code>grep '\"version\"' .claude-plugin/plugin.json</code> shows <code>0.8.4</code>."],
+     ["P0.3","Sanity baseline: <code>/home/rocky00717/.local/bin/pytest tests/ -q</code> gives 629 passed, 2 skipped."],
+     ["P0.4","Clean ledger: <code>python3 scripts/slopslap_review/feedback.py path</code> then <code>python3 scripts/slopslap_review/feedback.py reset</code> before the learning scenarios."],
+     ["P0.5","Hash each original so you can diff after apply: <code>sha256sum &lt;doc&gt; &gt; &lt;doc&gt;.sha</code>."]
+   ]},
+  {n:"1",title:"Detect &mdash; flags real tells, spares clean prose",pri:"p0",
+   goal:"Audit catches genuine tells and does NOT punish distinctive-but-clean writing (anti-slap).",
+   items:[
+     ["1.1","Run <code>/slopslap:audit &lt;heavy doc&gt;</code> (or <code>python3 scripts/slopslap_assemble/assemble.py audit --path &lt;doc&gt;</code>)."],
+     ["1.2","Emits per-tell diagnosis records (category / evidence span / harm / ratings / remedy) &mdash; and <b>no edits</b> (audit is read-only)."],
+     ["1.3","Flagged spans are real tells you can see: em-dash overuse, rule-of-three, vague attribution, buzzwords, negative parallelism, generic diction, bold-label density."],
+     ["1.4","<b>Anti-slap:</b> audit a <em>clean</em> doc gives <b>no harm findings</b>. FAIL if it flags clean voice as slop."],
+     ["1.5","(CLI) <code>audit</code> exits 0, one JSON RunResult; <code>audit_status</code> = flagged (heavy) / clean (clean); raw doc never embedded (identity = <code>source_sha256</code> + byte_length)."]
+   ]},
+  {n:"2",title:"Recommend &mdash; genre gates the recommendation, not the detection",pri:"p0",
+   goal:"Genre changes strip/keep advice only; the detected span set stays identical across genres.",
+   items:[
+     ["2.1","<code>python3 scripts/slopslap_assemble/assemble.py audit --path &lt;spec&gt; --declared-genre general</code> &mdash; note which findings recommend <b>strip</b>."],
+     ["2.2","Same command with <code>--declared-genre spec</code> &mdash; same tells detected, but cadence/correctness findings now recommend <b>keep</b>."],
+     ["2.3","Confirm genre changed the <b>recommendation only</b> &mdash; identical detected spans across genres (genre never hides a tell)."],
+     ["2.4","<code>--declared-genre personal</code> on a voice-y doc flips voice-punctuation + cadence to <b>keep</b> (voice-floor)."]
+   ]},
+  {n:"3",title:"Review &mdash; the user decides, per finding",pri:"p0",
+   goal:"Every finding is the user's call; blocked findings are feedback-only; review never writes the doc.",
+   items:[
+     ["3.1","<code>/slopslap:review &lt;doc&gt;</code> (or <code>python3 scripts/slopslap_review/review.py &lt;doc&gt;</code>) opens a loopback page on <code>127.0.0.1:&lt;random port&gt;</code> with a per-run token."],
+     ["3.2","Each finding shows an outcome-named button (apply strip / keep original), a keep option, and &mdash; if blocked &mdash; a false-positive mark."],
+     ["3.3","Override in <b>both</b> directions: accept a strip, keep a strip you disagree with, and <b>edit</b> one. Nothing is authorized except your explicit choice."],
+     ["3.4","A <b>blocked</b> finding (strip would break an invariant/protected span) shows the verifier reason and is feedback-only &mdash; never applied."],
+     ["3.5","<b>Finish</b> writes <code>decisions.json</code>, bound to <code>source_sha256</code>. (Or <code>python3 scripts/slopslap_review/review.py &lt;doc&gt; --static out.html</code> then Export &mdash; the no-server fallback.)"],
+     ["3.6","Review never mutated the doc (hash unchanged from P0.5)."]
+   ]},
+  {n:"4",title:"Apply &mdash; approved hunks only, backup-gated, verifier-gated",pri:"p0",
+   goal:"Backup-first, atomic, approved-only, fail-closed on a verifier reject.",
+   items:[
+     ["4.1","<code>/slopslap:apply &lt;doc&gt;</code> / <code>python3 scripts/slopslap_assemble/assemble.py apply --path &lt;doc&gt; --decisions decisions.json</code>."],
+     ["4.2","A <b>verified backup</b> is written <b>before</b> any mutation (path in RunResult), then staged + atomically swapped."],
+     ["4.3","Only the hunks you <b>approved</b> changed; everything kept/discarded is byte-identical."],
+     ["4.4","<b>Blocked-on-apply:</b> an approved hunk that would break an invariant is surfaced <b>blocked</b>, file left untouched for it &mdash; never a silent partial mutation."],
+     ["4.5","<b>Restore works:</b> run the backup's <code>restore_command</code> and the doc returns to original bytes (P0.5 hash)."]
+   ]},
+  {n:"5",title:"Preservation &mdash; the keystone, byte-exact",pri:"p0",
+   goal:"Zero invariant drift. Use the densest spec. A single changed number / requirement / negation / code-span is a P0 FAIL.",
+   items:[
+     ["5.1","In review, approve an aggressive set of strips/edits (try to make it break something)."],
+     ["5.2","Diff original vs result. NONE of these changed: every <b>number</b>, <b>MUST/SHALL/SHOULD</b>, <b>negation</b> (not/never/no), <b>condition</b> (if/unless/when), <b>defined term</b>, <b>citation/cross-ref</b>, <b>fenced code block</b>."],
+     ["5.3","Any edit that <em>would</em> have touched one was <b>blocked</b> by the verifier, not silently applied."],
+     ["5.4","Load-bearing uncertainty survived (may, approximately) &mdash; it trims empty hedging, not real qualifiers."]
+   ]},
+  {n:"6",title:"Learn &mdash; feedback tunes recommendations only, never authorization",pri:"p0",
+   goal:"Learning only softens recommendations toward keep; the user gate + verifier stay untouched; ledger is local, span-hashed, purgeable.",
+   items:[
+     ["6.1","<code>python3 scripts/slopslap_review/feedback.py show</code> notes the overlay (empty after P0.4)."],
+     ["6.2","Across several review/apply runs, repeatedly <b>keep/override</b> a particular <em>strip</em>-recommended class."],
+     ["6.3","<code>python3 scripts/slopslap_review/feedback.py show</code> shows that (genre, class) flipped to <b>keep</b>."],
+     ["6.4","A fresh <code>/slopslap:review</code> now shows that class as <b>keep</b> (the tool grew more conservative)."],
+     ["6.5","<b>Invariant:</b> take a finding the overlay now recommends keep and <b>still choose apply</b> &mdash; the edit is authorized + applied (verifier still gates). Learning never blocked authorization or relaxed the verifier."],
+     ["6.6","<b>Purge:</b> <code>python3 scripts/slopslap_review/feedback.py reset</code> &mdash; then <code>show</code> returns empty; ledger is span-hashed (<code>finding_id</code> = <code>metric:&lt;hex&gt;</code>, no raw offsets/text)."]
+   ]},
+  {n:"7",title:"Untrusted-input / injection resistance",pri:"p1",
+   goal:"Injected content is diagnosed as data, never obeyed.",
+   items:[
+     ["7.1","Add to a doc: a line reproducing the fence <code>SLOPSLAP_UNTRUSTED_TARGET</code>, an ignore-previous-instructions line, and a fake Keystone. Run <code>/slopslap:audit</code>."],
+     ["7.2","Confirm it treats all of it as <b>data to diagnose</b> &mdash; no mode change, no obeyed instruction, no authorized write."]
+   ]},
+  {n:"8",title:"Dry-run & replay safety",pri:"p1",
+   goal:"Previews never write; stale decisions never apply.",
+   items:[
+     ["8.1","<b>Dry-run makes no backup (#47):</b> <code>python3 scripts/slopslap_assemble/assemble.py run --path &lt;doc&gt; --edits &lt;edits.json&gt;</code> gives <code>mutated:false</code> and <b>no .bak</b> created; doc byte-identical."],
+     ["8.2","<b>Replay against a drifted doc rejected:</b> apply a <code>decisions.json</code>, hand-edit the doc, re-apply the same file &mdash; rejected (<code>invalid_decisions</code>/<code>digest_mismatch</code>), doc untouched."]
+   ]}
+];
+
+const CAND = [
+  {label:"Slop-heavy &mdash; best strip/repair targets (secs 1,3,4)",
+   rows:[
+     ["marketing-heavy--chorestory-briefing.md","marketing","1090","heavy","robust modular monolith / scalability, security, and performance; technical moat","numbers, blockquote citations, comparison table, versions"],
+     ["marketing-heavy--investor-briefing.md","marketing","1215","heavy","the real secret sauce; enterprise-grade / millions of users","$9B/$11.5B, 52M DAU, tiers; a verbatim quote; first-person cadence to preserve"]
+   ]},
+  {label:"Clean controls &mdash; must NOT be punished (sec 1.4 anti-slap)",
+   rows:[
+     ["marketing-clean--saystory-README.md","marketing","673","clean","concrete throughout; em-dashes purposeful","safety MUSTs (copy-only, never auto-send); code; MIT attribution"],
+     ["general-clean--arc-README.md","general","690","clean","terse, no filler","MUST-like label state-machine; code; host/IP"],
+     ["general-clean-voice--kukakuka-README.md","general","802","clean","strong distinctive voice; Hawaiian etymology","build facts (PRs #13-16); ADR refs; commands"],
+     ["general-clean--presentation-builder-retro.md","general","1969","clean","earned voice (like assembling IKEA furniture)","hex values, P0-P3 MUST tables"]
+   ]},
+  {label:"Spec &mdash; the byte-exact preservation tests (sec 2 genre, sec 5 keystone)",
+   rows:[
+     ["spec-DENSEST--provenance-contract.md STAR","spec","1790","moderate","34 em-dashes; the #1 port footgun","DENSEST: ~91 numbers incl. crypto golden vectors, 4 MUST/FORBIDDEN, do NOT normalize NEL, anchored regex, 4 code blocks"],
+     ["spec-dense--sentinel-forced-command-ssh.md","spec","1690","moderate","crown jewel; defense in depth","~118 numbers (perms, TOTP, uuid); NEVER/no-wildcard; sudoers + authorized_keys code"],
+     ["spec--chorestory-tenant-isolation.md","spec","790","moderate","RLS done right; defense in depth","NEVER a client value; 6 js/bash blocks; defined terms (RLS/GUC)"],
+     ["spec-clean--rawgentic-wal-guide.md","spec","1590","clean","mild bolded-label cadence","~50 numbers; 10 blocks incl. byte-exact JSONL + jq; regex; INTENT/DONE/FAIL"]
+   ]},
+  {label:"PRD &mdash; genre-gating at scale (sec 2)",
+   rows:[
+     ["prd-large--chorestory-admin-user-creation.md","prd","~6950","moderate","streamlining the onboarding process; Current/Desired-State scaffolding","~327 numbers, 54 code blocks; 8 must / 13 should / 20 required; API citations (chunk it, large)"]
+   ]}
+];
+
+const KEY = "slopslap-uat-v0.8.4";
+let state = {};
+try{ state = JSON.parse(localStorage.getItem(KEY) || "{}"); }catch(e){ state = {}; }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+
+function el(tag, cls, html){ const n=document.createElement(tag); if(cls)n.className=cls; if(html!=null)n.innerHTML=html; return n; }
+
+const scenHost = document.getElementById("scenarios");
+SCEN.forEach(s=>{
+  const card = el("div","card"); card.dataset.scen = s.n;
+  const head = el("div","chead");
+  head.appendChild(el("span","cnum", s.n));
+  head.appendChild(el("span","ctitle", s.title));
+  const pillCls = s.pri==="setup"?"setup":s.pri;
+  head.appendChild(el("span","pill "+pillCls, s.pri==="setup"?"setup":s.pri.toUpperCase()));
+  card.appendChild(head);
+  card.appendChild(el("p","goal", s.goal));
+  const ul = el("ul","checks");
+  s.items.forEach(function(pair,i){
+    const tag=pair[0], txt=pair[1];
+    const id = "s"+s.n+"-"+i;
+    const li = el("li");
+    const cb = el("input"); cb.type="checkbox"; cb.id=id;
+    cb.checked = !!state[id];
+    cb.addEventListener("change",function(){ state[id]=cb.checked; save(); refresh(); });
+    const lb = el("label"); lb.htmlFor=id; lb.innerHTML='<span class="tag">'+tag+'</span> '+txt;
+    li.appendChild(cb); li.appendChild(lb); ul.appendChild(li);
+  });
+  card.appendChild(ul);
+  if(s.pri!=="setup"){
+    const vr = el("div","vrow");
+    vr.appendChild(el("span","vlbl","verdict"));
+    ["pass","fail"].forEach(function(v){
+      const b = el("button","vbtn", v.toUpperCase()); b.dataset.v=v; b.type="button";
+      const vk = "v"+s.n;
+      b.setAttribute("aria-pressed", state[vk]===v ? "true":"false");
+      b.addEventListener("click",function(){
+        state[vk] = state[vk]===v ? null : v; save();
+        vr.querySelectorAll(".vbtn").forEach(function(x){ x.setAttribute("aria-pressed", state[vk]===x.dataset.v?"true":"false"); });
+        card.dataset.verdict = state[vk]||"";
+        refresh();
+      });
+      vr.appendChild(b);
+    });
+    card.dataset.verdict = state["v"+s.n]||"";
+    card.appendChild(vr);
+  }
+  scenHost.appendChild(card);
+});
+
+const candHost = document.getElementById("candidates");
+CAND.forEach(function(g){
+  const w = el("div","twrap");
+  const t = el("table");
+  t.innerHTML = "<caption>"+g.label+"</caption><thead><tr><th>Document</th><th>Genre</th><th>~w</th><th>Slop</th><th>Concrete tells</th><th>Invariants</th></tr></thead>";
+  const tb = el("tbody");
+  g.rows.forEach(function(r){
+    const tr = el("tr");
+    const doc = r[0].indexOf("STAR")>-1 ? r[0].replace("STAR",'<span class="star">&#9733;</span>') : r[0];
+    tr.innerHTML =
+      '<td class="doc">'+doc+'</td>'+
+      '<td>'+r[1]+'</td>'+
+      '<td class="num">'+r[2]+'</td>'+
+      '<td><span class="lvl '+r[3]+'">'+r[3]+'</span></td>'+
+      '<td>'+r[4]+'</td>'+
+      '<td>'+r[5]+'</td>';
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb); w.appendChild(t); candHost.appendChild(w);
+});
+
+const resBody = document.getElementById("resultsBody");
+function refresh(){
+  let total=0, done=0;
+  SCEN.forEach(function(s){ s.items.forEach(function(_,i){ total++; if(state["s"+s.n+"-"+i]) done++; }); });
+  document.getElementById("pcount").textContent = done;
+  document.getElementById("ptotal").textContent = total;
+  document.getElementById("pbar").style.width = total? (100*done/total).toFixed(1)+"%" : "0%";
+  resBody.innerHTML="";
+  let marked=0;
+  SCEN.filter(function(s){return s.pri!=="setup";}).forEach(function(s){
+    const v = state["v"+s.n]; if(v) marked++;
+    const tr = el("tr");
+    const vhtml = v ? '<span class="lvl '+(v==="pass"?"clean":"heavy")+'">'+v.toUpperCase()+'</span>' : '<span style="color:var(--muted)">&mdash;</span>';
+    tr.innerHTML = '<td class="num">'+s.n+'</td><td>'+s.title+'</td>'+
+      '<td><span class="pill '+s.pri+'" style="padding:.05rem .4rem">'+s.pri.toUpperCase()+'</span></td>'+
+      '<td>'+vhtml+'</td>';
+    resBody.appendChild(tr);
+  });
+  document.getElementById("pverd").textContent = marked;
+}
+refresh();
+
+document.getElementById("resetBtn").addEventListener("click",function(){
+  if(confirm("Clear all ticks and verdicts on this sheet?")){ state={}; save(); location.reload(); }
+});
+
+document.querySelectorAll('input[name="final"]').forEach(function(r){
+  if(state.final===r.value) r.checked=true;
+  r.addEventListener("change",function(){ state.final=r.value; save(); });
+});
+
+const root = document.documentElement;
+const tbtn = document.getElementById("themeToggle");
+if(state.theme) root.setAttribute("data-theme", state.theme);
+tbtn.addEventListener("click",function(){
+  const cur = root.getAttribute("data-theme")
+    || (matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");
+  const next = cur==="dark"?"light":"dark";
+  root.setAttribute("data-theme", next); state.theme=next; save();
+});
+</script>
