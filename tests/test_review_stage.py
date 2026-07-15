@@ -240,7 +240,10 @@ def test_payload_emits_alternatives_only_when_present(tmp_path):
     alts = [{"id": "subjectivize", "text": "we stand behind it", "claim_status": "none"}]
     enriched = [replace(findings[0], alternatives=alts)] + list(findings[1:])
     p2 = build_review_payload(audit, doc, enriched)
-    assert p2["findings"][0]["alternatives"] == alts
+    emitted = p2["findings"][0]["alternatives"]
+    # emitted with id/text intact; claim_status is SERVER-DERIVED (#84) so it may differ
+    assert [a["id"] for a in emitted] == ["subjectivize"]
+    assert emitted[0]["text"] == "we stand behind it"
     for f in p2["findings"][1:]:
         assert "alternatives" not in f
     _json.dumps(p2)  # payload stays JSON-serializable
@@ -401,3 +404,30 @@ def test_alternatives_authoring_contract_doc_anchor():
     assert "precheck_replacement" in skill
     review_cmd = (root / "commands" / "review.md").read_text(encoding="utf-8")
     assert "anchor:alternatives-authoring" in review_cmd
+
+
+def test_payload_derives_claim_status_server_side(tmp_path):
+    # #84 adv F1/F2: the payload builder runs the precheck itself and OVERRIDES a model-authored
+    # claim_status with `banned` on ANY blocked verdict — an unprechecked claim-adding
+    # alternative can never be served as selectable.
+    from dataclasses import replace
+    p = tmp_path / "d.md"
+    # a buzzword-pile span with NO ledger invariants (no negation/modal/number/condition),
+    # so the precheck outcome is decided purely by the no-new-claims dimension
+    p.write_text("Intro sentence here.\n\nOur robust, scalable, best-in-class platform "
+                 "empowers teams across projects.\n", encoding="utf-8")
+    audit = audit_document(str(p), declared_genre="general").data
+    doc = p.read_bytes()
+    findings = build_findings(audit, doc)
+    alts = [
+        # claim-adding (buzzword absent from the whole doc) but AUTHORED as 'none' — must flip to banned
+        {"id": "sneaky", "text": "A world-class platform.", "claim_status": "none"},
+        # claim-free (composed from lexemes the doc already carries) — authored status survives
+        {"id": "honest", "text": "Our robust platform helps teams.", "claim_status": "scoped"},
+    ]
+    enriched = [replace(findings[0], alternatives=alts)] + list(findings[1:])
+    payload = build_review_payload(audit, doc, enriched)
+    out = {a["id"]: a for a in payload["findings"][0]["alternatives"]}
+    assert out["sneaky"]["claim_status"] == "banned", out["sneaky"]
+    assert "no_new_claim_atoms" in out["sneaky"].get("label", ""), out["sneaky"]
+    assert out["honest"]["claim_status"] == "scoped"
