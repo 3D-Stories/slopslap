@@ -159,3 +159,20 @@ def test_cli_path_show_reset(tmp_path, monkeypatch, capsys):
     assert main(["reset"]) == 0
     capsys.readouterr()
     assert list(read_feedback()) == []      # purged
+
+
+def test_alternative_label_flows_to_ledger(tmp_path):
+    # #81 T3: an alternative-seeded edit's provenance label lands on the feedback line.
+    import base64
+    from slopslap_review.review import decisions_from_actions
+    audit, findings, payload = _findings(tmp_path)
+    b64 = base64.b64encode(b"We stand behind it.").decode("ascii")
+    strip = next(f for f in payload["findings"] if f["recommendation"] == "strip")
+    actions = {strip["id"]: {"action": "edit", "replacement_b64": b64, "alternative": "subjectivize"}}
+    dec = decisions_from_actions(payload, actions)
+    assert dec["decisions"][0].get("alternative") == "subjectivize"
+    path = _ledger(tmp_path)
+    append_feedback(dec, findings, audit.genre, path=path, now="2026-07-15T09:00:00Z")
+    ln = json.loads(open(path, encoding="utf-8").readline())
+    assert ln["alternative"] == "subjectivize"
+    assert validate_feedback_line(ln) == []

@@ -85,6 +85,9 @@ def append_feedback(decisions: dict, findings, genre: str, *, path: Optional[str
             line["reason"] = d["reason"]
         if d["user_action"] == "edit" and d.get("replacement"):
             line["replacement"] = d["replacement"]
+        if d["user_action"] == "edit" and d.get("alternative"):
+            # #81: alternative-pick provenance rides into the learning ledger (edit-only)
+            line["alternative"] = d["alternative"]
         problems = validate_feedback_line(line)
         if problems:
             raise FeedbackError(f"writer produced an invalid feedback line: {problems}")

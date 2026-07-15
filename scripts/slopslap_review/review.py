@@ -81,6 +81,9 @@ def decisions_from_actions(payload: dict, actions: dict) -> dict:
         entry = {"finding_id": fid, "user_action": action}
         if action == "edit" and act.get("replacement_b64"):
             entry["replacement"] = act["replacement_b64"]
+        if action == "edit" and act.get("alternative"):
+            # #81: provenance label of an alternative-seeded edit (edit-only per schema)
+            entry["alternative"] = act["alternative"]
         if act.get("reason"):
             entry["reason"] = act["reason"]
         decisions.append(entry)
