@@ -1,6 +1,6 @@
 # SlopSlap — User Acceptance Testing (UAT) checklist
 
-**Version under test:** v0.8.4 (`main`) · **Date:** 2026-07-14 · **Tester:** ______
+**Version under test:** v0.13.2 (`main`) · **Date:** 2026-07-14 · **Tester:** ______
 
 SlopSlap repairs prose that carries editorial cost (genericness, unsupported claims, synthetic
 cadence, obscured responsibility, voice discontinuity) **while preserving meaning, numbers,
@@ -33,13 +33,13 @@ UAT **passes** only if every P0 scenario passes. A P0 failure blocks release.
       ```
       mkdir -p /tmp/slopslap-uat && cp <candidate.md> /tmp/slopslap-uat/
       ```
-- [ ] **P0.2 — Version check.** Confirm the tool under test is v0.8.4:
+- [ ] **P0.2 — Version check.** Confirm the tool under test is v0.13.2:
       ```
-      grep '"version"' /home/rocky00717/rawgentic/projects/slopslap/.claude-plugin/plugin.json   # → 0.8.4
+      grep '"version"' /home/rocky00717/rawgentic/projects/slopslap/.claude-plugin/plugin.json   # → 0.13.2
       ```
 - [ ] **P0.3 — Suite green baseline** (sanity, not part of UAT proper):
       ```
-      cd /home/rocky00717/rawgentic/projects/slopslap && /home/rocky00717/.local/bin/pytest tests/ -q   # → 629 passed, 2 skipped
+      cd /home/rocky00717/rawgentic/projects/slopslap && /home/rocky00717/.local/bin/pytest tests/ -q   # → 656 passed, 2 skipped
       ```
 - [ ] **P0.4 — Feedback ledger clean start** (so learning scenarios are not polluted by prior runs):
       ```
