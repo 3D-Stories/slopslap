@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>#98 marketing genre classifier fix</title>
+<style>
+:root{--bg:#f6f7f8;--surface:#fff;--ink:#1a2126;--ink-2:#4b5a63;--ink-3:#7b8a92;
+--line:#dde3e6;--accent:#0f766e;--code:#eef1f3}
+@media(prefers-color-scheme:dark){:root{--bg:#12181c;--surface:#1a2228;--ink:#e7edf0;
+--ink-2:#a8b6bd;--ink-3:#71808a;--line:#2a353c;--accent:#2dd4bf;--code:#232d34}}
+:root[data-theme=dark]{--bg:#12181c;--surface:#1a2228;--ink:#e7edf0;--ink-2:#a8b6bd;
+--ink-3:#71808a;--line:#2a353c;--accent:#2dd4bf;--code:#232d34}
+:root[data-theme=light]{--bg:#f6f7f8;--surface:#fff;--ink:#1a2126;--ink-2:#4b5a63;
+--ink-3:#7b8a92;--line:#dde3e6;--accent:#0f766e;--code:#eef1f3}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+font:15px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px 72px}
+header{padding:40px 0 18px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.eyebrow{color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+h1{font-size:clamp(22px,4vw,30px);margin:.3em 0;font-weight:750;letter-spacing:-.02em}
+h2{font-size:19px;font-weight:700;margin:1.4em 0 .4em}
+h3{font-size:16px;font-weight:650;margin:1.2em 0 .3em}
+p,li{color:var(--ink-2)}
+code{background:var(--code);border-radius:4px;padding:1px 5px;font:12.5px/1.4 ui-monospace,Menlo,Consolas,monospace}
+pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto}
+pre code{background:none;padding:0}
+blockquote{border-left:3px solid var(--accent);margin:.6em 0;padding:.2em 0 .2em 14px;color:var(--ink-3)}
+table{border-collapse:collapse;width:100%;margin:.6em 0;font-size:13.5px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.telemetry th{white-space:nowrap;color:var(--ink-3);width:1%}
+.telemetry-section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 18px 14px;margin-top:24px}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px}
+
+:root{--sev-crit:#b91c1c;--sev-crit-bg:#fdecec;--sev-high:#c2410c;--sev-high-bg:#fdeee2;--sev-med:#a16207;--sev-med-bg:#f8f2e2;--sev-low:#4b5a63;--sev-low-bg:#eef1f3;--req-c:#0f766e;--req-c-bg:#e6f2f0}
+@media(prefers-color-scheme:dark){:root{--sev-crit:#f87171;--sev-crit-bg:#3b1717;--sev-high:#fb923c;--sev-high-bg:#3a2410;--sev-med:#fbbf24;--sev-med-bg:#302a14;--sev-low:#a8b6bd;--sev-low-bg:#232d34;--req-c:#2dd4bf;--req-c-bg:#123531}}
+:root[data-theme=dark]{--sev-crit:#f87171;--sev-crit-bg:#3b1717;--sev-high:#fb923c;--sev-high-bg:#3a2410;--sev-med:#fbbf24;--sev-med-bg:#302a14;--sev-low:#a8b6bd;--sev-low-bg:#232d34;--req-c:#2dd4bf;--req-c-bg:#123531}
+:root[data-theme=light]{--sev-crit:#b91c1c;--sev-crit-bg:#fdecec;--sev-high:#c2410c;--sev-high-bg:#fdeee2;--sev-med:#a16207;--sev-med-bg:#f8f2e2;--sev-low:#4b5a63;--sev-low-bg:#eef1f3;--req-c:#0f766e;--req-c-bg:#e6f2f0}
+.score{font:11.5px/1.4 ui-monospace,Menlo,Consolas,monospace;font-weight:700;background:var(--code);color:var(--accent);border-radius:5px;padding:1px 6px}
+.sev{font-size:11px;font-weight:700;letter-spacing:.03em;padding:1px 7px;border-radius:999px;text-transform:uppercase;white-space:nowrap}
+.sev-critical{color:var(--sev-crit);background:var(--sev-crit-bg)}
+.sev-high{color:var(--sev-high);background:var(--sev-high-bg)}
+.sev-medium{color:var(--sev-med);background:var(--sev-med-bg)}
+.sev-low{color:var(--sev-low);background:var(--sev-low-bg)}
+.req{font-size:11px;font-weight:700;letter-spacing:.03em;padding:1px 6px;border-radius:5px;color:var(--req-c);background:var(--req-c-bg)}
+.req-must-not,.req-should-not{color:var(--sev-crit);background:var(--sev-crit-bg)}
+.req-may{color:var(--ink-3);background:var(--code)}
+
+.tpl-design h2{border-bottom:2px solid var(--accent);padding-bottom:.15em}
+</style>
+</head>
+<body class="tpl-design">
+<div class="wrap">
+<header>
+<div class="eyebrow">rawgentic design artifact · updated 2026-07-16 01:59 MDT</div>
+<h1>#98 marketing genre classifier fix</h1>
+
+</header>
+<main>
+<h1>#98 — marketing prose misclassifies as <code>spec</code> and under-strips its cadence slop</h1>
+<p><strong>Workflow:</strong> WF3 (fix-bug) · <strong>Branch:</strong> <code>fix/98-marketing-genre</code> · <strong>Version:</strong> 0.14.1 · <strong>Date:</strong> 2026-07-16</p>
+<h2>Problem</h2>
+<p>Both <code>marketing-heavy</code> UAT candidates classified as genre <code>spec</code> in the v0.14.0 UAT run. <code>spec</code> is the most-preservation-heavy profile and keeps the whole cadence class, so a marketing doc&#x27;s corporate-cadence slop (rule-of-three, repeated openers, transition clusters) was recommended <strong>keep</strong> instead of <strong>strip</strong> — the tool blunted on exactly the genre the candidate set labels &quot;heavy&quot;. Recommendation-quality gap only; no safety/keystone impact (the failure direction is under-stripping).</p>
+<h2>Root cause (confirmed)</h2>
+<p>The issue&#x27;s premise that &quot;the spec heuristic trips on the structure&quot; was <strong>refuted</strong>: both docs carry <strong>zero</strong> RFC-2119 normative modals. The actual mechanism is the no-signal <strong>asymmetric fallback</strong> — marketing prose emits no first-person / PRD / modal / path signal, so <code>classify_genre</code> falls through to <code>MOST_PRESERVING_GENRE = &quot;spec&quot;</code> (<code>genre.py</code>), whose keep-set retains the cadence class (<code>metrics.py</code> <code>_GENRE_KEEP_CLASSES</code>).</p>
+<h2>Fix</h2>
+<p>A fifth genre, <strong><code>marketing</code></strong> (empty keep-set = strip-cadence, like <code>general</code>), detected by a marketing/GTM <strong>lexicon-density tier</strong> placed LAST among the structural markers — any stronger signal (declaration, path, personal, PRD, modals) still wins, and a genuinely ambiguous doc still falls back to <code>spec</code>.</p>
+<p>Three gates must all pass: <strong>count ≥ 8</strong>, <strong>density ≥ 0.8 %</strong>, <strong>≥ 4 distinct surface forms</strong> (blocks a single repeated term such as a data-&quot;retention&quot; spec). Measured margin on the candidate set: marketing-heavy docs run 22–37 hits/1k words (17 distinct forms); every other candidate is ≤ 2.3/1k (≤ 2 distinct).</p>
+<p>Threaded through <code>GENRE_ENUM</code>, <code>_SCANNER_GENRES</code>, <code>_DECL_ALIASES</code>; the feedback schema&#x27;s <code>VALID_GENRES</code> and <code>_GENRE_KEEP_CLASSES</code> already carried forward-compat <code>marketing</code> entries. The honest label also gives marketing prose its own <code>(genre, metric-class)</code> learning bucket — the reason routing to <code>general</code> was rejected.</p>
+<h2>Acceptance criteria</h2>
+<table>
+<thead><tr><th>AC</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>1 — both marketing-heavy candidates land on a strip-cadence profile</td><td>PASS — <code>marketing</code>, cadence recommends strip (test + live <code>assemble.py audit</code>: densities 38/1022, 27/1210)</td></tr>
+<tr><td>2 — other 9 candidates unchanged vs the v0.14.0 UAT map</td><td>PASS — pinned by <code>test_uat_candidate_genre_map_no_regression</code></td></tr>
+<tr><td>3 — asymmetric failure preserved</td><td>PASS — ambiguous/no-signal docs still → <code>spec</code>; single-lexeme + stronger-signal guards added</td></tr>
+<tr><td>4 — genre threaded consistently</td><td>PASS — enum/scanner/aliases updated; keep-set + <code>VALID_GENRES</code> pre-seeded; sync guard test green</td></tr>
+</tbody>
+</table>
+<h2>Test evidence</h2>
+<ul>
+<li>RED before GREEN: reproduction test failed <code>spec != marketing</code> before the fix.</li>
+<li>Suite: baseline <strong>657 passed / 2 skipped</strong> → <strong>665 / 2</strong>, exit 0 (+8 tests, 0 regressions).</li>
+<li>Candidate-file tests are <code>skipif</code>-guarded: the UAT candidates are internal briefings,</li>
+</ul>
+<p>  deliberately untracked in this public repo (now gitignored). A fresh clone runs the always-on   synthetic marketing fixture instead; the real-corpus assertions execute on the UAT host.</p>
+<h2>Review</h2>
+<p>2-agent opus review (silent-failure-hunter + code-reviewer): 0 Critical/High/Medium, 4 Low — all applied (stale 4-genre comments, distinct-surface-form comment honesty, <code>.gitignore</code> hardening) or named here (real-corpus tests green-by-skip off-machine). Keystone verified intact: detection universal, genre gates recommendation only, verifier still hard-gates every edit.</p>
+<section class='telemetry-section'><h2>Run telemetry</h2><table class='telemetry'><tbody><tr><th>Issue</th><td>#98 (bug, standard)</td></tr><tr><th>Tests</th><td>8 added · 665/667 passing</td></tr><tr><th>Security scan</th><td>0 blocking resolved · 0 advisory · skipped: none</td></tr><tr><th>Outcome</th><td>PR None · merged: None · CI: not_configured</td></tr></tbody></table><h2>Quality gates</h2><table class='gates'><thead><tr><th>Step</th><th>Gate</th><th>Findings</th><th>Resolved</th><th>Status</th></tr></thead><tbody><tr><td>4</td><td>Lightweight Reflect</td><td>1</td><td>1</td><td>pass</td></tr><tr><td>9</td><td>Code Review</td><td>4</td><td>4</td><td>pass</td></tr></tbody></table></section>
+</main>
+<footer>Last updated: 2026-07-16 01:59 MDT · generated by hooks/render_artifact.py — self-contained, no external resources.</footer>
+</div>
+</body>
+</html>

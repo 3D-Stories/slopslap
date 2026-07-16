@@ -9,3 +9,7 @@ __pycache__/
 findings.json
 decisions.json
 review.html
+
+# UAT candidate docs: internal briefings, deliberately never published (repo is public).
+# tests/test_genre.py skips its candidate-file tests when this dir is absent (#98).
+docs/uat/candidate-test-files/
