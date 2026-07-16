@@ -43,9 +43,15 @@ _PRD = ("As a user, I want to check out quickly. Acceptance criteria: the cart p
 _PERSONAL = ("I keep coming back to that morning. My coffee went cold while I stared at the wall. "
              "I don't know what I expected — maybe nothing. I just sat there, and I let it happen.")
 
-# the committed UAT candidate set (#98) — real docs, classified with real bytes + real path,
-# exactly as scripts/slopslap_assemble/assemble.py threads them into classify_genre.
+# the UAT candidate set (#98) — real docs, classified with real bytes + real path, exactly as
+# scripts/slopslap_assemble/assemble.py threads them into classify_genre. The candidates are
+# deliberately UNTRACKED working files (the repo is public; several are internal briefings), so
+# these tests skip visibly on a checkout without them — the always-on synthetic fixture below
+# carries the portable regression guard.
 _CANDIDATES = Path(__file__).resolve().parents[1] / "docs" / "uat" / "candidate-test-files"
+needs_candidates = pytest.mark.skipif(
+    not _CANDIDATES.is_dir(),
+    reason="UAT candidate set not present (untracked working files; see #98)")
 
 
 def _classify_candidate(name):
@@ -96,6 +102,7 @@ def test_personal_voice_doc_classifies_personal():
     assert r["genre"] == "personal"
 
 
+@needs_candidates
 def test_marketing_heavy_candidates_classify_marketing_and_strip_cadence():
     # #98 AC1: both marketing-heavy UAT candidates land on a strip-cadence profile — the new
     # ``marketing`` genre — so their corporate-cadence slop recommends strip, not keep.
@@ -109,6 +116,7 @@ def test_marketing_heavy_candidates_classify_marketing_and_strip_cadence():
             assert recommend(r["genre"], metric) == "strip", f"{name}/{metric}"
 
 
+@needs_candidates
 def test_uat_candidate_genre_map_no_regression():
     # #98 AC2: the other 9 candidates still land where the v0.14.0 UAT recorded them
     # (docs/reviews/2026-07-16-uat-v0.14.0-results.md, candidate audit map) — classified the same
@@ -126,6 +134,24 @@ def test_uat_candidate_genre_map_no_regression():
     }
     for name, genre in expected.items():
         assert _classify_candidate(name)["genre"] == genre, name
+
+
+def test_marketing_shaped_doc_classifies_marketing():
+    # #98: always-on synthetic guard (the candidate-file tests above skip off-machine). GTM-pitch
+    # prose: dense, distinct marketing lexicon; no first-person density, no PRD markers, no modals.
+    doc = (
+        "The brand is positioned to capture an underserved market. Competitors ship flat, "
+        "utility-first products; our differentiation is a cooperative model competitors cannot "
+        "copy. Market analysis shows retention drives revenue, and investor interest follows "
+        "adoption. Pricing lands mid-segment, with monetization layered on engagement. The "
+        "competitive moat compounds: every customer cohort raises switching costs, and the "
+        "flywheel turns brand awareness into adoption. Investors get a defensible position in "
+        "a growing market with best-in-class retention."
+    ).encode()
+    r = classify_genre(doc)
+    assert r["genre"] == "marketing"
+    assert r["confidence"] == "medium"
+    assert "marketing lexicon density" in r["reason"]
 
 
 def test_declared_marketing_wins():
