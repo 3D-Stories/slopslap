@@ -457,3 +457,17 @@ def test_distribution_finding_has_no_delete_candidate(tmp_path):
     for f in runs:
         assert f.recommendation == "keep", f
         assert f.proposed_rewrite is None, f.proposed_rewrite   # no whole-span delete candidate
+
+
+def test_category_chips_carry_explanatory_tooltips(tmp_path):
+    # UAT feedback: each category chip gets a hover tooltip explaining the metric.
+    payload, _, _ = _payload(tmp_path)
+    page = render_review_page(payload, post_url="http://127.0.0.1:9/finish?token=x")
+    assert "CATEGORY_HELP" in page
+    # the four the owner named, plus the map is keyed by metric name
+    for metric in ("rule_of_three", "paragraph_sentence_count_runs",
+                   "repeated_openers", "transition_clusters"):
+        assert metric in page, metric
+    # tooltip is set as the native title attribute on the .cat chip, with a hover affordance
+    assert ".title =" in page and "CATEGORY_HELP[" in page
+    assert "cursor:help" in page

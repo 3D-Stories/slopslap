@@ -186,6 +186,7 @@ h1 .slap{{color:var(--red);font-style:italic}}
 .f .top{{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}}
 .f .cat{{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--red);
   background:var(--red-soft);border:1px solid var(--red);border-radius:2px;padding:2px 7px}}
+.f .cat[title]{{cursor:help;text-decoration:underline dotted;text-underline-offset:2px}}
 .f .gen{{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);
   background:var(--blue-soft);border:1px solid var(--blue);border-radius:2px;padding:2px 7px}}
 .f .rec{{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;border-radius:2px;padding:2px 7px}}
@@ -276,6 +277,22 @@ footer{{padding:22px 0 0;color:var(--faint);font-family:var(--mono);font-size:12
 _PAGE_SCRIPT = r"""
 const PAYLOAD = JSON.parse(document.getElementById('payload').textContent);
 const POST_URL = %POST_URL%;
+// plain-English hover help per scanner metric (UAT feedback); keyed by finding.category.
+const CATEGORY_HELP = {
+  negative_parallelism: "\"Not X, but Y\" / \"it's not just… it's…\" framing — promises depth it rarely delivers.",
+  rule_of_three: "Three parallel items in a row (\"X, Y, and Z\") — a cadence tell when decorative, not substantive.",
+  repeated_openers: "Several sentences/paragraphs starting with the same word(s) — monotonous openings.",
+  punctuation_rates: "Density of em-dashes / semicolons — a style signal, not harm on its own.",
+  sentence_length_distribution: "Spread of sentence lengths — uniformity reads as synthetic cadence.",
+  sentence_length_dispersion: "How varied sentence lengths are — low variation is a cadence signal.",
+  paragraph_sentence_count_runs: "3+ consecutive paragraphs with the same sentence count — uniform rhythm, a synthetic-cadence signal.",
+  transition_clusters: "Stacked transitions (however, moreover, furthermore…) doing one connective job.",
+  stock_lexical_clusters: "Stock phrase clusters (\"leverage synergies to unlock value\").",
+  generic_diction: "Corporate buzzwords / empty intensifiers (robust, leverage, best-in-class…).",
+  vague_attribution: "Borrowed authority with no source (\"experts agree\", \"studies show\").",
+  bold_label_density: "Many **bold labels:** in a row — scaffolding that often just restates itself.",
+  adjective_requirements: "An evaluative adjective asserted as a requirement in a PRD (\"must be intuitive\").",
+};
 const actions = {};   // finding_id -> {action, reason?} ; edit replacements read live from the textarea
 const boxes = {};     // finding_id -> {box, stateEl, ta}
 function mk(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
@@ -299,7 +316,10 @@ PAYLOAD.findings.forEach(f => {
 
   // top row: category / genre / recommendation chips + live state label
   const top = mk('div','top');
-  top.appendChild(mk('span','cat', f.category));
+  const catEl = mk('span','cat', f.category);
+  const help = CATEGORY_HELP[f.category];
+  if(help) catEl.title = help;   // native hover tooltip explaining the metric
+  top.appendChild(catEl);
   if(f.genre) top.appendChild(mk('span','gen', f.genre));
   top.appendChild(mk('span','rec '+(f.recommendation==='strip'?'strip':'keep'),
     'recommend: '+f.recommendation+(f.confidence==='low'?' (low conf)':'')));
