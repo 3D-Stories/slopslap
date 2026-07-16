@@ -304,7 +304,7 @@ ALL_METRICS = [
 # detector (#60 generic-diction/filler) plugs into a named class without a re-do. The keep-CLASS sets
 # are SEEDED from the prior per-metric suppress profiles — what a genre used to suppress (preserve) it
 # now recommends keep; everything else strips — so behavior is byte-identical to pre-#59 for the
-# 4 genres the classifier emits.
+# 4 pre-#98 genres the classifier emitted (marketing, added by #98, mirrors general).
 
 # every scanner metric (+ the prd-only ``adjective_requirements``) maps to exactly one class. A drift
 # guard (test_genre) asserts full coverage; the runtime default for an unmapped metric is the
@@ -330,7 +330,7 @@ METRIC_CLASS = {
 # cannot emit it yet; when a keep-identifier class exists, extend it. ``marketing`` is emitted
 # since #98 and strips everything (empty keep-set, like general).
 # ``spec`` keeps its correctness cadence; ``personal`` also keeps voice punctuation — seeded from the
-# old suppress sets, so the recommendation is byte-identical to pre-#59 for the classifier's 4 genres.
+# old suppress sets, so the recommendation is byte-identical to pre-#59 for the 4 pre-#98 genres.
 _GENRE_KEEP_CLASSES = {
     "general": frozenset(),
     "prd": frozenset(),

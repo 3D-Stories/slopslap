@@ -74,11 +74,14 @@ _FP_MIN_COUNT = 3
 _FP_MIN_RATIO = 0.05
 
 # marketing/GTM lexicon (#98). Measured on the committed UAT candidate set: the two
-# marketing-heavy briefings run 22-37 hits per 1k words; every other candidate (specs, PRD,
-# READMEs, a retro) is <= 2.3 per 1k — a >9x separation the thresholds sit inside. The distinct-
-# lexeme floor blocks a single repeated term (e.g. a data-"retention" spec) from masquerading as
-# marketing: a false ``marketing`` call would STRIP a spec's correctness cadence — the over-strip
-# direction the asymmetric-failure rule exists to prevent — so all three gates must pass.
+# marketing-heavy briefings run 22-37 hits per 1k words (17 distinct forms); every other candidate
+# (specs, PRD, READMEs, a retro) is <= 2.3 per 1k with <= 2 distinct — a wide gap the thresholds
+# sit inside. The distinct floor counts distinct lowercased SURFACE FORMS (a coarse lexeme proxy:
+# "market"/"markets" are 2), which blocks a single repeated term (e.g. a data-"retention" spec)
+# from masquerading as marketing: a false ``marketing`` call would STRIP a spec's correctness
+# cadence — the over-strip direction the asymmetric-failure rule exists to prevent — so all three
+# gates must pass. ponytail: no stemming; if 2-3 morphological families ever false-positive a real
+# doc, stem to roots before the distinct-set or raise _MKT_MIN_DISTINCT.
 _MKT_RE = re.compile(
     r"\b(?:market(?:s|ing)?|competitors?|competiti(?:on|ve)|investors?|investments?"
     r"|brand(?:ing)?|rebranding|position(?:ed|ing)|customers?|revenue|monetiz\w+|moat"
