@@ -173,7 +173,7 @@ no edit. *When in doubt, it changes nothing.*
 
 ## Status
 
-- **Version:** 0.13.2 — distribution-class cadence tells no longer offer a nonsense whole-span delete candidate (#92): they recommend `keep` genre-independently (structural run property, no span-local strip), killing the footgun where a numberless uniform-cadence run showed a green "apply strip" that deleted a whole paragraph. Previous: 0.13.1 — edit textarea auto-resizes with its content (UAT feedback; field-sizing + JS fallback, no inner scrollbar). Previous: 0.13.0 — alternatives authoring contract + learning (#84, epic #85 C4, closes the
+- **Version:** 0.14.0 — review-page category chips carry hover tooltips explaining each metric (rule_of_three, paragraph_sentence_count_runs, repeated_openers, transition_clusters, …) — UAT feedback. Previous: 0.13.2 — distribution-class cadence tells no longer offer a nonsense whole-span delete candidate (#92): they recommend `keep` genre-independently (structural run property, no span-local strip), killing the footgun where a numberless uniform-cadence run showed a green "apply strip" that deleted a whole paragraph. Previous: 0.13.1 — edit textarea auto-resizes with its content (UAT feedback; field-sizing + JS fallback, no inner scrollbar). Previous: 0.13.0 — alternatives authoring contract + learning (#84, epic #85 C4, closes the
   epic): the model lane authors alternatives for `simulation`-class findings in three sanctioned
   shapes, every candidate pre-checked via the new `findings.precheck_replacement`; the
   no-new-claims gate stays exemption-free by design; alternative-pick provenance rides the
@@ -205,6 +205,8 @@ no edit. *When in doubt, it changes nothing.*
   a licensed calibration corpus with verbatim text clears the validation bar.
 
 ## Changelog
+
+- **0.14.0** — review-page category chips now carry a native hover tooltip explaining each scanner metric (UAT feedback): a `CATEGORY_HELP` map gives plain-English one-liners for all metrics (rule_of_three, paragraph_sentence_count_runs, repeated_openers, transition_clusters, generic_diction, vague_attribution, …), set as the chip's `title` with a `cursor:help` + dotted-underline affordance. Static text, `textContent`-safe; no engine change.
 
 - **0.13.2** — fix: `distribution`-class cadence tells (`paragraph_sentence_count_runs`, `sentence_length_distribution`/`dispersion`) recommend `keep` genre-independently instead of `strip` (#92, epic #85 follow-up, surfaced in UAT). A cadence-run tell is a structural property of a *run* with no span-local strippable token, so the engine's only auto-strip candidate was a whole-span delete — wrong-in-kind, and on numberless prose a green one-click paragraph delete (on numbered prose, a dead-on-arrival BLOCKED card). Now surfaced as informational keep; the user can still hand-edit and the verifier still gates. Fixed at the single `metrics.recommend` choke point via a genre-independent `_ALWAYS_KEEP_CLASSES`.
 
