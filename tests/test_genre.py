@@ -10,6 +10,8 @@ Two real parts of the issue:
     an adjective-as-requirement candidate while never vision-policing aspirational language.
 """
 
+from pathlib import Path
+
 import pytest
 
 from slopslap_scan import TEXT_PROFILE
@@ -40,6 +42,15 @@ _PRD = ("As a user, I want to check out quickly. Acceptance criteria: the cart p
 # personal-voice: heavy first-person singular.
 _PERSONAL = ("I keep coming back to that morning. My coffee went cold while I stared at the wall. "
              "I don't know what I expected — maybe nothing. I just sat there, and I let it happen.")
+
+# the committed UAT candidate set (#98) — real docs, classified with real bytes + real path,
+# exactly as scripts/slopslap_assemble/assemble.py threads them into classify_genre.
+_CANDIDATES = Path(__file__).resolve().parents[1] / "docs" / "uat" / "candidate-test-files"
+
+
+def _classify_candidate(name):
+    p = _CANDIDATES / name
+    return classify_genre(p.read_bytes(), path=str(p))
 
 
 # ================= part (a): classifier =================
@@ -83,6 +94,81 @@ def test_prd_shaped_doc_classifies_prd():
 def test_personal_voice_doc_classifies_personal():
     r = classify_genre(_PERSONAL.encode())
     assert r["genre"] == "personal"
+
+
+def test_marketing_heavy_candidates_classify_marketing_and_strip_cadence():
+    # #98 AC1: both marketing-heavy UAT candidates land on a strip-cadence profile — the new
+    # ``marketing`` genre — so their corporate-cadence slop recommends strip, not keep.
+    for name in ("marketing-heavy--chorestory-briefing.md",
+                 "marketing-heavy--investor-briefing.md"):
+        r = _classify_candidate(name)
+        assert r["genre"] == "marketing", f"{name}: {r}"
+        assert r["confidence"] == "medium"
+        for metric in ("rule_of_three", "repeated_openers", "negative_parallelism",
+                       "transition_clusters"):
+            assert recommend(r["genre"], metric) == "strip", f"{name}/{metric}"
+
+
+def test_uat_candidate_genre_map_no_regression():
+    # #98 AC2: the other 9 candidates still land where the v0.14.0 UAT recorded them
+    # (docs/reviews/2026-07-16-uat-v0.14.0-results.md, candidate audit map) — classified the same
+    # way assemble.py does: real bytes + real path.
+    expected = {
+        "general-clean--arc-README.md": "general",
+        "general-clean--presentation-builder-retro.md": "spec",
+        "general-clean-voice--kukakuka-README.md": "general",
+        "marketing-clean--saystory-README.md": "general",
+        "prd-large--chorestory-admin-user-creation.md": "prd",
+        "spec--chorestory-tenant-isolation.md": "spec",
+        "spec-DENSEST--provenance-contract.md": "spec",
+        "spec-clean--rawgentic-wal-guide.md": "spec",
+        "spec-dense--sentinel-forced-command-ssh.md": "spec",
+    }
+    for name, genre in expected.items():
+        assert _classify_candidate(name)["genre"] == genre, name
+
+
+def test_declared_marketing_wins():
+    # #98 AC4: "marketing" is a recognized explicit declaration.
+    r = classify_genre(_SPEC.encode(), declared="marketing")
+    assert r["genre"] == "marketing"
+    assert r["confidence"] == "high"
+
+
+def test_marketing_lexicon_below_threshold_falls_back_to_spec():
+    # #98 AC3: a short marketing-flavored note under the count floor is treated as ambiguous —
+    # asymmetric-failure still lands on the most-preserving profile, never on marketing.
+    r = classify_genre(b"Our brand is positioned to win the market against competitors.")
+    assert r["genre"] == MOST_PRESERVING_GENRE
+    assert r["confidence"] == "low"
+
+
+def test_single_repeated_lexeme_does_not_masquerade_as_marketing():
+    # #98 AC3: the distinct-lexeme floor — a data-retention doc repeating one lexicon word passes
+    # the count and ratio gates but must NOT flip to marketing (that would strip a spec-like doc's
+    # cadence: the over-strip direction the asymmetric rule guards against).
+    doc = ("Retention applies to logs. Retention runs nightly. Retention windows vary. "
+           "Retention holds for audits. Retention excludes backups. Retention is tiered. "
+           "Retention ends on delete. Retention resumes on restore.")
+    r = classify_genre(doc.encode())
+    assert r["genre"] == MOST_PRESERVING_GENRE
+    assert r["confidence"] == "low"
+
+
+def test_stronger_structural_signal_beats_marketing_lexicon():
+    # a spec that talks about markets: normative modals (a stronger tier) win over the lexicon.
+    doc = (_SPEC + " The market feed MUST list competitors, pricing, segments, revenue, "
+           "brand positioning, customer adoption, and investor retention data.").encode()
+    assert classify_genre(doc)["genre"] == "spec"
+
+
+def test_marketing_genre_accepted_by_scanner():
+    # #98 AC4: the scanner gate (_SCANNER_GENRES) accepts what the classifier now emits, and the
+    # recommendation strips cadence (empty keep-set, like general).
+    m = _metrics(_REPETITION, genre="marketing")
+    assert m["negative_parallelism"]["soft_flag"] is True   # detection universal, never zeroed
+    assert recommend("marketing", "negative_parallelism") == "strip"
+    assert recommend("marketing", "punctuation_rates") == "strip"
 
 
 def test_ambiguous_doc_falls_back_to_most_preservation_heavy():
@@ -210,6 +296,8 @@ def test_recommend_reproduces_prior_suppress_keepsets_no_regression():
         "spec": ("negative_parallelism", "rule_of_three", "repeated_openers"),
         "personal": ("negative_parallelism", "rule_of_three", "repeated_openers", "punctuation_rates"),
         "prd": (),
+        # marketing is emitted since #98; it never had a suppress set — strip everything.
+        "marketing": (),
     }
     probe = ["negative_parallelism", "rule_of_three", "repeated_openers", "punctuation_rates",
              "transition_clusters", "vague_attribution", "stock_lexical_clusters", "bold_label_density"]

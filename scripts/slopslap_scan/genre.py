@@ -36,9 +36,11 @@ class GenreError(RuntimeError):
 
 
 # the profiles this classifier + the scanner mechanic distinguish. genre-profiles.md also names
-# technical-doc / legal / marketing; those carry NO distinct scanner mechanic yet, so emitting
-# them would be an inert label — the classifier does not. ``general`` == general-prose.
-GENRE_ENUM = ("general", "spec", "prd", "personal")
+# technical-doc / legal; those carry NO distinct scanner mechanic yet, so emitting them would be
+# an inert label — the classifier does not. ``marketing`` is emitted since #98: its keep-set is
+# empty (strip-cadence, like general) but learned feedback keys on (genre, metric-class), so the
+# honest label gives marketing prose its own learning bucket. ``general`` == general-prose.
+GENRE_ENUM = ("general", "spec", "prd", "personal", "marketing")
 
 # §Asymmetric-failure: unsure -> preserve MORE. spec preserves the widest edit-constraining set,
 # so it is the most preservation-heavy of the profiles the mechanic distinguishes.
@@ -51,6 +53,7 @@ _DECL_ALIASES = {
     "spec": "spec", "specification": "spec", "rfc": "spec", "standard": "spec",
     "prd": "prd", "product-requirements": "prd", "product-requirements-doc": "prd",
     "personal": "personal", "personal-prose": "personal", "journal": "personal", "diary": "personal",
+    "marketing": "marketing", "marketing-copy": "marketing", "pitch": "marketing",
 }
 
 # RFC-2119 STRONG normative modals only (must/shall/required). "should"/"may" are too common in
@@ -69,6 +72,23 @@ _PRD_MARKERS = (
 _FIRST_PERSON = {"i", "i'm", "i've", "i'd", "i'll", "me", "my", "mine", "myself"}
 _FP_MIN_COUNT = 3
 _FP_MIN_RATIO = 0.05
+
+# marketing/GTM lexicon (#98). Measured on the committed UAT candidate set: the two
+# marketing-heavy briefings run 22-37 hits per 1k words; every other candidate (specs, PRD,
+# READMEs, a retro) is <= 2.3 per 1k — a >9x separation the thresholds sit inside. The distinct-
+# lexeme floor blocks a single repeated term (e.g. a data-"retention" spec) from masquerading as
+# marketing: a false ``marketing`` call would STRIP a spec's correctness cadence — the over-strip
+# direction the asymmetric-failure rule exists to prevent — so all three gates must pass.
+_MKT_RE = re.compile(
+    r"\b(?:market(?:s|ing)?|competitors?|competiti(?:on|ve)|investors?|investments?"
+    r"|brand(?:ing)?|rebranding|position(?:ed|ing)|customers?|revenue|monetiz\w+|moat"
+    r"|segments?|pricing|adoption|go-to-market|value proposition|best-in-class|world-class"
+    r"|enterprise-grade|flywheel|retention|differentiat\w+)\b",
+    re.IGNORECASE,
+)
+_MKT_MIN_COUNT = 8
+_MKT_MIN_RATIO = 0.008
+_MKT_MIN_DISTINCT = 4
 
 
 def _normalize_declared(declared):
@@ -121,6 +141,14 @@ def _from_structure(text):
     modal_hits = len(_MODAL_RE.findall(text))
     if modal_hits >= 3:
         return "spec", f"{modal_hits} normative modals"
+    # marketing last — the weakest tier (#98): a doc that also reads personal/prd/spec keeps that
+    # call; only positively marketing-lexical prose with no stronger signal lands here, so a
+    # genuinely ambiguous doc still falls through to the asymmetric spec fallback.
+    mkt_hits = _MKT_RE.findall(text)
+    if (n and len(mkt_hits) >= _MKT_MIN_COUNT
+            and len(mkt_hits) / n >= _MKT_MIN_RATIO
+            and len({h.lower() for h in mkt_hits}) >= _MKT_MIN_DISTINCT):
+        return "marketing", f"marketing lexicon density {len(mkt_hits)}/{n}"
     return None, None
 
 

@@ -326,8 +326,9 @@ METRIC_CLASS = {
 }
 
 # per-genre KEEP classes; a metric-class NOT listed for a genre strips. Keyed over the feedback
-# schema's VALID_GENRES (6). ``marketing``/``technical`` are forward-compat — the 4-genre classifier
-# (genre.GENRE_ENUM) cannot emit them yet; when a keep-identifier class exists, extend ``technical``.
+# schema's VALID_GENRES (6). ``technical`` is forward-compat — the classifier (genre.GENRE_ENUM)
+# cannot emit it yet; when a keep-identifier class exists, extend it. ``marketing`` is emitted
+# since #98 and strips everything (empty keep-set, like general).
 # ``spec`` keeps its correctness cadence; ``personal`` also keeps voice punctuation — seeded from the
 # old suppress sets, so the recommendation is byte-identical to pre-#59 for the classifier's 4 genres.
 _GENRE_KEEP_CLASSES = {
@@ -341,7 +342,7 @@ _GENRE_KEEP_CLASSES = {
 
 # genres the SCANNER (compute_all/_apply_genre) accepts — exactly what classify_genre emits
 # (genre.GENRE_ENUM). An unknown scanner genre is a caller error (fail loud).
-_SCANNER_GENRES = ("general", "spec", "prd", "personal")
+_SCANNER_GENRES = ("general", "spec", "prd", "personal", "marketing")
 
 # Classes that ALWAYS keep, regardless of genre (#92). A distribution-class tell
 # (paragraph_sentence_count_runs, sentence_length_distribution/dispersion) is a STRUCTURAL
@@ -360,8 +361,8 @@ def recommend(genre, metric_name: str) -> str:
 
     ``genre`` None or empty threads as ``"general"`` (the scanner treats genre=None/"" == general, via
     ``compute_all``'s ``if genre:`` guard — kept consistent here). A non-empty genre string outside the
-    forward-compat table is a caller error (``ValueError``): ``classify_genre`` only ever emits the
-    4-genre enum, so such a value is a bug, not untrusted input. An unmapped (new/unknown) metric
+    forward-compat table is a caller error (``ValueError``): ``classify_genre`` only ever emits
+    ``genre.GENRE_ENUM``, so such a value is a bug, not untrusted input. An unmapped (new/unknown) metric
     preserves (``"keep"``) — the asymmetric-failure-safe direction — until it is deliberately
     classified in ``METRIC_CLASS``.
     """
