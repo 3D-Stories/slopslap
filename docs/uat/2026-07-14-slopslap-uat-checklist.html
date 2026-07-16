@@ -164,15 +164,15 @@
 
 <div class="wrap">
   <header class="mast">
-    <p class="eyebrow">User Acceptance Testing / v0.8.4</p>
+    <p class="eyebrow">User Acceptance Testing / v0.13.2</p>
     <h1><span class="slap">SlopSlap</span> Acceptance Sheet</h1>
     <p class="lede">Walk the whole loop on real documents and prove the one thing that matters: every
       applied edit leaves numbers, requirements, negations, defined terms, and code <em>byte-exact</em>,
       while the writer &mdash; never the scanner &mdash; authorizes the change.</p>
     <div class="metarow">
       <span class="chip">repo <b>3D-Stories/slopslap</b></span>
-      <span class="chip">main <b>57bebda</b></span>
-      <span class="chip">suite <b>629 pass / 2 skip</b></span>
+      <span class="chip">main <b>c5c6f78</b></span>
+      <span class="chip">suite <b>656 pass / 2 skip</b></span>
       <span class="chip">tester <b>___________</b></span>
       <span class="chip">date <b>2026-07-14</b></span>
     </div>
@@ -253,8 +253,8 @@
       in the browser &mdash; export or screenshot before clearing.</p>
   </div>
 
-  <footer>SlopSlap v0.8.4 / checklist source committed at
-    <code>docs/uat/2026-07-14-slopslap-uat-checklist.md</code> (main / #78) / generated 2026-07-14.</footer>
+  <footer>SlopSlap v0.13.2 / checklist source committed at
+    <code>docs/uat/2026-07-14-slopslap-uat-checklist.md</code> (main) / updated 2026-07-15 through #95 (epic #85).</footer>
 </div>
 
 <script>
@@ -263,8 +263,8 @@ const SCEN = [
    goal:"Set up so UAT never touches your originals and starts from a clean learning ledger. Every command below is copy-pasteable AS WRITTEN once you are in the repo root: cd /home/rocky00717/rawgentic/projects/slopslap.",
    items:[
      ["P0.1","<b>Never test against originals.</b> Copies are staged in <code>/tmp/slopslap-uat/</code>; run only against those (<code>apply</code> mutates files)."],
-     ["P0.2","Version check: <code>grep '\"version\"' .claude-plugin/plugin.json</code> shows <code>0.8.4</code>."],
-     ["P0.3","Sanity baseline: <code>/home/rocky00717/.local/bin/pytest tests/ -q</code> gives 629 passed, 2 skipped."],
+     ["P0.2","Version check: <code>grep '\"version\"' .claude-plugin/plugin.json</code> shows <code>0.13.2</code>."],
+     ["P0.3","Sanity baseline: <code>/home/rocky00717/.local/bin/pytest tests/ -q</code> gives 656 passed, 2 skipped."],
      ["P0.4","Clean ledger: <code>python3 scripts/slopslap_review/feedback.py path</code> then <code>python3 scripts/slopslap_review/feedback.py reset</code> before the learning scenarios."],
      ["P0.5","Hash each original so you can diff after apply: <code>sha256sum &lt;doc&gt; &gt; &lt;doc&gt;.sha</code>."]
    ]},
