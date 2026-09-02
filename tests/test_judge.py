@@ -96,7 +96,8 @@ def _valid(preferred="A", fill="A"):
 
 def test_schema_is_closed_and_names_every_dimension():
     assert JUDGE_SCHEMA["additionalProperties"] is False
-    assert set(JUDGE_SCHEMA["required"]) >= {"preferred", "dimensions"}
+    # the structured-output contract requires EVERY property to be required (live 400 otherwise)
+    assert set(JUDGE_SCHEMA["required"]) == set(JUDGE_SCHEMA["properties"]) == {"preferred", "dimensions", "reason"}
     dims = JUDGE_SCHEMA["properties"]["dimensions"]
     assert set(dims["properties"]) == set(judge.DIMENSIONS)
     assert dims["additionalProperties"] is False

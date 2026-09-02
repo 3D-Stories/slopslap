@@ -334,8 +334,10 @@ def run_judge(pairs: List[EvalPair], blind: dict, *, model: str, trials: int, ti
     decided = tot_app + tot_orig
     summary = {
         "pairs": len(out_pairs),
-        "pairs_completed": sum(1 for p in out_pairs if not p["verdict"]["errored"]),
-        "pairs_errored": sum(1 for p in out_pairs if p["verdict"]["errored"]),
+        # a pair is COMPLETED only with a present, non-errored verdict; zero valid trials is errored
+        # (judge.evaluate([]) says present=False — "no trials" — which must never read as completed).
+        "pairs_completed": sum(1 for p in out_pairs if p["verdict"]["present"] and not p["verdict"]["errored"]),
+        "pairs_errored": sum(1 for p in out_pairs if not p["verdict"]["present"] or p["verdict"]["errored"]),
         "trials_valid": tot_valid, "trials_failed": tot_failed,
         "applied_preferred_trials": tot_app, "original_preferred_trials": tot_orig, "equal_trials": tot_eq,
         "applied_preference_pct_of_decided": (round(100.0 * tot_app / decided, 1) if decided else None),
@@ -474,10 +476,23 @@ def render_results_md(results: dict) -> str:
         lines.append(f"| `{f['dir_name']}` | {where} | {f['genre']} | `{f['engine_model']}` |")
     ab = results.get("abstentions")
     if ab:
-        lines += ["", f"Abstentions: the engine abstained on {ab.get('count', len(ab.get('items', [])))} "
-                  f"sampled paragraph(s), which therefore yield no pair (listed in `{ab.get('file', 'the abstentions file')}`)."]
+        sampled = ab.get("sampled", len(ab.get("items", [])))
+        lines += ["", f"### Sampling — {sampled} paragraphs sampled, {len(fx)} shipped as pairs", ""]
+        if ab.get("selection"):
+            lines += [str(ab["selection"]), ""]
+        bd = ab.get("breakdown") or {}
+        if bd:
+            lines += ["| disposition | paragraphs | meaning |", "|---|---|---|"]
+            meaning = {"shipped": "engine repair authorized, verifier ACCEPT, applied — a pair",
+                       "verifier_blocked": "engine proposed a repair; the byte-exact verifier rejected it and no safe alternative existed",
+                       "not_authorized": "no strip-recommended tell under the auto-classified genre, so the autonomous path authorized no range",
+                       "abstained": "authorized, but the engine found no demonstrated harm",
+                       "excluded_circular": "quotes slop examples itself; excluded as circular"}
+            for k in sorted(bd, key=lambda k: -bd[k]):
+                lines.append(f"| {k} | {bd[k]} | {meaning.get(k, '')} |")
+        lines += ["", f"The full per-paragraph ledger (source, disposition, note) is `{ab.get('file', 'the sampling ledger')}`."]
     else:
-        lines += ["", "Abstentions: not recorded for this run."]
+        lines += ["", "Sampling: not recorded for this run."]
     # ---- human
     lines += ["", "## Human raters", ""]
     raters = results["human"]["raters"]

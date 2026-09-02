@@ -293,6 +293,9 @@ def test_judge_all_failures_is_failed_not_not_run(fixtures, tmp_path, monkeypatc
     assert P.main(["judge", "--fixtures", str(fixtures), "--model", "m", "--out", str(out)], judge_transport=t) == 4
     j = json.loads(out.read_text())
     assert j["status"] == "failed" and "timeout" in j["reason"]
+    # zero valid trials is an ERRORED pair, never a completed one (found live: 9/9 calls failed
+    # and the summary said pairs_completed 3)
+    assert j["summary"]["pairs_errored"] == 2 and j["summary"]["pairs_completed"] == 0
 
 
 def test_judge_refuses_a_judge_that_matches_the_engine(fixtures, tmp_path, monkeypatch, capsys):
@@ -417,3 +420,16 @@ def test_report_renders_a_not_run_judge_honestly(fixtures, tmp_path, monkeypatch
     assert P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf), "--out", str(md)]) == 0
     text = md.read_text(encoding="utf-8")
     assert "## LLM judge" in text and "not run" in text and "SLOPSLAP_LIVE" in text
+
+
+def test_report_renders_the_sampling_breakdown(fixtures, tmp_path):
+    ledger = tmp_path / "sampled.json"
+    ledger.write_text(json.dumps({"schema_version": 1, "sampled": 7, "count": 5, "selection": "public docs only",
+                                  "breakdown": {"shipped": 2, "verifier_blocked": 3, "not_authorized": 2},
+                                  "items": []}))
+    md = tmp_path / "r.md"
+    assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", str(ledger), "--out", str(md)]) == 0
+    text = md.read_text(encoding="utf-8")
+    assert "7 paragraphs sampled, 2 shipped as pairs" in text and "public docs only" in text
+    assert "| verifier_blocked | 3 |" in text and "| not_authorized | 2 |" in text
+    assert "AI %" not in text and "sloppiness score" not in text

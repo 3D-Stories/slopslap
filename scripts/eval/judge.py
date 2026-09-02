@@ -158,7 +158,11 @@ assert set(DIMENSION_GUIDE) == set(DIMENSIONS)
 JUDGE_SCHEMA: dict = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["preferred", "dimensions"],
+    # Every property is REQUIRED: the structured-output contract behind `codex exec --output-schema`
+    # rejects a schema whose `required` omits any key in `properties` (measured live 2026-09-02:
+    # HTTP 400 invalid_json_schema "Missing 'reason'"). parse_judge_response still tolerates an
+    # absent reason so a hand-built or older object validates.
+    "required": ["preferred", "dimensions", "reason"],
     "properties": {
         "preferred": {"type": "string", "enum": list(_SIDES)},
         "dimensions": {
