@@ -34,8 +34,20 @@ def _manifest(original: bytes, applied: bytes, *, eval_pair: bool = True, engine
     if eval_pair:
         m["eval_pair"] = {"schema_version": 1, "engine_model": engine, "source_sha256": _sha(original),
                           "applied_sha256": _sha(applied), "apply_exit": 0, "semantic_mode": "live",
-                          "edits_file": "edits.json"}
+                          "edits_file": "edits.json", "apply_result_file": "apply_result.json"}
     return m
+
+
+def _apply_result(original: bytes) -> dict:
+    """The minimum RunResult shape `load_eval_pairs` binds to: an ok status, and an audit stage
+    whose `source_sha256` is this fixture's own source. It carries no source bytes, like the real
+    committed records."""
+    return {"status": "ok", "stages": [
+        {"stage": "audit", "data": {"source_sha256": _sha(original)}},
+        {"stage": "candidate", "data": {}},
+        {"stage": "verify", "data": {"decision": "ACCEPT"}},
+        {"stage": "apply", "data": {"applied": True}},
+    ]}
 
 
 def _whole_file_edits(original: bytes, applied: bytes) -> list:
@@ -56,6 +68,9 @@ def _write_pair(root, name, original: bytes, applied: bytes, *, edits=None, **kw
     if ep and ep.get("edits_file"):
         e = _whole_file_edits(original, applied) if edits is None else edits
         (d / ep["edits_file"]).write_text(json.dumps(e, indent=1), encoding="utf-8")
+    if ep and ep.get("apply_result_file"):
+        (d / ep["apply_result_file"]).write_text(
+            json.dumps(_apply_result(original), indent=1), encoding="utf-8")
     return d
 
 
@@ -159,7 +174,8 @@ def test_human_cli_records_picks_bound_to_source_and_side_hashes(fixtures, tmp_p
     P.main(["build", "--fixtures", str(fixtures), "--seed", "s", "--out", str(pairs_file)])
     blind = json.loads(pairs_file.read_text())
     picks_file = tmp_path / "picks.json"
-    rc = P.main(["human", "--pairs", str(pairs_file), "--rater", "chris", "--out", str(picks_file)],
+    rc = P.main(["human", "--pairs", str(pairs_file), "--fixtures", str(fixtures),
+                 "--rater", "chris", "--out", str(picks_file)],
                 stdin=io.StringIO("a\n=\n"), stdout=io.StringIO())
     assert rc == 0
     picks = json.loads(picks_file.read_text())
@@ -175,7 +191,8 @@ def test_human_cli_skip_and_quit_record_nothing_for_those_pairs(fixtures, tmp_pa
     pairs_file = tmp_path / "pairs.json"
     P.main(["build", "--fixtures", str(fixtures), "--out", str(pairs_file)])
     picks_file = tmp_path / "picks.json"
-    rc = P.main(["human", "--pairs", str(pairs_file), "--rater", "r", "--out", str(picks_file)],
+    rc = P.main(["human", "--pairs", str(pairs_file), "--fixtures", str(fixtures),
+                 "--rater", "r", "--out", str(picks_file)],
                 stdin=io.StringIO("s\nq\n"), stdout=io.StringIO())
     assert rc == 0
     assert json.loads(picks_file.read_text())["picks"] == []
@@ -194,7 +211,8 @@ def test_human_cli_shows_both_texts_and_nothing_that_names_a_role(fixtures, tmp_
     pairs_file = tmp_path / "pairs.json"
     P.main(["build", "--fixtures", str(fixtures), "--out", str(pairs_file)])
     out = io.StringIO()
-    P.main(["human", "--pairs", str(pairs_file), "--rater", "r", "--out", str(tmp_path / "p.json")],
+    P.main(["human", "--pairs", str(pairs_file), "--fixtures", str(fixtures),
+            "--rater", "r", "--out", str(tmp_path / "p.json")],
            stdin=io.StringIO("a\na\n"), stdout=out)
     shown = out.getvalue()
     assert ALPHA_O.decode().strip() in shown and ALPHA_A.decode().strip() in shown
@@ -207,13 +225,14 @@ def test_static_page_embeds_texts_safely_and_leaks_no_role(fixtures, tmp_path):
     P.main(["build", "--fixtures", str(fixtures), "--seed", "seedtokenXYZ987", "--out", str(pairs_file)])
     blind = json.loads(pairs_file.read_text())
     page_file = tmp_path / "rate.html"
-    assert P.main(["human", "--pairs", str(pairs_file), "--static", str(page_file)]) == 0
+    assert P.main(["human", "--pairs", str(pairs_file), "--fixtures", str(fixtures),
+                   "--static", str(page_file)]) == 0
     page = page_file.read_text(encoding="utf-8")
     assert page.lstrip().lower().startswith("<!doctype html")
-    # both texts are present as JSON data; the raw `</script>` from the fixture never appears —
-    # a fixture byte cannot terminate the data script and inject markup (T3 security surface)
-    assert page.count("</script>") == page.count("<script")  # only the page's own tags balance
-    assert "<\\/script>" in page
+    # both texts are present as JSON data; NO angle bracket from a fixture byte survives, so a
+    # fixture cannot terminate the data script and inject markup (T3 security surface)
+    assert page.count("</script>") == page.count("<script") == 2  # only the page's own two tags
+    assert "\\u003c/script\\u003e" in page  # the fixture's own `</script>` bytes, fully escaped
     assert "alpha service handles 100 requests" in page
     assert blind["run_id"] in page and blind["seed"] not in page.replace(blind["run_id"], "")
     low = page.lower()
@@ -349,7 +368,8 @@ def _picks_preferring(fixtures, blind, role, rater="chris"):
             pick = "B" if applied_side == "A" else "A"
         else:
             pick = "equal"
-        picks.append({"pair_id": bp["pair_id"], "source_sha256": bp["source_sha256"], "pick": pick,
+        picks.append({"pair_id": bp["pair_id"], "token": bp["token"],
+                      "source_sha256": bp["source_sha256"], "pick": pick,
                       "a_side_hash": bp["a_side_hash"], "b_side_hash": bp["b_side_hash"]})
     return {"schema_version": 1, "run_id": blind["run_id"], "rater": rater, "mode": "cli", "picks": picks}
 
@@ -358,12 +378,20 @@ def _blind(fixtures, seed="s"):
     return P.build_pairs(P.load_eval_pairs(str(fixtures)), seed=seed)
 
 
+def _blind_file(fixtures, tmp_path, seed="s", name="pairs.json"):
+    """Write the blind file `report` now requires alongside `--picks`, and hand back both."""
+    pf = tmp_path / name
+    P.main(["build", "--fixtures", str(fixtures), "--seed", seed, "--out", str(pf)])
+    return pf, json.loads(pf.read_text())
+
+
 def test_report_scores_human_picks_and_renders_separate_sections(fixtures, tmp_path):
-    blind = _blind(fixtures)
+    pf, blind = _blind_file(fixtures, tmp_path)
     picks = tmp_path / "picks.json"
     picks.write_text(json.dumps(_picks_preferring(fixtures, blind, "applied")))
     md, js = tmp_path / "results.md", tmp_path / "results.json"
-    rc = P.main(["report", "--fixtures", str(fixtures), "--picks", str(picks), "--out", str(md), "--json", str(js)])
+    rc = P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf), "--picks", str(picks),
+                 "--out", str(md), "--json", str(js)])
     assert rc == 0
     text = md.read_text(encoding="utf-8")
     assert "## Human raters" in text and "## LLM judge" in text
@@ -379,13 +407,13 @@ def test_report_scores_human_picks_and_renders_separate_sections(fixtures, tmp_p
 
 
 def test_report_counts_equal_and_original_separately(fixtures, tmp_path):
-    blind = _blind(fixtures)
+    pf, blind = _blind_file(fixtures, tmp_path)
     p1, p2 = tmp_path / "p1.json", tmp_path / "p2.json"
     p1.write_text(json.dumps(_picks_preferring(fixtures, blind, "original", rater="r1")))
     p2.write_text(json.dumps(_picks_preferring(fixtures, blind, "equal", rater="r2")))
     js = tmp_path / "r.json"
-    assert P.main(["report", "--fixtures", str(fixtures), "--picks", str(p1), "--picks", str(p2),
-                   "--out", str(tmp_path / "r.md"), "--json", str(js)]) == 0
+    assert P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf), "--picks", str(p1),
+                   "--picks", str(p2), "--out", str(tmp_path / "r.md"), "--json", str(js)]) == 0
     raters = {x["rater"]: x for x in json.loads(js.read_text())["human"]["raters"]}
     assert raters["r1"]["original_preferred"] == 2 and raters["r1"]["applied_pct_of_decided"] == 0.0
     assert raters["r2"]["equal"] == 2 and raters["r2"]["applied_pct_of_decided"] is None
@@ -399,7 +427,7 @@ def test_report_with_no_picks_says_the_human_mode_has_not_run(fixtures, tmp_path
 
 
 def test_report_refuses_drifted_or_tampered_picks(fixtures, tmp_path, capsys):
-    blind = _blind(fixtures)
+    pf, blind = _blind_file(fixtures, tmp_path)
     good = _picks_preferring(fixtures, blind, "applied")
     cases = {
         "source": lambda p: p["picks"][0].update(source_sha256="0" * 64),
@@ -411,9 +439,13 @@ def test_report_refuses_drifted_or_tampered_picks(fixtures, tmp_path, capsys):
     for name, mutate in cases.items():
         bad = json.loads(json.dumps(good)); mutate(bad)
         f = tmp_path / f"bad-{name.replace(' ', '_')}.json"; f.write_text(json.dumps(bad))
-        rc = P.main(["report", "--fixtures", str(fixtures), "--picks", str(f), "--out", str(tmp_path / "r.md")])
+        rc = P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf), "--picks", str(f),
+                     "--out", str(tmp_path / "r.md")])
         assert rc == 2, name
-        assert good["picks"][0]["pair_id"] in capsys.readouterr().err or name == "unknown pair"
+        # the refusal always names the offending FILE; which identifier it can name depends on how
+        # far the pick got — a drifted run_id or side hash is refused at the blind-file binding,
+        # before any pair_id is resolved
+        assert str(f) in capsys.readouterr().err, name
 
 
 def test_report_renders_the_judge_section_from_judge_json(fixtures, tmp_path, monkeypatch):
@@ -491,18 +523,19 @@ def test_one_seed_repeats_the_side_order_but_never_a_token(fixtures):
 
 
 def test_report_scores_page_picks_carrying_only_a_token_and_side_hashes(fixtures, tmp_path):
-    blind = _blind(fixtures)
+    pf, blind = _blind_file(fixtures, tmp_path)
     by_id = {p.pair_id: p for p in P.load_eval_pairs(str(fixtures))}
     picks = []
     for bp in blind["pairs"]:
         fx = by_id[bp["pair_id"]]
         picks.append({"token": bp["token"], "pick": "A" if bp["a_text"].encode("utf-8") == fx.applied else "B",
                       "a_side_hash": bp["a_side_hash"], "b_side_hash": bp["b_side_hash"]})
-    pf = tmp_path / "picks.json"
-    pf.write_text(json.dumps({"schema_version": 1, "run_id": blind["run_id"], "rater": "web",
-                              "mode": "static", "picks": picks}))
+    picks_file = tmp_path / "picks.json"
+    picks_file.write_text(json.dumps({"schema_version": 1, "run_id": blind["run_id"], "rater": "web",
+                                      "mode": "static", "picks": picks}))
     js = tmp_path / "r.json"
-    assert P.main(["report", "--fixtures", str(fixtures), "--picks", str(pf),
+    assert P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf),
+                   "--picks", str(picks_file),
                    "--out", str(tmp_path / "r.md"), "--json", str(js)]) == 0
     rater = json.loads(js.read_text())["human"]["raters"][0]
     assert rater["pairs_rated"] == 2 and rater["applied_preferred"] == 2
@@ -513,22 +546,25 @@ def test_report_scores_page_picks_carrying_only_a_token_and_side_hashes(fixtures
 
 # --- one pick per pair, one picks file per rater and run -----------------------------------------
 def test_report_refuses_the_same_pair_picked_twice(fixtures, tmp_path, capsys):
-    good = _picks_preferring(fixtures, _blind(fixtures), "applied")
+    pf, blind = _blind_file(fixtures, tmp_path)
+    good = _picks_preferring(fixtures, blind, "applied")
     dup = json.loads(json.dumps(good))
     dup["picks"].append(json.loads(json.dumps(dup["picks"][0])))
     f = tmp_path / "dup.json"
     f.write_text(json.dumps(dup))
-    rc = P.main(["report", "--fixtures", str(fixtures), "--picks", str(f), "--out", str(tmp_path / "r.md")])
+    rc = P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf), "--picks", str(f),
+                 "--out", str(tmp_path / "r.md")])
     assert rc == 2 and "twice" in capsys.readouterr().err
 
 
 def test_report_refuses_two_picks_files_from_one_rater_and_run(fixtures, tmp_path, capsys):
-    body = json.dumps(_picks_preferring(fixtures, _blind(fixtures), "applied", rater="chris"))
+    pf, blind = _blind_file(fixtures, tmp_path)
+    body = json.dumps(_picks_preferring(fixtures, blind, "applied", rater="chris"))
     p1, p2 = tmp_path / "a.json", tmp_path / "b.json"
     p1.write_text(body)
     p2.write_text(body)
-    rc = P.main(["report", "--fixtures", str(fixtures), "--picks", str(p1), "--picks", str(p2),
-                 "--out", str(tmp_path / "r.md")])
+    rc = P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf), "--picks", str(p1),
+                 "--picks", str(p2), "--out", str(tmp_path / "r.md")])
     assert rc == 2 and "same rater" in capsys.readouterr().err
 
 
@@ -645,3 +681,226 @@ def test_report_refuses_a_trial_whose_applied_side_does_not_recompute(fixtures, 
     jf.write_text(json.dumps(j))
     rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf), "--out", str(tmp_path / "r.md")])
     assert rc == 2 and "applied_side" in capsys.readouterr().err
+
+
+# ------------------------------- Step 11 review round (#102): the confirmed findings
+# The cross-model pass (gpt-5.6-sol, architecture + security) and the adversarial diff-review layer
+# raised 9 distinct findings over the whole diff. Two were REFUTED by direct measurement and are
+# pinned here anyway so they stay refuted; the rest are fixed below.
+
+def _judge_run(fixtures, tmp_path, answers, name="judge.json"):
+    out = tmp_path / name
+    P.main(["judge", "--fixtures", str(fixtures), "--model", "m", "--out", str(out)],
+           judge_transport=_Transport(answers))
+    return out, json.loads(out.read_text())
+
+
+class _PreferApplied:
+    """Always prefers the APPLIED side, whichever letter it sits on, then fails every later call."""
+    def __init__(self, ok_calls):
+        self.left = ok_calls
+    def __call__(self, request, *, model, schema, timeout_s, status_sink=None):
+        if status_sink is not None:
+            status_sink["model_confirmed"] = False
+        req = json.loads(request)
+        if self.left <= 0:
+            if status_sink is not None:
+                status_sink["invocation_status"] = "timeout"
+            return None
+        self.left -= 1
+        applied = {ALPHA_A.decode(), BETA_A.decode()}
+        side = "A" if req["text_a"] in applied else "B"
+        if status_sink is not None:
+            status_sink["invocation_status"] = "ok"
+        return _judge_reply(side)
+
+
+# --- a blind file must cover the whole current fixture set --------------------------------------
+def test_judge_refuses_a_blind_file_that_drops_a_fixture(fixtures, tmp_path, monkeypatch, capsys):
+    """Dropping an unfavorable pair from pairs.json used to yield `completed` over the subset."""
+    monkeypatch.setenv("SLOPSLAP_LIVE", "1")
+    pf = tmp_path / "pairs.json"
+    P.main(["build", "--fixtures", str(fixtures), "--seed", "s", "--out", str(pf)])
+    blind = json.loads(pf.read_text())
+    sf = tmp_path / "pairs-subset.json"
+    sf.write_text(json.dumps(dict(blind, pairs=blind["pairs"][:1])))
+    rc = P.main(["judge", "--pairs", str(sf), "--fixtures", str(fixtures), "--model", "m",
+                 "--out", str(tmp_path / "j.json")], judge_transport=_Transport([_judge_reply()] * 6))
+    assert rc == 2 and "fixture set" in capsys.readouterr().err
+
+
+def test_judge_refuses_a_blind_file_whose_text_is_not_the_fixture(fixtures, tmp_path, monkeypatch,
+                                                                  capsys):
+    monkeypatch.setenv("SLOPSLAP_LIVE", "1")
+    pf = tmp_path / "pairs.json"
+    P.main(["build", "--fixtures", str(fixtures), "--seed", "s", "--out", str(pf)])
+    blind = json.loads(pf.read_text())
+    blind["pairs"][0]["a_text"] = "a paragraph no fixture holds\n"
+    sf = tmp_path / "pairs-bad.json"
+    sf.write_text(json.dumps(blind))
+    rc = P.main(["judge", "--pairs", str(sf), "--fixtures", str(fixtures), "--model", "m",
+                 "--out", str(tmp_path / "j.json")], judge_transport=_Transport([_judge_reply()] * 6))
+    assert rc == 2 and "side" in capsys.readouterr().err
+
+
+def test_report_refuses_a_judge_run_that_does_not_cover_every_fixture(fixtures, tmp_path,
+                                                                      monkeypatch, capsys):
+    monkeypatch.setenv("SLOPSLAP_LIVE", "1")
+    jf, j = _judge_run(fixtures, tmp_path, [_judge_reply("A")] * 6)
+    j["pairs"] = j["pairs"][:1]
+    p = j["pairs"][0]
+    d = p["applied_preferred_trials"] + p["original_preferred_trials"]
+    # every recomputable total is made to agree with the truncated list, so ONLY coverage is wrong
+    j["summary"].update(
+        pairs=1, pairs_completed=1, pairs_errored=0, trials_valid=3, trials_scored=3,
+        trials_failed=0, applied_preferred_trials=p["applied_preferred_trials"],
+        original_preferred_trials=p["original_preferred_trials"], equal_trials=p["equal_trials"],
+        pairs_majority_applied=int(p["majority_applied"]), pairs_beat=int(p["verdict"]["beat"]),
+        applied_preference_pct_of_decided=(
+            round(100.0 * p["applied_preferred_trials"] / d, 1) if d else None))
+    jf.write_text(json.dumps(j))
+    rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf),
+                 "--out", str(tmp_path / "r.md")])
+    assert rc == 2 and "every" in capsys.readouterr().err
+
+
+# --- an errored pair is never a majority-applied win --------------------------------------------
+def test_an_errored_pair_is_never_counted_as_a_majority_applied_win(fixtures, tmp_path, monkeypatch):
+    """The results doc used to print `1 of 1` majority wins for a pair with zero scored trials."""
+    monkeypatch.setenv("SLOPSLAP_LIVE", "1")
+    out = tmp_path / "j.json"
+    P.main(["judge", "--fixtures", str(fixtures), "--model", "m", "--out", str(out)],
+           judge_transport=_PreferApplied(2))
+    j = json.loads(out.read_text())
+    first = j["pairs"][0]
+    assert first["verdict"]["errored"] is True and first["applied_preferred_trials"] == 2
+    assert first["majority_applied"] is False, "an errored pair has not won anything"
+    assert j["summary"]["pairs_majority_applied"] == 0
+
+
+# --- every published judge number recomputes ----------------------------------------------------
+@pytest.mark.parametrize("field", ["pairs_majority_applied", "pairs_beat"])
+def test_report_refuses_a_tampered_pair_level_summary_counter(fixtures, tmp_path, monkeypatch,
+                                                              capsys, field):
+    monkeypatch.setenv("SLOPSLAP_LIVE", "1")
+    jf, j = _judge_run(fixtures, tmp_path, [_judge_reply("A")] * 6)
+    j["summary"][field] = 99
+    jf.write_text(json.dumps(j))
+    rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf),
+                 "--out", str(tmp_path / "r.md")])
+    assert rc == 2 and field in capsys.readouterr().err
+
+
+def test_report_refuses_a_tampered_per_pair_counter(fixtures, tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("SLOPSLAP_LIVE", "1")
+    jf, j = _judge_run(fixtures, tmp_path, [_judge_reply("A")] * 6)
+    j["pairs"][0]["applied_preferred_trials"] = 99
+    jf.write_text(json.dumps(j))
+    rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf),
+                 "--out", str(tmp_path / "r.md")])
+    assert rc == 2 and "applied_preferred_trials" in capsys.readouterr().err
+
+
+def test_report_refuses_a_fabricated_beat_verdict(fixtures, tmp_path, monkeypatch, capsys):
+    """`beat` is the scaffold criterion, so it must be re-derived from the recorded dimensions."""
+    monkeypatch.setenv("SLOPSLAP_LIVE", "1")
+    jf, j = _judge_run(fixtures, tmp_path, [_judge_reply("A", fill="equal")] * 6)
+    assert j["pairs"][0]["verdict"]["beat"] is False, "these answers must not already beat"
+    j["pairs"][0]["verdict"]["beat"] = True
+    j["summary"]["pairs_beat"] = 1
+    jf.write_text(json.dumps(j))
+    rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf),
+                 "--out", str(tmp_path / "r.md")])
+    assert rc == 2 and "beat" in capsys.readouterr().err
+
+
+# --- a human pick is bound to the operator's own blind file -------------------------------------
+def test_report_requires_the_blind_file_alongside_picks(fixtures, tmp_path, capsys):
+    picks = tmp_path / "picks.json"
+    picks.write_text(json.dumps(_picks_preferring(fixtures, _blind(fixtures), "applied")))
+    rc = P.main(["report", "--fixtures", str(fixtures), "--picks", str(picks),
+                 "--out", str(tmp_path / "r.md")])
+    assert rc == 2 and "--pairs" in capsys.readouterr().err
+
+
+def test_report_refuses_picks_from_a_run_id_the_operator_never_issued(fixtures, tmp_path, capsys):
+    """A picks file used to carry ANY run_id: its hashes recompute from repo-visible fixture bytes."""
+    pf = tmp_path / "pairs.json"
+    P.main(["build", "--fixtures", str(fixtures), "--seed", "s", "--out", str(pf)])
+    forged = P.build_pairs(P.load_eval_pairs(str(fixtures)), seed="s")  # a DIFFERENT run_id
+    picks = tmp_path / "picks.json"
+    picks.write_text(json.dumps(_picks_preferring(fixtures, forged, "applied", rater="attacker")))
+    rc = P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf), "--picks", str(picks),
+                 "--out", str(tmp_path / "r.md")])
+    assert rc == 2 and "run_id" in capsys.readouterr().err
+
+
+def test_report_refuses_a_pick_whose_token_the_blind_file_does_not_hold(fixtures, tmp_path, capsys):
+    pf = tmp_path / "pairs.json"
+    P.main(["build", "--fixtures", str(fixtures), "--seed", "s", "--out", str(pf)])
+    obj = _picks_preferring(fixtures, json.loads(pf.read_text()), "applied")
+    obj["picks"][0]["token"] = "0" * 16
+    picks = tmp_path / "picks.json"
+    picks.write_text(json.dumps(obj))
+    rc = P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf), "--picks", str(picks),
+                 "--out", str(tmp_path / "r.md")])
+    assert rc == 2 and "token" in capsys.readouterr().err
+
+
+def test_report_scores_picks_that_match_the_issued_blind_file(fixtures, tmp_path):
+    pf = tmp_path / "pairs.json"
+    P.main(["build", "--fixtures", str(fixtures), "--seed", "s", "--out", str(pf)])
+    picks = tmp_path / "picks.json"
+    picks.write_text(json.dumps(_picks_preferring(fixtures, json.loads(pf.read_text()), "applied")))
+    js = tmp_path / "r.json"
+    assert P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf), "--picks", str(picks),
+                   "--out", str(tmp_path / "r.md"), "--json", str(js)]) == 0
+    rater = json.loads(js.read_text())["human"]["raters"][0]
+    assert rater["pairs_rated"] == 2 and rater["applied_preferred"] == 2
+
+
+# --- a fixture's recorded apply must bind to its own source -------------------------------------
+def test_load_eval_pairs_refuses_an_apply_result_bound_to_another_source(tmp_path):
+    root = tmp_path / "eval"
+    root.mkdir()
+    d = _write_pair(root, "pair-drifted", ALPHA_O, ALPHA_A)
+    res = json.loads((d / "apply_result.json").read_text(encoding="utf-8"))
+    for stage in res["stages"]:
+        if stage["stage"] == "audit":
+            stage["data"]["source_sha256"] = "0" * 64
+    (d / "apply_result.json").write_text(json.dumps(res), encoding="utf-8")
+    with pytest.raises(P.PairError, match="apply_result"):
+        P.load_eval_pairs(str(root))
+
+
+def test_load_eval_pairs_refuses_an_apply_result_that_did_not_succeed(tmp_path):
+    root = tmp_path / "eval"
+    root.mkdir()
+    d = _write_pair(root, "pair-notok", ALPHA_O, ALPHA_A)
+    res = json.loads((d / "apply_result.json").read_text(encoding="utf-8"))
+    res["status"] = "refused"
+    (d / "apply_result.json").write_text(json.dumps(res), encoding="utf-8")
+    with pytest.raises(P.PairError, match="apply_result"):
+        P.load_eval_pairs(str(root))
+
+
+# --- the page carries no literal angle bracket from fixture data (a REFUTED finding, pinned) ----
+def test_page_embeds_no_literal_angle_bracket_from_fixture_data(tmp_path):
+    """A reviewer read the `</` escape as lowercase-only. It is not — `</` carries no letter — and
+    every case variant measured as escaped. This pins the STRONGER invariant anyway: the embedded
+    JSON holds no literal `<` at all, so the guarantee no longer rests on HTML raw-text rules."""
+    root = tmp_path / "eval"
+    root.mkdir()
+    nasty = (b"</SCRIPT><script>window.x=1</script> </ScRiPt><img src=x onerror=alert(1)> "
+             b"</script > and a lone < plus > and &.\n")
+    _write_pair(root, "pair-nasty", nasty, b"Clean.\n")
+    page = P.render_static_page(P.build_pairs(P.load_eval_pairs(str(root)), seed="s"))
+    marker = '<script id="data" type="application/json">'
+    start = page.index(marker) + len(marker)
+    payload = page[start:page.index("</script>", start)]
+    assert "<" not in payload and ">" not in payload
+    for variant in ("</SCRIPT>", "</ScRiPt>", "</script>", "</script "):
+        assert variant not in payload, variant
+    assert json.loads(payload)["pairs"], "the payload still parses as JSON"
+    # exactly the page's OWN two script tags survive: the fixture's `<script>` bytes are escaped
+    assert page.count("<script") == 2 and page.lower().count("</script>") == 2

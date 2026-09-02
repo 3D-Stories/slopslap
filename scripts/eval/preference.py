@@ -134,6 +134,29 @@ def load_eval_pairs(fixtures_dir: str) -> List[EvalPair]:
         if replayed != applied:
             raise PairError(f"{name}: replaying the committed edit script does not reproduce the "
                             f"applied side — those bytes are not this edit script's output")
+        result_name = str(ep.get("apply_result_file") or "").strip()
+        if not result_name:
+            raise PairError(f"{name}: eval_pair names no apply_result_file — nothing records that "
+                            f"the engine ran, or over which source it ran")
+        result_path = os.path.join(d, result_name)
+        if not os.path.isfile(result_path):
+            raise PairError(f"{name}: apply_result_file {result_name!r} is missing")
+        with open(result_path, "r", encoding="utf-8") as fh:
+            apply_result = json.load(fh)
+        if not isinstance(apply_result, dict) or apply_result.get("status") != "ok":
+            raise PairError(f"{name}: apply_result status is "
+                            f"{(apply_result or {}).get('status')!r}, not 'ok' — the recorded run "
+                            f"did not succeed")
+        stages = apply_result.get("stages")
+        audit = None
+        if isinstance(stages, list):
+            audit = next((st.get("data") for st in stages
+                          if isinstance(st, dict) and st.get("stage") == "audit"), None)
+        if not isinstance(audit, dict) or audit.get("source_sha256") != src:
+            raise PairError(f"{name}: apply_result audit stage does not bind to this source "
+                            f"(expected {src}, found "
+                            f"{(audit or {}).get('source_sha256')!r}) — the record belongs to "
+                            f"another document")
         pairs.append(EvalPair(dir_name=name, path=d, pair_id=pair_id_for(src, app),
                               source_sha256=src, applied_sha256=app, original=original,
                               applied=applied, engine_model=engine_model,
@@ -175,6 +198,60 @@ def build_pairs(pairs: List[EvalPair], seed: Optional[str] = None, run_id: Optio
         })
     return {"schema_version": SCHEMA_VERSION, "run_id": run_id, "seed": seed,
             "created_at": _now(), "pairs": items}
+
+
+def validate_blind_json(blind: dict, pairs: List[EvalPair]) -> None:
+    """A supplied blind file must BE this fixture set, not merely look like a blind file.
+
+    It was checked only for its schema version, a pairs list and a `run_id`. So a stale or trimmed
+    `pairs.json` holding one favorable pair drove a judge run that reported `completed` over that
+    subset, which is the opposite of the drift refusal this file promises. Every pair must be
+    present exactly once, and each one's texts, source hash and side hashes must recompute from the
+    fixture bytes under the file's own `run_id`.
+    """
+    run_id = blind.get("run_id")
+    if not isinstance(run_id, str) or not run_id:
+        raise PairError("blind file has no run_id")
+    items = blind.get("pairs")
+    if not isinstance(items, list) or not items:
+        raise PairError("blind file carries no pairs")
+    by_id = {p.pair_id: p for p in pairs}
+    seen: dict = {}
+    tokens: dict = {}
+    for bp in items:
+        if not isinstance(bp, dict):
+            raise PairError("a blind pair entry is not an object")
+        pid = bp.get("pair_id")
+        fx = by_id.get(pid)
+        if fx is None:
+            raise PairError(f"blind file names pair_id {pid!r}, which this fixture set does not hold")
+        if pid in seen:
+            raise PairError(f"blind file carries pair_id {pid} twice")
+        seen[pid] = True
+        token = bp.get("token")
+        if not isinstance(token, str) or not token:
+            raise PairError(f"blind pair {pid}: no token")
+        if token in tokens:
+            raise PairError(f"blind file reuses token {token!r} across pairs")
+        tokens[token] = True
+        if bp.get("source_sha256") != fx.source_sha256:
+            raise PairError(f"blind pair {pid}: source_sha256 is not this fixture's")
+        try:
+            a = str(bp["a_text"]).encode("utf-8")
+            b = str(bp["b_text"]).encode("utf-8")
+        except KeyError as err:
+            raise PairError(f"blind pair {pid}: missing {err.args[0]}") from err
+        if {a, b} != {fx.original, fx.applied}:
+            raise PairError(f"blind pair {pid}: its two side texts are not this fixture's "
+                            f"original.md and applied.md")
+        for side, text in (("a", a), ("b", b)):
+            if bp.get(f"{side}_side_hash") != side_hash(run_id, text):
+                raise PairError(f"blind pair {pid}: {side}_side_hash does not match the text it "
+                                f"sits beside under run_id {run_id!r}")
+    missing = sorted(set(by_id) - set(seen))
+    if missing:
+        raise PairError(f"blind file covers {len(seen)} of {len(by_id)} pair(s); it must cover the "
+                        f"whole current fixture set, and it omits: {', '.join(missing)}")
 
 
 def _write_json(path: str, obj: dict) -> None:
@@ -312,7 +389,12 @@ def render_static_page(blind: dict) -> str:
     data = {"schema_version": blind["schema_version"], "run_id": blind["run_id"],
             "pairs": [{k: p[k] for k in ("token", "a_text", "b_text",
                                          "a_side_hash", "b_side_hash")} for p in blind["pairs"]]}
-    payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
+    # `</` alone is already enough to stop a raw-text end tag (it carries no letter, so
+    # `</SCRIPT>` and `</ScRiPt>` are covered too — measured). This goes further and leaves NO
+    # literal `<` or `>` from fixture bytes in the page at all, so the guarantee stops depending
+    # on anyone reasoning correctly about HTML raw-text rules.
+    payload = (json.dumps(data, ensure_ascii=False)
+               .replace("<", "\\u003c").replace(">", "\\u003e"))
     return _PAGE.replace("__DATA__", payload)
 
 
@@ -388,10 +470,14 @@ def run_judge(pairs: List[EvalPair], blind: dict, *, model: str, trials: int, ti
         # trials is ERRORED (judge.evaluate needs three), and it used to contaminate the number.
         if verdict.present and not verdict.errored:
             tot_scored += len(jtrials); tot_app += app; tot_orig += orig; tot_eq += eq
+        # `majority_applied` is a WIN claim, and the results document prints it as one. An
+        # errored or short pair has won nothing, however its few answered trials fell.
+        scored_pair = verdict.present and not verdict.errored and len(jtrials) == trials
         out_pairs.append({"pair_id": fx.pair_id, "dir_name": fx.dir_name, "genre": fx.genre,
                           "trials": recs, "valid_trials": len(jtrials), "verdict": _verdict_json(verdict),
                           "applied_preferred_trials": app, "original_preferred_trials": orig,
-                          "equal_trials": eq, "majority_applied": app > orig})
+                          "equal_trials": eq,
+                          "majority_applied": bool(scored_pair and app > orig)})
     decided = tot_app + tot_orig
     summary = {
         "pairs": len(out_pairs),
@@ -642,6 +728,11 @@ def render_results_md(results: dict) -> str:
         lines += [f"**LLM judge: not run** — {lj.get('reason', 'no judge.json was supplied')}."]
     # ---- limitations + reproduce
     lines += ["", "## Limitations", "",
+              "- A rater's picks are evidence only against the blind file the operator issued: "
+              "`report` refuses `--picks` without `--pairs`, and refuses a pick whose `run_id` or "
+              "`token` that file never handed out. Side hashes alone recompute from the committed "
+              "fixture bytes, so a self-consistent picks file proves only that its author can run "
+              "sha256.",
               f"- Sample size: {len(fx)} pairs. Any percentage here is a direction, not a measurement.",
               "- Selection: paragraphs were sampled from the owner's public design docs where the measure-only scanner "
               "reported at least one tell, so the set skews toward flagged prose; abstentions are reported, not hidden.",
@@ -655,7 +746,8 @@ def render_results_md(results: dict) -> str:
               "python3 scripts/eval/preference.py build --seed <seed> --out pairs.json",
               "python3 scripts/eval/preference.py human --pairs pairs.json --static rate.html   # or --rater NAME",
               "SLOPSLAP_LIVE=1 python3 scripts/eval/preference.py judge --pairs pairs.json --model gpt-5.6-sol --out judge.json",
-              "python3 scripts/eval/preference.py report --picks picks-<rater>.json --judge judge.json --out results.md --json results.json",
+              "python3 scripts/eval/preference.py report --pairs pairs.json --picks picks-<rater>.json \\",
+              "    --judge judge.json --out results.md --json results.json   # --pairs is REQUIRED with --picks",
               "```", ""]
     return "\n".join(lines)
 
@@ -690,10 +782,14 @@ def validate_judge_json(lj, pairs: List[EvalPair], *, name: str = "judge file") 
     jpairs = lj.get("pairs")
     if not isinstance(jpairs, list) or not jpairs:
         raise PairError(f"{name} carries no pairs")
+    trials_per_pair = lj.get("trials_per_pair")
+    if not isinstance(trials_per_pair, int) or trials_per_pair < 1:
+        raise PairError(f"{name}: trials_per_pair {trials_per_pair!r} is not a positive integer")
+    from eval import judge as J  # noqa: PLC0415 (lazy; pure)
     by_id = {p.pair_id: p for p in pairs}
     seen: dict = {}
     tot_app = tot_orig = tot_eq = tot_scored = tot_valid = tot_failed = 0
-    completed = errored = 0
+    completed = errored = majority = beat = 0
     for jp in jpairs:
         if not isinstance(jp, dict):
             raise PairError(f"{name}: a pair entry is not an object")
@@ -709,6 +805,7 @@ def validate_judge_json(lj, pairs: List[EvalPair], *, name: str = "judge file") 
         if not isinstance(trials, list):
             raise PairError(f"{name}, pair {pid}: trials is not a list")
         p_app = p_orig = p_eq = p_valid = 0
+        rebuilt: List = []
         for tr in trials:
             if not isinstance(tr, dict):
                 raise PairError(f"{name}, pair {pid}: a trial is not an object")
@@ -735,18 +832,64 @@ def validate_judge_json(lj, pairs: List[EvalPair], *, name: str = "judge file") 
                 p_orig += 1
             else:
                 p_eq += 1
+            # Rebuild the scaffold trial from the recorded per-dimension ROLES, so the verdict this
+            # file claims can be re-derived rather than trusted. `beat` is the scaffold criterion
+            # and the results document prints it, so it must recompute like every other number.
+            dims = tr.get("dimensions_role")
+            if not isinstance(dims, dict) or set(dims) != set(J.DIMENSIONS):
+                raise PairError(f"{name}, pair {pid}: trial dimensions_role is not the complete "
+                                f"dimension set")
+            other = "B" if recomputed == "A" else "A"
+            as_sides = {}
+            for dim, dim_role in dims.items():
+                if dim_role == "applied":
+                    as_sides[dim] = recomputed
+                elif dim_role == "original":
+                    as_sides[dim] = other
+                elif dim_role == "equal":
+                    as_sides[dim] = "equal"
+                else:
+                    raise PairError(f"{name}, pair {pid}: dimension {dim} role {dim_role!r} is not "
+                                    f"applied, original or equal")
+            rebuilt.append(J.trial_from_blind({"dimensions": as_sides}, recomputed))
         if jp.get("valid_trials") != p_valid:
             raise PairError(f"{name}, pair {pid}: valid_trials {jp.get('valid_trials')!r} is not the "
                             f"{p_valid} valid trial(s) it records")
         verdict = jp.get("verdict")
         if not isinstance(verdict, dict):
             raise PairError(f"{name}, pair {pid}: verdict is not an object")
+        for field, got, want in (("applied_preferred_trials", jp.get("applied_preferred_trials"), p_app),
+                                 ("original_preferred_trials", jp.get("original_preferred_trials"), p_orig),
+                                 ("equal_trials", jp.get("equal_trials"), p_eq)):
+            if got != want:
+                raise PairError(f"{name}, pair {pid}: {field} says {got!r} but its own trials "
+                                f"recompute to {want}")
+        recomputed_verdict = J.evaluate(rebuilt)
+        for field, got, want in (("present", verdict.get("present"), recomputed_verdict.present),
+                                 ("errored", verdict.get("errored"), recomputed_verdict.errored),
+                                 ("beat", verdict.get("beat"), recomputed_verdict.beat)):
+            if bool(got) != bool(want):
+                raise PairError(f"{name}, pair {pid}: verdict {field} says {got!r} but its own "
+                                f"trials recompute to {want!r}")
+        scored_pair = recomputed_verdict.present and not recomputed_verdict.errored \
+            and p_valid == trials_per_pair
+        want_majority = bool(scored_pair and p_app > p_orig)
+        if bool(jp.get("majority_applied")) != want_majority:
+            raise PairError(f"{name}, pair {pid}: majority_applied says "
+                            f"{jp.get('majority_applied')!r} but recomputes to {want_majority} "
+                            f"(an errored or short pair has won nothing)")
         tot_valid += p_valid
-        if verdict.get("present") and not verdict.get("errored"):
+        majority += int(want_majority)
+        beat += int(recomputed_verdict.beat)
+        if scored_pair or (recomputed_verdict.present and not recomputed_verdict.errored):
             completed += 1
             tot_scored += p_valid; tot_app += p_app; tot_orig += p_orig; tot_eq += p_eq
         else:
             errored += 1
+    uncovered = sorted(set(by_id) - set(seen))
+    if uncovered:
+        raise PairError(f"{name} reports {len(seen)} of {len(by_id)} pair(s); a judge run must "
+                        f"cover every current fixture, and it omits: {', '.join(uncovered)}")
     summary = lj.get("summary")
     if not isinstance(summary, dict):
         raise PairError(f"{name} carries no summary")
@@ -757,6 +900,7 @@ def validate_judge_json(lj, pairs: List[EvalPair], *, name: str = "judge file") 
         "applied_preferred_trials": tot_app, "original_preferred_trials": tot_orig,
         "equal_trials": tot_eq,
         "applied_preference_pct_of_decided": (round(100.0 * tot_app / decided, 1) if decided else None),
+        "pairs_majority_applied": majority, "pairs_beat": beat,
     }
     wrong = {k: (summary.get(k), v) for k, v in expected.items() if summary.get(k) != v}
     if wrong:
@@ -765,15 +909,51 @@ def validate_judge_json(lj, pairs: List[EvalPair], *, name: str = "judge file") 
         raise PairError(f"{name} summary does not recompute from its own trials: {detail}")
 
 
+def _bind_picks_to_blind(picks_obj: dict, blind: dict) -> None:
+    """A rater's picks are evidence only against the blind file the OPERATOR issued.
+
+    Side hashes recompute from repository-visible fixture bytes under whatever `run_id` a picks
+    file names, so a self-consistent file proves only that its author could run sha256. Requiring
+    the issued `run_id` and a `token` that file actually handed out is what makes a picks file a
+    rating session rather than an assertion — and it is why `report` refuses picks without
+    `--pairs`.
+    """
+    run_id = picks_obj.get("run_id")
+    if run_id != blind.get("run_id"):
+        raise PairError(f"picks run_id {run_id!r} is not the issued blind file's "
+                        f"{blind.get('run_id')!r} — this is not a rating session the operator began")
+    by_token = {bp.get("token"): bp for bp in blind.get("pairs") or []}
+    for pk in picks_obj.get("picks") or []:
+        if not isinstance(pk, dict):
+            raise PairError("a pick is not an object")
+        token = pk.get("token")
+        bp = by_token.get(token)
+        if bp is None:
+            raise PairError(f"pick token {token!r} is not one the issued blind file handed out")
+        if {pk.get("a_side_hash"), pk.get("b_side_hash")} != {bp.get("a_side_hash"),
+                                                              bp.get("b_side_hash")}:
+            raise PairError(f"pick token {token}: its side hashes are not the pair the blind file "
+                            f"issued under that token")
+
+
 def _cmd_report(args, stdin, stdout) -> int:
     pairs = load_eval_pairs(args.fixtures)
     by_id = {p.pair_id: p for p in pairs}
+    blind = None
+    if args.picks:
+        if not getattr(args, "pairs", None):
+            raise PairError("--pairs is required with --picks: a rater's picks bind to the blind "
+                            "file the operator issued, and without it any run_id and any side "
+                            "hashes recompute from the committed fixture bytes")
+        blind = _load_blind(args.pairs)
+        validate_blind_json(blind, pairs)
     raters = []
     seen_sessions: dict = {}
     for pf in (args.picks or []):
         with open(pf, "r", encoding="utf-8") as fh:
             obj = json.load(fh)
         try:
+            _bind_picks_to_blind(obj, blind)
             scored = score_picks(obj, by_id)
         except PairError as err:
             raise PairError(f"{pf}: {err}") from err
@@ -816,10 +996,13 @@ def _cmd_report(args, stdin, stdout) -> int:
 
 
 # ---------------------------------------------------------------------------- CLI
-def _blind_from_args(args) -> dict:
+def _blind_from_args(args, pairs: Optional[List[EvalPair]] = None) -> dict:
+    fixture_pairs = load_eval_pairs(args.fixtures) if pairs is None else pairs
     if getattr(args, "pairs", None):
-        return _load_blind(args.pairs)
-    return build_pairs(load_eval_pairs(args.fixtures), seed=getattr(args, "seed", None))
+        blind = _load_blind(args.pairs)
+        validate_blind_json(blind, fixture_pairs)
+        return blind
+    return build_pairs(fixture_pairs, seed=getattr(args, "seed", None))
 
 
 def _cmd_build(args, stdin, stdout) -> int:
@@ -873,6 +1056,8 @@ def _build_argparser() -> argparse.ArgumentParser:
 
     r = sub.add_parser("report", help="score picks + judge.json into the results document")
     r.add_argument("--fixtures", default=FIXTURES_DEFAULT)
+    r.add_argument("--pairs", default=None,
+                   help="the blind file the picks were rated against; REQUIRED with --picks")
     r.add_argument("--picks", action="append", default=[], help="repeatable; a rater's picks JSON")
     r.add_argument("--judge", default=None, help="the judge.json from `judge`")
     r.add_argument("--abstentions", default=None, help="optional JSON listing sampled paragraphs the engine abstained on")
