@@ -10,7 +10,11 @@
     "fullName": "3D-Stories/slopslap",
     "defaultBranch": "main"
   },
-  "techStack": ["python", "markdown", "claude-code-plugin"],
+  "techStack": [
+    "python",
+    "markdown",
+    "claude-code-plugin"
+  ],
   "testing": {
     "frameworks": [
       {
@@ -21,8 +25,18 @@
       }
     ]
   },
+  "ci": {
+    "provider": "github-actions",
+    "status": "active",
+    "workflows": [
+      ".github/workflows/test.yml"
+    ]
+  },
   "documentation": {
-    "primaryFiles": ["README.md", "docs/"],
+    "primaryFiles": [
+      "README.md",
+      "docs/"
+    ],
     "format": "markdown"
   },
   "protectionLevel": "sandbox",
@@ -30,5 +44,9 @@
     "status": "design-approved-to-build",
     "spec": "docs/planning/2026-07-12-slopslap-reconciled-spec.md",
     "notLinkedTo": "kukakuka (reused only Kukakuka's doc design-language for the spec artifact)"
+  },
+  "contextMeter": {
+    "checkInPercent": 50,
+    "actPercent": 65
   }
 }

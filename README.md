@@ -200,11 +200,31 @@ no edit. *When in doubt, it changes nothing.*
   (v0.8.4), #46 (v0.8.3), #36 (v0.8.2), #47 (v0.8.1).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
-- **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
-  cross-model LLM-judge A/B (currently secondary/not-run). Scanner thresholds stay measure-only until
-  a licensed calibration corpus with verbatim text clears the validation bar.
+- **Measured (#102):** the cross-model LLM-judge A/B has **run — 3 pairs, 9 blinded trials, the
+  slopslap-applied text preferred in 55.6% of decided trials (5 of 9; judge `gpt-5.6-sol`, model pinned
+  by request and not echoed by the CLI)**; the human paired-preference rating is **built but not yet
+  run (0 raters)**. Both sit in `docs/reviews/2026-09-02-102-blind-paired-preference-results.md`, which
+  also records that the fixture set is 3 pairs against the issue's floor of 5 and why.
+- **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook. Scanner
+  thresholds stay measure-only until a licensed calibration corpus with verbatim text clears the
+  validation bar.
 
 ## Changelog
+
+- **0.15.0** — blind paired-preference eval of slopslap's own output (#102). `scripts/eval/preference.py`
+  (`build` / `human` / `judge` / `report`) shows each fixture pair as a randomized blind A/B: a human
+  rates in a terminal loop or a self-contained static page; the cross-model LLM judge (`gpt-5.6-sol`
+  through a new Codex transport, `invoke_judge`, gated on `SLOPSLAP_LIVE=1`, refusing any judge that
+  token-matches the rewrite engine) runs 3 blinded trials per pair through the existing 9-dimension
+  scaffold. Every pick binds to `source_sha256` plus a salted hash of the bytes on each side, so the
+  side order rides with the pick and a drifted fixture set is refused, never mis-scored. Three
+  engine-applied `pair-102-*` fixtures (verbatim public design-doc paragraphs; `assemble.py apply`
+  output; reproducibility guard) — the issue's floor of 5 was NOT met on the default path
+  (31 sampled → 18 authorized under `spec` → 9 engine proposals → 3 verifier-accepted), stated in the
+  results doc with the owner's ways forward. Measured: LLM judge run, applied preferred in 5 of 9
+  trials (55.6% of decided), applied majority on 2 of 3 pairs; human: built, 0 raters yet. Results:
+  `docs/reviews/2026-09-02-102-blind-paired-preference-results.md`. Engine behavior unchanged: no
+  scanner rule, table, threshold or genre profile moved.
 
 - **0.14.1** — fix: marketing prose no longer misclassifies as `spec` and under-strips its cadence slop (#98, surfaced by the v0.14.0 UAT). Both `marketing-heavy` UAT candidates carried no first-person/PRD/modal signal, so they hit the asymmetric-failure fallback → `spec` → cadence recommended `keep`. `classify_genre` now emits a fifth genre, `marketing` (empty keep-set = strip-cadence, like general; the honest label also gives marketing its own `(genre, metric-class)` learning bucket), detected by a marketing/GTM lexicon-density tier placed LAST among the structural markers — count ≥ 8, density ≥ 0.8%, and ≥ 4 distinct lexemes (measured margin on the candidate set: 22–37 hits/1k words vs ≤ 2.3 everywhere else; the distinct-lexeme floor stops a single repeated term like "retention" from flipping a spec-like doc). Genuinely ambiguous docs still fall back to `spec`, and stronger signals (declaration, path, personal/PRD/modals) still win. Threaded through `GENRE_ENUM`, `_SCANNER_GENRES`, and `_DECL_ALIASES`; the feedback schema's `VALID_GENRES` and `_GENRE_KEEP_CLASSES` already carried forward-compat `marketing` entries.
 

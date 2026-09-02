@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="design-doc-publish">
+<title>#102 Blind paired-preference eval of slopslap&#x27;s own output</title>
+<style>
+:root{--bg:#12181c;--surface:#1a2228;--ink:#e7edf0;--ink-2:#a8b6bd;--ink-3:#76858f;
+--line:#2a353c;--accent:#2dd4bf;--code:#232d34}
+:root[data-theme=dark]{--bg:#12181c;--surface:#1a2228;--ink:#e7edf0;--ink-2:#a8b6bd;
+--ink-3:#76858f;--line:#2a353c;--accent:#2dd4bf;--code:#232d34}
+:root[data-theme=light]{--bg:#f6f7f8;--surface:#fff;--ink:#1a2126;--ink-2:#4b5a63;
+--ink-3:#667279;--line:#dde3e6;--accent:#0f766e;--code:#eef1f3}
+@media print{:root,:root[data-theme=dark]{--bg:#f6f7f8;--surface:#fff;--ink:#1a2126;
+--ink-2:#4b5a63;--ink-3:#667279;--line:#dde3e6;--accent:#0f766e;--code:#eef1f3}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+font:15px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px 72px}
+header{padding:40px 0 18px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.eyebrow{color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+h1{font-size:clamp(22px,4vw,30px);margin:.3em 0;font-weight:750;letter-spacing:-.02em}
+h2{font-size:19px;font-weight:700;margin:1.4em 0 .4em}
+h3{font-size:16px;font-weight:650;margin:1.2em 0 .3em}
+p,li{color:var(--ink-2)}
+code{background:var(--code);border-radius:4px;padding:1px 5px;font:12.5px/1.4 ui-monospace,Menlo,Consolas,monospace}
+pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto}
+pre code{background:none;padding:0}
+blockquote{border-left:3px solid var(--accent);margin:.6em 0;padding:.2em 0 .2em 14px;color:var(--ink-3)}
+table{border-collapse:collapse;width:100%;margin:.6em 0;font-size:13.5px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.telemetry th{white-space:nowrap;color:var(--ink-3);width:1%}
+.telemetry-section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 18px 14px;margin-top:24px}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px}
+
+:root{--sev-crit:#f87171;--sev-crit-bg:#3b1717;--sev-high:#fb923c;--sev-high-bg:#3a2410;--sev-med:#fbbf24;--sev-med-bg:#302a14;--sev-low:#a8b6bd;--sev-low-bg:#232d34;--req-c:#2dd4bf;--req-c-bg:#123531}
+:root[data-theme=dark]{--sev-crit:#f87171;--sev-crit-bg:#3b1717;--sev-high:#fb923c;--sev-high-bg:#3a2410;--sev-med:#fbbf24;--sev-med-bg:#302a14;--sev-low:#a8b6bd;--sev-low-bg:#232d34;--req-c:#2dd4bf;--req-c-bg:#123531}
+:root[data-theme=light]{--sev-crit:#b91c1c;--sev-crit-bg:#fdecec;--sev-high:#c2410c;--sev-high-bg:#fdeee2;--sev-med:#955a06;--sev-med-bg:#f8f2e2;--sev-low:#4b5a63;--sev-low-bg:#eef1f3;--req-c:#0f766e;--req-c-bg:#e6f2f0}
+@media print{:root,:root[data-theme=dark]{--sev-crit:#b91c1c;--sev-crit-bg:#fdecec;--sev-high:#c2410c;--sev-high-bg:#fdeee2;--sev-med:#955a06;--sev-med-bg:#f8f2e2;--sev-low:#4b5a63;--sev-low-bg:#eef1f3;--req-c:#0f766e;--req-c-bg:#e6f2f0}}
+a{color:var(--accent)}
+.score{font:11.5px/1.4 ui-monospace,Menlo,Consolas,monospace;font-weight:700;background:var(--code);color:var(--accent);border-radius:5px;padding:1px 6px}
+.sev{font-size:11px;font-weight:700;letter-spacing:.03em;padding:1px 7px;border-radius:999px;text-transform:uppercase;white-space:nowrap}
+.sev-critical{color:var(--sev-crit);background:var(--sev-crit-bg)}
+.sev-high{color:var(--sev-high);background:var(--sev-high-bg)}
+.sev-medium{color:var(--sev-med);background:var(--sev-med-bg)}
+.sev-low{color:var(--sev-low);background:var(--sev-low-bg)}
+.req{font-size:11px;font-weight:700;letter-spacing:.03em;padding:1px 6px;border-radius:5px;color:var(--req-c);background:var(--req-c-bg)}
+.req-must-not,.req-should-not{color:var(--sev-crit);background:var(--sev-crit-bg)}
+.req-may{color:var(--ink-3);background:var(--code)}
+
+:root{--accent-soft:color-mix(in srgb,var(--accent) 12%,transparent)}
+.blk{margin:14px 0}
+.blk-stats{display:flex;flex-wrap:wrap;gap:10px}
+.blk-stats .blk-item{flex:1 1 130px;background:var(--surface);border:1px solid var(--line);
+border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.blk-stats .blk-value{font-size:22px;font-weight:750;letter-spacing:-.02em;color:var(--ink)}
+.blk-stats .is-accent .blk-value{color:var(--accent)}
+.blk-stats .blk-label{font:11px/1.3 ui-monospace,Menlo,Consolas,monospace;
+letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.blk-bar{display:block;height:4px;border-radius:999px;background:var(--code);margin-top:6px}
+.blk-bar .blk-fill{display:block;height:100%;border-radius:999px;background:var(--accent)}
+.blk-verdict .blk-row{display:flex;gap:10px;align-items:baseline;padding:8px 0;
+border-bottom:1px solid var(--line)}
+.blk-verdict .blk-row:last-child{border-bottom:0}
+.blk-verdict .blk-key{font:11px/1.4 ui-monospace,Menlo,Consolas,monospace;font-weight:700;
+letter-spacing:.06em;text-transform:uppercase;color:var(--accent);flex:0 0 auto;min-width:64px}
+.blk-verdict .blk-text{color:var(--ink);font-size:16px;font-weight:600}
+.blk-chips{display:flex;flex-wrap:wrap;gap:6px}
+.blk-chip{font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 9px;
+border-radius:999px;text-transform:uppercase;white-space:nowrap;
+color:var(--ink-2);background:var(--code);border:1px solid var(--line)}
+.blk-chip.is-done,.blk-chip.is-shipped,.blk-chip.is-merged{color:var(--req-c);
+background:var(--req-c-bg);border-color:transparent}
+.blk-chip.is-wip,.blk-chip.is-pending{color:var(--sev-med);background:var(--sev-med-bg);
+border-color:transparent}
+.blk-chip.is-blocked,.blk-chip.is-failed{color:var(--sev-crit);background:var(--sev-crit-bg);
+border-color:transparent}
+.blk-callout>.blk-callout{border-left:3px solid var(--ink-3);background:var(--code);
+border-radius:0 8px 8px 0;padding:10px 14px}
+.blk-callout .blk-title{font-weight:700;color:var(--ink);margin-bottom:.2em}
+.blk-callout p{margin:0;color:var(--ink-2)}
+.blk-callout .is-warn,.blk-callout .is-high{border-left-color:var(--sev-high);
+background:var(--sev-high-bg)}
+.blk-callout .is-stop,.blk-callout .is-critical{border-left-color:var(--sev-crit);
+background:var(--sev-crit-bg)}
+.blk-callout .is-note,.blk-callout .is-info{border-left-color:var(--accent)}
+.blk-legend dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0}
+.blk-legend dt{font:11px/1.6 ui-monospace,Menlo,Consolas,monospace;font-weight:700;
+letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);
+border-left:3px solid var(--ink-3);padding-left:8px}
+.blk-legend dt.is-done{border-left-color:var(--req-c)}
+.blk-legend dt.is-blocked{border-left-color:var(--sev-crit)}
+.blk-legend dt.is-solid{border-left-color:var(--accent)}
+/* #171: the rest of the status vocabulary. Three tokens had a colour and the other ten did
+   not, so a legend whose keys happened to be `crit`/`warn`/`ok`/`note` — the four a roadmap
+   actually uses — rendered four identical grey bars. A legend exists to say what a colour
+   means, and that one could not: every row looked the same as every other.
+   Measured on the live `rawgentic-plan-graph` page before the fix.
+   Grouped to match `.blk-chip` above rather than invented here, so a legend key and a chip
+   carrying the same word cannot disagree about its colour. */
+.blk-legend dt.is-shipped,.blk-legend dt.is-merged,.blk-legend dt.is-ok{
+border-left-color:var(--req-c)}
+.blk-legend dt.is-failed,.blk-legend dt.is-crit{border-left-color:var(--sev-crit)}
+.blk-legend dt.is-wip,.blk-legend dt.is-pending,.blk-legend dt.is-active,
+.blk-legend dt.is-warn{border-left-color:var(--sev-med)}
+/* `note` and `planned` are deliberately absent: they are the declared NEUTRAL states, and the
+   base rule's `--ink-3` is their colour. Adding a rule here would be the same mistake in
+   reverse — see `_PHASE_STATE_NEUTRAL`. A key outside the vocabulary entirely (`solid` above,
+   or a line style in a module map) also keeps the neutral bar, correctly: the legend's key
+   space is open by design, and only the status words carry a status colour. */
+.blk-legend dd{margin:0;color:var(--ink-2);font-size:13.5px}
+.blk-meter{display:grid;grid-template-columns:1fr auto;gap:2px 12px;margin:8px 0}
+.blk-meter .blk-label{color:var(--ink-2);font-size:13.5px}
+.blk-meter .blk-value{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;color:var(--ink-3)}
+.blk-meter .blk-track{grid-column:1/-1;height:6px;border-radius:999px;background:var(--code);
+overflow:hidden}
+.blk-meter .blk-fill{display:block;height:100%;background:var(--accent)}
+.blk-meter.is-accent .blk-fill{background:var(--accent)}
+.blk-findings .blk-finding{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;
+padding:10px 0;border-bottom:1px solid var(--line)}
+.blk-findings .blk-finding:last-child{border-bottom:0}
+.blk-sev{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+padding:2px 7px;border-radius:999px;white-space:nowrap;align-self:start;
+color:var(--sev-low);background:var(--sev-low-bg)}
+.is-critical>.blk-sev{color:var(--sev-crit);background:var(--sev-crit-bg)}
+.is-high>.blk-sev{color:var(--sev-high);background:var(--sev-high-bg)}
+.is-medium>.blk-sev{color:var(--sev-med);background:var(--sev-med-bg)}
+.blk-findings .blk-title{font-weight:650;color:var(--ink)}
+.blk-findings .blk-text{grid-column:2;color:var(--ink-2);font-size:13.5px}
+.blk-prov{grid-column:2;font:11.5px/1.5 ui-monospace,Menlo,Consolas,monospace;
+color:var(--ink-3)}
+.blk-steps ol,.blk-steps{margin:0;padding:0;list-style:none}
+.blk-step{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;padding:9px 0;
+border-bottom:1px solid var(--line)}
+.blk-step:last-child{border-bottom:0}
+.blk-step .blk-n{font:11.5px/1.5 ui-monospace,Menlo,Consolas,monospace;font-weight:700;
+color:var(--accent);align-self:start}
+.blk-step .blk-title{font-weight:650;color:var(--ink)}
+.blk-step .blk-text{grid-column:2;color:var(--ink-2);font-size:13.5px}
+.blk-nodes ul{list-style:none;margin:0;padding:0}
+.blk-nodes ul ul{margin-left:18px;padding-left:14px;border-left:1px solid var(--line)}
+.blk-node{background:var(--surface);border:1px solid var(--line);border-radius:8px;
+padding:7px 11px;margin:6px 0;display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}
+/* A child list lives INSIDE its parent <li>, so on a flex parent it becomes a flex
+   SIBLING of the label and renders beside it instead of beneath. Found by looking at a
+   rendered three-level tree, not by reading the markup. */
+.blk-node>ul{flex-basis:100%;margin-top:6px}
+/* Two roots in ONE nodes block are a before/after pair; a template opts in by
+   gridding this top-level list. Two separate fences cannot pair — each is its
+   own wrapper with a single child. */
+.blk-nodes>ul{display:grid;gap:0 16px}
+.blk-node .blk-label{font-weight:650;color:var(--ink)}
+.blk-node .blk-text{color:var(--ink-3);font:11.5px/1.5 ui-monospace,Menlo,Consolas,monospace}
+.blk-edge{flex-basis:100%;font:10.5px/1.4 ui-monospace,Menlo,Consolas,monospace;
+letter-spacing:.05em;text-transform:uppercase;color:var(--accent)}
+.blk-edge.is-proposed{color:var(--ink-3);border-bottom:1px dashed var(--ink-3);
+align-self:start;display:inline-block;flex-basis:auto}
+.blk-provenance dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;
+font-size:13px}
+.blk-provenance dt{font:11px/1.5 ui-monospace,Menlo,Consolas,monospace;font-weight:700;
+letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.blk-provenance dd{margin:0;color:var(--ink-2)}
+
+body.tpl-spec{background:var(--bg)}
+.tpl-spec .wrap{max-width:760px;padding:0 20px 88px}
+.tpl-spec header{padding:60px 0 22px;border-bottom:1px solid var(--line);margin-bottom:28px}
+.tpl-spec h1{font-size:clamp(21px,3vw,27px)}
+.tpl-spec h2{font-size:17px;margin:2.2em 0 .5em}
+
+/* #76 — the reference's `.step-num`: the requirement id reads as an INDEX into a normative
+   list, not as prose. `review`'s gutter (D73) is right-aligned severity text, so the two
+   numbered-looking styles do not converge.
+
+   THE TRACK WIDTH IS NOT TOUCHED, and that is deliberate. A first attempt set
+   `grid-template-columns:34px 1fr` here and broke a measured decision this template already
+   carries: the id and the RFC-2119 level pill SHARE column one, and #40 T7 fixed it at a
+   >=90px track because `auto` sized it by the level WORD (44px MUST, 60px SHOULD, 36px MAY) so
+   every card's title began at a different x. `test_requirement_cards_share_one_gutter_width…`
+   caught the regression immediately — the guard did its job. Only the numeral is styled here;
+   the gutter that holds it is left exactly as it was. */
+.tpl-spec .sp-req .blk-n,.tpl-spec .sp-ac .blk-n{display:inline-flex;align-items:center;
+justify-content:center;min-width:26px;padding:2px 7px;border:1px solid var(--line);
+border-radius:8px;background:var(--bg);font:700 11px/1.4 ui-monospace,Menlo,Consolas,monospace;
+color:var(--accent)}
+.tpl-spec h1{line-height:1.15;max-width:22ch}
+.tpl-spec header .eyebrow{display:inline-block;font-size:11.5px;letter-spacing:.13em;
+border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:var(--surface)}
+
+.tpl-spec .sp-section{margin-top:24px}
+/* On-this-page index — the reference's `.toc` aside. Emitted by the shared section renderer
+   from `index_class`; nothing here parses headings. */
+.tpl-spec .sp-index{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+padding:10px 18px;margin:18px 0}
+.tpl-spec .sp-index ol{margin:.2em 0;padding-left:1.2em}
+.tpl-spec .sp-index li{margin:.25em 0}
+.tpl-spec .sp-index a{color:var(--ink-2);text-decoration:none;
+border-bottom:1px solid var(--line)}
+.tpl-spec .sp-index a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+/* Requirement cards — the reference's `.card`: a panel per requirement with the stable ID as a
+   mono index, rather than the bare left rule this was before. The RFC-2119 badge and the
+   optional MUST/SHOULD level come from the shared layer; only the frame is new. */
+.tpl-spec .sp-req{margin:18px 0}
+/* The grid goes on the `<ol>`, not on `.sp-req`. `.sp-req` has exactly ONE child — the list — so
+   gridding it spaced nothing; the cards are the `<li>`s inside. Review caught the no-op. */
+.tpl-spec .sp-req ol{display:grid;gap:10px;margin:0;padding:0}
+.tpl-spec .sp-req .blk-step{background:var(--surface);border:1px solid var(--line);
+border-left:3px solid var(--accent);border-radius:10px;padding:12px 16px;margin:0;
+grid-template-columns:92px 1fr}
+/* The gutter is a FIXED width, not `auto`. The ID and the RFC-2119 level pill share column one,
+   and the pill's width follows its word — so on `auto` the column measured 44px for MUST, 60px
+   for SHOULD and 36px for MAY, and every card's title started at a different x. Browser-measured
+   across a five-level probe, not guessed.
+   92px, not 64px: the accepted set is must / must-not / should / should-not / may
+   (`_SEMANTIC_SETS["requirement level"]`), and the two hyphenated ones measure 72.1px and 88.6px
+   — both of which the first attempt's 64px track wrapped. Review measured them.
+   An UNRECOGNISED level is deliberately not dropped — `_semantic` warns and still renders the
+   author's text — so the pill is additionally constrained rather than trusted to fit: a long one
+   wraps inside the gutter instead of overlapping the title, which is what it did before. */
+.tpl-spec .sp-req .blk-level{justify-self:start;max-width:100%;overflow-wrap:anywhere}
+.tpl-spec .sp-req .blk-n{color:var(--accent);font-weight:700;
+font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;letter-spacing:.04em}
+.tpl-spec .sp-req .blk-title{font-size:15px}
+.tpl-spec .sp-ac .blk-step{border-bottom-style:dashed}
+.tpl-spec .sp-ac .blk-n{color:var(--ink-3)}
+.tpl-spec .sp-gate .blk-chip{border-radius:5px;font:10.5px/1.4 ui-monospace,Menlo,Consolas,monospace}
+.tpl-spec table th{color:var(--accent)}
+.tpl-spec li{margin:.2em 0}
+</style>
+</head>
+<body class="tpl-spec">
+<div class="wrap">
+<header>
+<div class="eyebrow">design artifact · updated 2026-09-02 03:11 MDT</div>
+<h1>#102 Blind paired-preference eval of slopslap&#x27;s own output</h1>
+
+</header>
+<main>
+<h1>#102 — Blind paired-preference eval of slopslap&#x27;s own output</h1>
+<p>Issue: https://github.com/3D-Stories/slopslap/issues/102 · Filed 2026-09-02 · Type: feature · Complexity: M · Task class: production</p>
+<div class="blk blk-callout"><div class="blk-callout is-info"><div class="blk-title">Owner decision 2026-09-02</div><p>Build this eval first. Rule borrowing (Kobak&#x27;s 379 corpus-proven excess words, a public-domain known-human baseline for calibrate.py) and the design-doc-publish integration wait for a measured result to stand on.</p></div></div>
+<nav class="sp-index"><ol><li><a href="#s1">Problem</a></li><li><a href="#s2">Evidence</a></li><li><a href="#s3">Acceptance criteria</a></li><li><a href="#s4">Scope</a></li><li><a href="#s5">Affected components (verified to exist)</a></li><li><a href="#s6">Risk</a></li><li><a href="#s7">Related</a></li><li><a href="#s8">WF2 Step 3 — design note (small-standard lane, 2026-09-02)</a></li><li><a href="#s9">Platform / external dependencies</a></li><li><a href="#s10">WF2 Step 8 — implementation outcome (2026-09-02)</a></li></ol></nav>
+<section class="sp-section" id="s1"><h3>Problem</h3><p>slopslap has strong safety machinery — a byte-exact verifier and per-finding authorization bound to <code>source_sha256</code> — and no measurement that its edits read better.</p>
+<ul>
+<li><code>README.md:203-205</code> lists the cross-model LLM-judge A/B as &quot;currently secondary/not-run&quot;.</li>
+<li><code>scripts/eval/run_eval.py:218</code> reports <code>judge: not_run</code>.</li>
+<li><code>scripts/eval/judge.py</code> is a complete scoring scaffold (9 dimensions, 0/1/2 against a baseline, median over 3 or more blinded trials) with no live judge wired to it.</li>
+<li><code>scripts/slopslap_corpus/calibrate.py</code> is measure-only with 0 usable calibration points.</li>
+</ul></section>
+<section class="sp-section" id="s2"><h3>Evidence</h3><p>A research run on 2026-09-02 (rawgentic workspace <code>claude_docs/research/2026-09-02-humanize-prior-art.md</code>, 8 lanes) found that the only humanizing methods with human-rater proof use blind paired preference.</p>
+<table>
+<thead><tr><th>Source</th><th>What was measured</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>LAMP, &quot;Can AI writing be salvaged?&quot; — https://arxiv.org/html/2409.14509v5</td><td>1,057 LLM paragraphs edited by professional writers; 600 blind judgments</td><td>Writer-edited text preferred in 65% of comparisons; raw LLM text last 60% of the time</td></tr>
+<tr><td>Writing Quality Reward Model — https://arxiv.org/abs/2504.07532</td><td>Best-of-20 selection judged by 9 professional writers</td><td>Preferred 66% overall, 72.2% when the score gap exceeded 1 point</td></tr>
+<tr><td>MohamedAbdallah-14/unslop</td><td>Blind LLM-judge A/B, 7 fixtures, 3 runs</td><td>21 of 21 — the eval slopslap designed and never ran</td></tr>
+<tr><td>Substack 8-method test</td><td>Detector score versus a writing-quality rubric</td><td>Moved in opposite directions</td></tr>
+<tr><td>StoryScope — https://arxiv.org/html/2604.03136</td><td>LAMP-style surface edits versus discourse-level detection</td><td>Detection moved only from 95.5% to 93.9%</td></tr>
+</tbody>
+</table></section>
+<section class="sp-section" id="s3"><h3>Acceptance criteria</h3><ol>
+<li>A script under <code>scripts/eval/</code> takes N pairs (original paragraph, slopslap-applied paragraph), presents each pair as a randomized blind A/B, and records which side the rater preferred. Side order is randomized per pair and recorded with the pick.</li>
+<li><strong>Human mode:</strong> a static page or a CLI records one rater&#x27;s picks into a JSON file bound to each pair&#x27;s <code>source_sha256</code>, the same binding <code>scripts/slopslap_review/review.py</code> uses for <code>decisions.json</code>. The page shows nothing that reveals which side is slopslap&#x27;s output.</li>
+<li><strong>LLM-judge mode:</strong> the existing <code>scripts/eval/judge.py</code> scaffold is wired to a live judge through <code>scripts/slopslap_invoke/invoke.py</code> and runs under <code>SLOPSLAP_LIVE=1</code>. Offline it stays <code>not_run</code> and says so. The judge model differs from the model that produced any rewrite.</li>
+<li>A fixture set of 5 to 10 real design-doc paragraphs with verbatim, licence-clean text, in the <code>tests/fixtures/eval/pair-*</code> shape (<code>original.md</code>, the applied output, <code>fixture.json</code> with <code>provenance</code>). The applied side is produced by <code>assemble.py apply</code> on the original, never hand-written.</li>
+<li>A results document under <code>docs/reviews/</code> reports human and LLM-judge results in separate sections, with pair counts and preference percentages. It never reports a single &quot;AI %&quot; or sloppiness score.</li>
+<li><code>README.md</code> replaces the &quot;currently secondary/not-run&quot; line with the measured result in the form &quot;run, N pairs, X% preference&quot;, or an honest statement of what did not run.</li>
+<li><code>pytest -q</code> passes, with no change to any scanner rule, table, threshold or genre profile.</li>
+</ol></section>
+<section class="sp-section" id="s4"><h3>Scope</h3><p><strong>In:</strong> the eval script, both modes, the fixture set, the results document, the README line.</p>
+<p><strong>Out:</strong> any change to <code>scripts/slopslap_scan/tables.py</code>, <code>scripts/slopslap_scan/metrics.py</code> or the genre gate; any new rule (the Kobak word list); the calibration corpus; the design-doc-publish integration; detector-score measurements of any kind.</p></section>
+<section class="sp-section" id="s5"><h3>Affected components (verified to exist)</h3><table>
+<thead><tr><th>Component</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td><code>scripts/eval/judge.py</code></td><td>The A/B scaffold to wire</td></tr>
+<tr><td><code>scripts/eval/run_eval.py</code></td><td>Reports <code>judge: not_run</code> today</td></tr>
+<tr><td><code>scripts/eval/semantic.py</code></td><td>The <code>SLOPSLAP_LIVE</code> gating pattern to reuse</td></tr>
+<tr><td><code>scripts/slopslap_invoke/invoke.py</code></td><td><code>invoke_semantic</code> (line 286), the <code>claude -p</code> transport</td></tr>
+<tr><td><code>scripts/slopslap_review/review.py</code></td><td>The <code>source_sha256</code> binding pattern</td></tr>
+<tr><td><code>tests/fixtures/eval/pair-*</code></td><td>The fixture shape</td></tr>
+<tr><td><code>docs/reviews/</code></td><td>Results document home</td></tr>
+<tr><td><code>README.md</code> lines 203 to 205</td><td>The line to replace</td></tr>
+</tbody>
+</table></section>
+<section class="sp-section" id="s6"><h3>Risk</h3><ul>
+<li><strong>Product:</strong> low. No rule changes ship.</li>
+<li><strong>Claim:</strong> medium. 5 to 10 pairs and one rater is a small sample. The results document must say so and must not overstate.</li>
+<li><strong>Cost:</strong> a live judge run makes model calls and needs <code>SLOPSLAP_LIVE=1</code>.</li>
+</ul></section>
+<section class="sp-section" id="s7"><h3>Related</h3><p>None open covers this. #101 (correspondence genre profile) and #42 (authenticated audit handle) are unrelated.</p></section>
+<section class="sp-section" id="s8"><h3>WF2 Step 3 — design note (small-standard lane, 2026-09-02)</h3><p>Authored inline by the WF2 orchestrator (model <code>claude-fable-5-1</code>) after the Step 2 codebase analysis. Lane form: one approach, file list, failure modes, security, platform dependencies. Owner decisions taken at bedtime (2026-09-02T07:55Z): small-standard lane; judge model <strong>gpt-5.6-sol</strong> (Codex CLI); merge when green for this run; the owner is the human rater and rates after waking.</p>
+<h3>Chosen approach — model-lane edits, engine-applied fixtures, one stdlib script</h3>
+<p><strong>A (chosen).</strong> A new <code>scripts/eval/preference.py</code> (stdlib only) with four subcommands — <code>build</code>, <code>human</code>, <code>judge</code>, <code>report</code>. Fixtures <code>tests/fixtures/eval/pair-102-NN-&lt;slug&gt;/</code> carry a verbatim <code>original.md</code> and an <code>applied.md</code> that <code>scripts/slopslap_assemble/assemble.py apply</code> produced from a committed <code>edits.json</code>. The judge transport is a new public <code>invoke_judge</code> in <code>scripts/slopslap_invoke/invoke.py</code> backed by a Codex runner; the judge request and strict response contract live in <code>scripts/eval/judge.py</code>, whose existing <code>Trial</code> / <code>evaluate</code> / <code>run_trials</code> scaffold is reused unchanged.</p>
+<p><strong>B (rejected) — deterministic findings path for the applied side</strong> (<code>assemble.py apply --decisions</code> accepting every strip recommendation). Rejected because a strip finding&#x27;s proposed rewrite is a whole-Unit delete (<code>scripts/slopslap_review/findings.py:_unit_spans_for</code> + <code>_precheck</code>), so a one-paragraph fixture&#x27;s applied side would be empty. slopslap&#x27;s real output path is the model lane: the session applies <code>skills/slopslap/SKILL.md</code>, serializes an edit-script, and the verifier-gated engine applies it (<code>commands/apply.md</code>).</p>
+<p><strong>C (rejected) — <code>claude -p</code> judge through the existing <code>_run_claude</code>.</strong> Rejected by the owner&#x27;s judge choice (gpt-5.6-sol), which also keeps the judge cross-vendor from the rewrite engine. <code>run_eval.py:219</code> already names &quot;Codex gpt-5.6-sol&quot; as the documented follow-up.</p>
+<h3>Fixture set (AC4)</h3>
+<ul>
+<li>Source: paragraphs from the owner&#x27;s two PUBLIC repos only — <code>3D-Stories/slopslap</code> (this repo, <code>docs/planning/</code>) and <code>3D-Stories/design-doc-publish</code> (MIT, commit <code>0aa220d3c5a392ea43e85de6659c7856a4b4853d</code>). The other workspace repos are private (checked with <code>gh repo view</code> 2026-09-02) and are excluded so no private text is published.</li>
+<li>Selection: paragraphs of 40–170 words where the measure-only scanner reported at least one tell (126 candidates). The engine (this session, applying SKILL.md) diagnoses each; a paragraph slopslap abstains on yields no pair and is counted as an abstention in the results doc. Target 6–10 pairs; the AC floor is 5.</li>
+<li>Per pair: <code>original.md</code> (exact bytes, trailing newline preserved), <code>edits.json</code> (the engine&#x27;s edit-script in original byte coordinates), <code>applied.md</code> (bytes produced by <code>assemble.py apply</code>), <code>apply_result.json</code> (the apply <code>RunResult</code>, which carries no source bytes), <code>fixture.json</code> — loader-valid, <code>pair: true</code>, <code>clean_file: &quot;applied.md&quot;</code>, <code>control: false</code>, <code>seeded_defects</code> = the typed diagnosis records, <code>provenance</code> = repo + path + commit + line range + license, and an <code>eval_pair</code> block <code>{schema_version, engine_model, source_sha256, applied_sha256, apply_exit, semantic_mode}</code>.</li>
+<li>Apply runs with <code>SLOPSLAP_LIVE=1</code> where <code>claude -p</code> auth is available so Layer 3 is a real verdict (<code>semantic_mode: live</code>); if unavailable the pair records <code>semantic_mode: offline_stub</code> honestly.</li>
+<li>Guard test: for every <code>pair-102-*</code>, <code>apply_edits(original, parse_edits(edits.json)) == applied.md</code>, both sha256 fields match, <code>eval_pair.apply_exit == 0</code>, and the offline <code>assemble.py run</code> dry-run on a temp copy reaches <code>verify.decision == &quot;ACCEPT&quot;</code>. The existing <code>tests/test_golden_pairs.py</code> still passes (its <code>clean_file</code> field is honored).</li>
+</ul>
+<h3>Blinding protocol (AC1, AC2)</h3>
+<p><em>(Revised at WF2 Step 3 pass 2, after the Step 4 self-review (F2) and the incremental verifier&#x27;s findings V1–V4 and L1–L3. Picks are bound to the bytes the rater saw; roles are recovered per fixture, never by seed or by code order.)</em></p>
+<ul>
+<li><strong><code>build [--seed S] --out pairs.json</code>.</strong> Collects every <code>pair-*</code> manifest carrying <code>eval_pair</code> (the two hand-written pairs are excluded — their after side is not slopslap output), sorts by directory name, computes <code>pair_id = sha256(source_sha256 + &quot;:&quot; + applied_sha256)[:16]</code>, generates <code>run_id = secrets.token_hex(16)</code> ONCE per build, and assigns side order per pair from <code>random.Random(seed)</code> in that sorted order (<code>seed</code> = <code>--seed</code> or <code>secrets.token_hex(8)</code>, recorded). Refuses with exit 2, naming the pair, when: zero eval pairs are found; a fixture has <code>source_sha256 == applied_sha256</code> (identical sides — a no-op apply is an abstention, never a pair); two fixtures share a <code>pair_id</code>. Output <code>pairs.json</code> (blind): <code>{schema_version, run_id, seed, created_at, pairs: [{pair_id, source_sha256, a_text, b_text, a_side_hash, b_side_hash}]}</code> with <code>side_hash = sha256(run_id + &quot;:&quot; + text_bytes)</code>. Determinism (tested): the same seed over the same fixture set gives the same side order and the same <code>pair_id</code>s; <code>run_id</code> and <code>created_at</code> differ per build and are excluded from that test.</li>
+<li><strong>What the blind file reveals, stated exactly.</strong> It carries no role and no fixture name, and no applied hash in the clear (<code>pair_id</code> commits to the applied hash but is not invertible without the fixture set). The salted side hashes equal neither <code>source_sha256</code> nor <code>applied_sha256</code>, so inspection alone reveals no role. Residual channels, all requiring deliberate effort: (a) hashing a side&#x27;s text and comparing it with <code>source_sha256</code>, which must ride along for the AC2 binding; (b) the seed plus the public algorithm recompute the side order — so the seed rides ONLY in <code>pairs.json</code>, never in the static page or in <code>picks.json</code>; (c) the fixture directories and <code>judge.json</code> reveal roles — the results doc says &quot;rate before reading either&quot;. The page never displays <code>source_sha256</code>, <code>run_id</code> or the seed.</li>
+<li><strong><code>human --rater NAME (--pairs pairs.json | --seed S) --out picks.json [--static page.html]</code>.</strong> With <code>--pairs</code> it reads an existing blind file; without it, it calls the same <code>build</code> function internally (fresh <code>run_id</code>, the given or a random seed). Terminal loop (<code>a</code> / <code>b</code> / <code>=</code> / <code>s</code>kip / <code>q</code>uit) or a self-contained static page (every string rendered with <code>textContent</code>, per-pair A/B/no-preference buttons, progress, Export downloads the same JSON). <code>picks.json</code>: <code>{schema_version, run_id, rater, mode, picks: [{pair_id, source_sha256, pick: &quot;A&quot;|&quot;B&quot;|&quot;equal&quot;, a_side_hash, b_side_hash}]}</code> — <code>run_id</code> copied verbatim from the blind file, no seed. Each pick is self-describing: the side letter plus the salted hash of what sat on each side records the side order with the pick (AC1).</li>
+<li><strong><code>judge (--pairs pairs.json | --seed S) --model gpt-5.6-sol --trials 3 --out judge.json</code>.</strong> Per pair, per trial, a fresh side order from <code>random.Random(f&quot;{seed}:{pair_id}:{trial}&quot;)</code>; request = <code>judge.build_judge_request(a_text, b_text)</code>; transport <code>invoke_judge</code>; strict parse; <code>judge.trial_from_blind(parsed, applied_side)</code> maps each of the nine dimensions (<code>A</code>/<code>B</code>/<code>equal</code>) to the scaffold&#x27;s 0/1/2 candidate-vs-baseline scores (applied wins → 2/0, equal → 1/1, loses → 0/2); <code>judge.evaluate(trials)</code> gives the per-pair verdict. Each trial record stores <code>a_side_hash</code>, <code>b_side_hash</code>, <code>applied_side</code>, <code>preferred_side</code> (this file is post-hoc and reveals roles by design). Offline (<code>SLOPSLAP_LIVE != &quot;1&quot;</code>): writes <code>{status: &quot;not_run&quot;, reason}</code> and exits 0 (AC3). Live transport failure: <code>status: &quot;failed&quot;</code> with the invocation status — never laundered into <code>not_run</code>. The judge process holds the fixture set, so identical sides are refused here exactly as in <code>build</code>.</li>
+<li><strong>Cross-model guard.</strong> <code>judge</code> refuses (exit 2, no call) when the judge model token-matches any <code>eval_pair.engine_model</code> in the fixture set, using the same token rule as <code>invoke._model_confirmed</code>.</li>
+<li><strong><code>report [--picks P ...] [--judge J] --out results.md [--json results.json]</code>.</strong> Role recovery is per fixture, in this order: (1) locate the fixture by the pick&#x27;s <code>pair_id</code> — an unknown <code>pair_id</code> refuses the picks file (exit 2, naming it); (2) require the pick&#x27;s <code>source_sha256</code> to equal that fixture&#x27;s <code>source_sha256</code>; (3) recompute <code>sha256(run_id + &quot;:&quot; + bytes)</code> for THAT fixture&#x27;s <code>original.md</code> and <code>applied.md</code> under the picks file&#x27;s <code>run_id</code>, and require the two side hashes to match exactly one file each, with the recovered role set exactly <code>{original, applied}</code> — equal side hashes, a hash matching both files, or both sides matching one file refuse the picks file (identical sides can never count as a preference). Then score. <code>--json</code> renders, per pick, the recovered side letter of the applied text, so the side order is readable without fixture access. Renders separate <code>## Human raters</code> and <code>## LLM judge</code> sections with pair counts and preference percentages, plus Method, Fixture set (with abstentions), Limitations, Reproduce. A guard test asserts the rendered doc contains both headings and never the strings <code>AI %</code> or <code>sloppiness score</code> (SKILL.md anchor:ratings).</li>
+</ul>
+<h3>File changes</h3>
+<table>
+<thead><tr><th>File</th><th>Change</th></tr></thead>
+<tbody>
+<tr><td><code>scripts/eval/preference.py</code></td><td>NEW — <code>build</code> / <code>human</code> / <code>judge</code> / <code>report</code>; stdlib only; <code>main(argv)</code> returns an exit code (0 ok · 2 invalid input or refusal · 4 execution failure).</td></tr>
+<tr><td><code>scripts/slopslap_invoke/invoke.py</code></td><td>ADD <code>_run_codex(...)</code> (module-private, same lockdown philosophy as <code>_run_claude</code>: fresh temp cwd, scrubbed env + <code>CODEX</code> prefix, own process group, SIGTERM→SIGKILL on timeout, schema/out files 0600 inside the temp dir, statuses `ok</td><td>timeout</td><td>cli_missing</td><td>nonzero_exit</td><td>parse_error<code>) and public </code>invoke_judge(request, *, model, schema, timeout_s=180.0, executable=None, status_sink=None) -&gt; Optional[dict]<code>. </code>invoke_semantic<code> and </code>_run_claude` untouched.</td></tr>
+<tr><td><code>scripts/eval/judge.py</code></td><td>ADD <code>JUDGE_SCHEMA</code>, <code>build_judge_request</code>, <code>parse_judge_response</code> (fail-closed), <code>trial_from_blind</code>, <code>live_judge_available()</code>; existing API unchanged (10 pinned tests).</td></tr>
+<tr><td><code>scripts/eval/run_eval.py</code></td><td>Judge note text only: points at <code>preference.py judge</code> under <code>SLOPSLAP_LIVE=1</code> and the results doc; <code>status</code> stays <code>not_run</code> (pinned enum in <code>tests/test_eval_run.py:110</code>).</td></tr>
+<tr><td><code>tests/fixtures/eval/pair-102-*/</code></td><td>NEW fixtures (5–10).</td></tr>
+<tr><td><code>tests/test_preference.py</code>, <code>tests/test_judge.py</code> (+), <code>tests/test_invoke_judge.py</code></td><td>NEW tests: build determinism and blindness, role recovery by salted side hash, picks binding + drift refusal, static page content, CLI human loop via scripted stdin, judge offline <code>not_run</code>, judge live path with an injected transport, same-model refusal, malformed response → errored trial, report sections + banned strings, fixture reproducibility guard, <code>_run_codex</code> via a fake executable (ok / missing / timeout / bad JSON).</td></tr>
+<tr><td><code>docs/reviews/2026-09-02-102-blind-paired-preference-results.md</code></td><td>NEW — rendered by <code>report</code> from the live judge run; human section states &quot;0 raters yet&quot; until the owner rates.</td></tr>
+<tr><td><code>README.md</code></td><td>Replace the &quot;currently secondary/not-run&quot; line (README.md:203-205) with the measured form; changelog entry; version bump per repo convention.</td></tr>
+<tr><td><code>.rawgentic.json</code></td><td><code>ci</code> section added (learning-config; <code>.github/workflows/test.yml</code> exists). Carries a pre-existing uncommitted reformat + <code>contextMeter</code> block — flagged in the PR body.</td></tr>
+<tr><td><code>docs/planning/2026-09-02-102-blind-paired-preference-eval.{md,html}</code></td><td>This doc (WF1 artifact + this section), re-rendered with design-doc-publish 5.0.0.</td></tr>
+</tbody>
+</table>
+<p>No new Python dependency. Estimated diff: about 1,200–1,500 inserted lines including fixtures and docs; one PR (the pieces are not separable — the results doc needs the fixtures and the script).</p>
+<h3>Failure modes</h3>
+<ul>
+<li>Codex CLI missing or not logged in under <code>SLOPSLAP_LIVE=1</code> → <code>judge</code> status <code>failed</code>, reason names the invocation status; never <code>not_run</code>.</li>
+<li>A pair with fewer than 3 valid trials → <code>judge.evaluate</code> returns <code>errored</code>; the pair is reported as errored, never dropped or counted as a win.</li>
+<li>Same judge and engine model → refused before any call (exit 2).</li>
+<li>Zero eval pairs found → <code>build</code> refuses (exit 2); a vacuous 0-pair run can never render a percentage.</li>
+<li>Picks bound to a different fixture set (sha mismatch) → that picks file is refused with the offending <code>pair_id</code>.</li>
+<li>Fixture drift (edits no longer reproduce <code>applied.md</code>) → guard test fails.</li>
+<li>A judge response outside the schema (unknown dimension, bad enum) → that trial errors; the parser never invents a score.</li>
+<li>Identical sides (<code>source_sha256 == applied_sha256</code>) → <code>build</code> and <code>judge</code> refuse the pair (exit 2); <code>report</code> refuses a pick whose recovered roles are not exactly {original, applied}.</li>
+<li>An unknown <code>pair_id</code> in a picks file → refused (exit 2, naming it); a duplicate <code>pair_id</code> across fixtures → <code>build</code> refuses.</li>
+</ul>
+<h3>Security</h3>
+<ul>
+<li>The paragraphs are untrusted data inside the judge request: a fixed instruction names them as data, and the reply is validated locally against a closed schema (enums, exact dimension set) — prompt wording is never schema enforcement (same stance as <code>contract.py</code>).</li>
+<li>The static page renders every string via <code>textContent</code>; no HTML from fixtures reaches the DOM. Export uses a Blob download, like <code>review.py</code>.</li>
+<li>The Codex runner writes only inside its own temp dir (schema + <code>-o</code> files created 0600), runs <code>--sandbox read-only --ephemeral</code>, and scrubs the child env to <code>HOME</code>, <code>PATH</code> and the <code>CLAUDE</code>/<code>ANTHROPIC</code>/<code>XDG</code>/<code>CODEX</code> prefixes.</li>
+<li>No secrets in code or fixtures; auth comes from the host&#x27;s Codex login.</li>
+</ul></section>
+<section class="sp-section" id="s9"><h3>Platform / external dependencies</h3><p>platform_apis:</p>
+<ul>
+<li>api: <code>codex exec -m &lt;model&gt; --sandbox read-only --output-schema &lt;f&gt; -o &lt;f&gt; -c model_reasoning_effort=&lt;e&gt; --ephemeral --color never -c project_doc_max_bytes=0 -C &lt;tmp&gt; --skip-git-repo-check -</code> with the prompt on stdin, codex-cli 0.150.1 feasibility: verified via spike — run live 2026-09-02T08:00Z with <code>-m gpt-5.6-sol</code>: exit 0 in 7 s, the <code>-o</code> file held a schema-conforming JSON object (<code>{&quot;preferred&quot;:&quot;B&quot;,&quot;reason&quot;:...}</code>), <code>codex login status</code> = &quot;Logged in using ChatGPT&quot; (session notes, Step 3 probe) failure: fail-silent — the CLI never echoes the model that answered (no <code>model</code> field in any <code>--json</code> event), so a substituted model would go unnoticed surface: <code>judge.json.model_confirmed</code> is always <code>false</code> for this transport and the results doc + README line say &quot;model pinned by <code>-m</code>, not echoed&quot;; a non-zero exit, timeout or unparseable <code>-o</code> file surfaces as <code>status: failed</code> with the invocation status</li>
+<li>api: <code>scripts/slopslap_assemble/assemble.py apply --path P --edits E.json</code> and library <code>apply_edits</code> / <code>parse_edits</code> feasibility: verified via existing-call-site — <code>commands/apply.md</code> step 3, <code>tests/test_apply_from_decisions.py:test_approved_safe_hunk_applies_and_changes_file</code>, <code>tests/helpers.py:make_envelope</code> failure: fail-loud — exit 2/3/4 with a JSON <code>RunResult</code>; nothing mutates on failure</li>
+<li>api: <code>SLOPSLAP_LIVE == &quot;1&quot;</code> live gate feasibility: verified via existing-call-site — <code>scripts/eval/semantic.py:28</code>, <code>tests/test_invoke_live.py:76</code> failure: fail-loud — offline is an explicit <code>not_run</code> record</li>
+<li>api: <code>claude -p</code> Layer-3 semantic pass during the fixture apply (<code>invoke_semantic</code>, model <code>sonnet</code>) feasibility: verified via existing-call-site — <code>scripts/slopslap_invoke/invoke.py:286</code>, <code>tests/test_invoke_live.py:80</code> failure: fail-loud — <code>semantic_invocation_failed</code> → apply exit 4; the pair records <code>semantic_mode</code></li>
+</ul></section>
+<section class="sp-section" id="s10"><h3>WF2 Step 8 — implementation outcome (2026-09-02)</h3><ul>
+<li>Shipped: <code>scripts/eval/preference.py</code> (build / human / judge / report), <code>invoke_judge</code> + <code>models_match</code> in <code>scripts/slopslap_invoke/invoke.py</code>, the blind A/B contract in <code>scripts/eval/judge.py</code>, 3 <code>pair-102-*</code> fixtures with a reproducibility guard, the results document <code>docs/reviews/2026-09-02-102-blind-paired-preference-results.md</code>, and the README line.</li>
+<li><strong>AC4 shortfall, decided while the owner slept:</strong> 3 pairs shipped against a floor of 5. 31 public paragraphs sampled → 18 authorized under the auto-classified <code>spec</code> genre → 9 engine proposals → 3 verifier ACCEPTs. No genre was declared to widen edits and no private text was used; the results document states the shortfall and the owner&#x27;s four ways forward. The PR is left OPEN (merge-when-green assumed the ACs were met).</li>
+<li>Live judge (gpt-5.6-sol, 9 trials): applied preferred in 5 of 9 trials, applied majority on 2 of 3 pairs. Human mode: built, 0 raters.</li>
+<li>Two product limitations found (follow-ups, not filed — issue throttle): a review-stage <code>edit</code> on any invariant-bearing paragraph is always rejected (<code>entry_dropped</code> for every entry inside the replaced span, even when preserved byte for byte); <code>technical</code> is in the genre table but not declarable (<code>genre._DECL_ALIASES</code>).</li>
+</ul></section>
+
+</main>
+<footer>Last updated: 2026-09-02 03:11 MDT · generated by design-doc-publish — self-contained, no external resources.</footer>
+</div>
+</body>
+</html>
