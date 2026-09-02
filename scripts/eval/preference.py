@@ -491,6 +491,8 @@ def render_results_md(results: dict) -> str:
             for k in sorted(bd, key=lambda k: -bd[k]):
                 lines.append(f"| {k} | {bd[k]} | {meaning.get(k, '')} |")
         lines += ["", f"The full per-paragraph ledger (source, disposition, note) is `{ab.get('file', 'the sampling ledger')}`."]
+        if ab.get("status_note"):
+            lines += ["", "### Status against the issue", "", str(ab["status_note"])]
     else:
         lines += ["", "Sampling: not recorded for this run."]
     # ---- human

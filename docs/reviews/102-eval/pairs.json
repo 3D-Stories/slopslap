@@ -1,0 +1,32 @@
+{
+ "schema_version": 1,
+ "run_id": "237b50e2d519a507413177e9b134b186",
+ "seed": "102-judge-2026-09-02",
+ "created_at": "2026-09-02T09:01:41Z",
+ "pairs": [
+  {
+   "pair_id": "0ba7d23e832b2c78",
+   "source_sha256": "bb3699228179ee3a84569ef08d081198fe2afa3cea5cc805a7af6b27c88391ff",
+   "a_text": "The control API is described as requiring BOTH a Cloudflare Access service token AND a bearer secret. However, the Cloudflare Access layout section (S5) states that Access is applied to '*.3dstories.ca' and that the service token policy is 'for publish verification and CI'. The control host 'docs-control.3dstories.ca' falls under the wildcard, so it would be behind Access. But the artifact also says 'Control routes exist only on that host' — implying the control host is separate from the doc-serving hosts. The contradiction is that if the control host is behind the same wildcard Access application, then the 'bearer secret' is redundant with the Access service token (both are bearer tokens presented in headers). If the control host is NOT behind Access, then the 'guarded by BOTH' claim is false. The concrete failure: an implementer cannot determine the correct authentication architecture, leading to either a security hole (control API exposed without Access) or broken integration (double auth that CI cannot satisfy).\n",
+   "b_text": "The artifact describes the control API as requiring BOTH a Cloudflare Access service token AND a bearer secret. However, the Cloudflare Access layout section (S5) states that Access is applied to '*.3dstories.ca' and that the service token policy is 'for publish verification and CI'. The control host 'docs-control.3dstories.ca' falls under the wildcard, so it would be behind Access. But the artifact also says 'Control routes exist only on that host' — implying the control host is separate from the doc-serving hosts. The contradiction is that if the control host is behind the same wildcard Access application, then the 'bearer secret' is redundant with the Access service token (both are bearer tokens presented in headers). If the control host is NOT behind Access, then the 'guarded by BOTH' claim is false. The concrete failure: an implementer cannot determine the correct authentication architecture, leading to either a security hole (control API exposed without Access) or broken integration (double auth that CI cannot satisfy).\n",
+   "a_side_hash": "d56e7cf969c9535e446186280062f0c521659abe4c00a2b3785d33d4042953bf",
+   "b_side_hash": "f3b731e8d3ea7b30cb0106eabff3429c93b3ad3992f710defa25789268ff1950"
+  },
+  {
+   "pair_id": "71736cd1002e46bd",
+   "source_sha256": "5d2026b1600a4626c0494e31c348b28fb68a5e775a4e14ce08b529652773fa9b",
+   "a_text": "The artifact accepts that abandoned PRs will eventually cause 503 errors when GitHub garbage-collects the commit SHA. However, it does not specify how the harness detects this condition or how the diagnostic is generated. The serving path says 'a cold miss during an outage is a 503 with a plain diagnostic', but a GC'd SHA is not an outage — the blob doesn't exist. The harness needs to distinguish between 'GitHub is down' (serve cached bytes if available) and 'SHA no longer exists' (always 503). The artifact does not specify how the harness makes this distinction. The concrete failure: the harness may incorrectly serve cached bytes for a GC'd SHA during a transient GitHub error, or may fail to generate the promised diagnostic.\n",
+   "b_text": "The artifact accepts that abandoned PRs will eventually cause 503 errors when GitHub garbage-collects the commit SHA. However, it does not specify how the harness detects this condition or how the diagnostic is generated. The serving path says 'a cold miss during an outage is a 503 with a plain diagnostic', but a GC'd SHA is not an outage — the blob simply doesn't exist. The harness needs to distinguish between 'GitHub is down' (serve cached bytes if available) and 'SHA no longer exists' (always 503). The artifact does not specify how the harness makes this distinction. The concrete failure: the harness may incorrectly serve cached bytes for a GC'd SHA during a transient GitHub error, or may fail to generate the promised diagnostic.\n",
+   "a_side_hash": "efdbb4ed87b1877011e1323d67a9905a499d5e7841a111e99a1ff61c6e26da30",
+   "b_side_hash": "49a4686636cb49afc479c2cf80c77463db08182ddb54521e371ea9e97531cafa"
+  },
+  {
+   "pair_id": "dfac22100c2c8b78",
+   "source_sha256": "b4f43f7f2b81f06d3c84cf8091b48514e8d1113ddec1403f907745a60a00e52f",
+   "a_text": "The artifact states the server resolves the commit's tree and verifies each declared file's blob hash. However, the deployment manifest is submitted by the publisher via the control API. The artifact expects the server to independently verify that the declared files exist at the declared paths in the declared commit. This requires the server to have read access to the source repository (which may be private, per D5: '3D-Stories/rawgentic is PRIVATE'). The artifact mentions a 'fine-grained read-only PAT scoped to the doc repos' for serving, but does not specify whether this same token is used for publish-time verification or if a separate token with broader scope is needed. The concrete failure: the server may be unable to verify private repo assets during publish, either failing all publishes or silently accepting unverified manifests.\n",
+   "b_text": "The artifact states the server resolves the commit's tree and verifies each declared file's blob hash. However, the deployment manifest is submitted by the publisher via the control API. The server is expected to independently verify that the declared files exist at the declared paths in the declared commit. This requires the server to have read access to the source repository (which may be private, per D5: '3D-Stories/rawgentic is PRIVATE'). The artifact mentions a 'fine-grained read-only PAT scoped to the doc repos' for serving, but does not specify whether this same token is used for publish-time verification or if a separate token with broader scope is needed. The concrete failure: the server may be unable to verify private repo assets during publish, either failing all publishes or silently accepting unverified manifests.\n",
+   "a_side_hash": "aaf2e775cf00a9741cd1b8b2b64a277d76f6ee3d4d64170a4c1f0688aefe98ec",
+   "b_side_hash": "f88795baaa77b5c9f001c655fb42a1c1ebd1f97235d9d0aefbeb929058d2f40d"
+  }
+ ]
+}

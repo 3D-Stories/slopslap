@@ -433,3 +433,8 @@ def test_report_renders_the_sampling_breakdown(fixtures, tmp_path):
     assert "7 paragraphs sampled, 2 shipped as pairs" in text and "public docs only" in text
     assert "| verifier_blocked | 3 |" in text and "| not_authorized | 2 |" in text
     assert "AI %" not in text and "sloppiness score" not in text
+    # an explicit status note renders under its own heading when the ledger carries one
+    ledger.write_text(json.dumps({"schema_version": 1, "sampled": 7, "count": 5, "breakdown": {"shipped": 2},
+                                  "status_note": "AC4 asked for 5; this run ships 2.", "items": []}))
+    assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", str(ledger), "--out", str(md)]) == 0
+    assert "### Status against the issue" in md.read_text(encoding="utf-8") and "this run ships 2" in md.read_text(encoding="utf-8")

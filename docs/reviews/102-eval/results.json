@@ -1,0 +1,753 @@
+{
+ "schema_version": 1,
+ "issue": 102,
+ "created_at": "2026-09-02T09:11:13Z",
+ "fixtures": [
+  {
+   "dir_name": "pair-102-15-control-api-auth-passive",
+   "pair_id": "0ba7d23e832b2c78",
+   "genre": "spec",
+   "engine_model": "claude-fable-5-1",
+   "source_sha256": "bb3699228179ee3a84569ef08d081198fe2afa3cea5cc805a7af6b27c88391ff",
+   "applied_sha256": "02df8a4b151bdba58c7c4ea1724588fff992a85bbb1d607423a6e2414bdfbb9f",
+   "source": {
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+    "lines": "19-19",
+    "commit": "0aa220d3c5a392ea43e85de6659c7856a4b4853d",
+    "license": "MIT"
+   }
+  },
+  {
+   "dir_name": "pair-102-17-gc-sha-503-intensifier",
+   "pair_id": "71736cd1002e46bd",
+   "genre": "spec",
+   "engine_model": "claude-fable-5-1",
+   "source_sha256": "5d2026b1600a4626c0494e31c348b28fb68a5e775a4e14ce08b529652773fa9b",
+   "applied_sha256": "89f37480506003d79ee0a9336ab45454fc8e99cfff959d90a35366bfc98484e6",
+   "source": {
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+    "lines": "78-78",
+    "commit": "0aa220d3c5a392ea43e85de6659c7856a4b4853d",
+    "license": "MIT"
+   }
+  },
+  {
+   "dir_name": "pair-102-21-publish-verification-passive",
+   "pair_id": "dfac22100c2c8b78",
+   "genre": "spec",
+   "engine_model": "claude-fable-5-1",
+   "source_sha256": "b4f43f7f2b81f06d3c84cf8091b48514e8d1113ddec1403f907745a60a00e52f",
+   "applied_sha256": "a4e5b71b19a1acc30d3858e93fa484abf9a06ea1388bdc9d648cc4810bd3db19",
+   "source": {
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+    "lines": "53-53",
+    "commit": "0aa220d3c5a392ea43e85de6659c7856a4b4853d",
+    "license": "MIT"
+   }
+  }
+ ],
+ "abstentions": {
+  "schema_version": 1,
+  "issue": 102,
+  "sampled": 31,
+  "count": 28,
+  "engine_model": "claude-fable-5-1",
+  "selection": "paragraphs of 40–200 words from the owner's two PUBLIC repos (3D-Stories/slopslap @1591b61, 3D-Stories/design-doc-publish @0aa220d3, both MIT) where the measure-only scanner reported at least one tell; every paragraph auto-classified as genre `spec`; private repos excluded so no private text is published.",
+  "breakdown": {
+   "not_authorized": 13,
+   "abstained": 11,
+   "shipped": 3,
+   "verifier_blocked": 3,
+   "excluded_circular": 1
+  },
+  "items": [
+   {
+    "id": "01",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/planning/2026-08-24-34-doc-harness-service.md",
+    "lines": "336-343",
+    "words": 108,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone."
+   },
+   {
+    "id": "02",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/planning/2026-08-24-35-harness-go-live.md",
+    "lines": "420-426",
+    "words": 99,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone."
+   },
+   {
+    "id": "03",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/design-language.md",
+    "lines": "314-319",
+    "words": 82,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone."
+   },
+   {
+    "id": "04",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/planning/2026-08-10-1-move-package-to-own-repo.md",
+    "lines": "276-283",
+    "words": 79,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone."
+   },
+   {
+    "id": "05",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/planning/2026-08-24-36-publish-to-harness.md",
+    "lines": "493-498",
+    "words": 71,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone."
+   },
+   {
+    "id": "06",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/runbooks/2026-08-24-37-vercel-backfill.md",
+    "lines": "102-106",
+    "words": 66,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone."
+   },
+   {
+    "id": "07",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/planning/campaign-log.md",
+    "lines": "109-116",
+    "words": 113,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone."
+   },
+   {
+    "id": "08",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/planning/2026-08-24-36-publish-to-harness.md",
+    "lines": "162-168",
+    "words": 96,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone."
+   },
+   {
+    "id": "09",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/planning/2026-08-24-36-publish-to-harness.md",
+    "lines": "198-204",
+    "words": 96,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone."
+   },
+   {
+    "id": "10",
+    "repo": "3D-Stories/slopslap",
+    "path": "docs/planning/2026-07-12-30-corpus-integration.md",
+    "lines": "90-100",
+    "words": 118,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone."
+   },
+   {
+    "id": "11",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/planning/2026-08-25-access-architecture-consult.md",
+    "lines": "1-1",
+    "words": 97,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone."
+   },
+   {
+    "id": "12",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/planning/2026-08-10-9-first-run-setup-flow.md",
+    "lines": "537-542",
+    "words": 97,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone."
+   },
+   {
+    "id": "13",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/planning/2026-08-24-35-harness-go-live.md",
+    "lines": "510-517",
+    "words": 142,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone."
+   },
+   {
+    "id": "14",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/planning/2026-08-24-34-doc-harness-service.md",
+    "lines": "566-573",
+    "words": 110,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "abstained",
+    "note": "authorized (transition_clusters strip) but the engine found no demonstrated harm."
+   },
+   {
+    "id": "15",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+    "lines": "19-19",
+    "words": 160,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "shipped",
+    "note": "pair-102-15: passive→active with the actor the paragraph already names; ACCEPT, live Layer-3 clean."
+   },
+   {
+    "id": "16",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+    "lines": "28-28",
+    "words": 149,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "verifier_blocked",
+    "note": "engine proposed deleting a tautological clause ('so byte equality is impossible unless…'); byte-exact verifier REJECTED it (entry_dropped: negation + condition entries); no verifier-safe alternative → no pair."
+   },
+   {
+    "id": "17",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+    "lines": "78-78",
+    "words": 124,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "shipped",
+    "note": "pair-102-17: first proposal (delete a restated sentence) BLOCKED (entry_dropped: negation); revised to deleting the intensifier 'simply'; ACCEPT, live clean."
+   },
+   {
+    "id": "18",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+    "lines": "86-86",
+    "words": 110,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "abstained",
+    "note": "authorized but every hedge is load-bearing; no demonstrated harm."
+   },
+   {
+    "id": "19",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+    "lines": "70-70",
+    "words": 96,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "verifier_blocked",
+    "note": "two proposals (delete / compress a restated sentence) both REJECTED: the normative_statement entry spans from the modal 'could' to the sentence end."
+   },
+   {
+    "id": "20",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+    "lines": "94-94",
+    "words": 93,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "verifier_blocked",
+    "note": "two proposals (delete / compress 'The byte-compare will fail…, blocking migration.') both REJECTED: modality entry 'will' spans to the sentence end."
+   },
+   {
+    "id": "21",
+    "repo": "3D-Stories/design-doc-publish",
+    "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+    "lines": "53-53",
+    "words": 131,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "shipped",
+    "note": "pair-102-21: passive→active with the actor the paragraph already names; ACCEPT, live clean (in-process seam, 300 s semantic timeout after two CLI timeouts)."
+   },
+   {
+    "id": "22",
+    "repo": "3D-Stories/slopslap",
+    "path": "README.md",
+    "lines": "122-126",
+    "words": 70,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "excluded_circular",
+    "note": "slopslap's own worked example quoting slop phrases — not a design-doc paragraph."
+   },
+   {
+    "id": "23",
+    "repo": "3D-Stories/slopslap",
+    "path": "docs/reviews/2026-07-12-26-platform-feasibility-spike-md-2026-07-12.md",
+    "lines": "22-22",
+    "words": 55,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "abstained",
+    "note": "tight review finding; no demonstrated harm."
+   },
+   {
+    "id": "24",
+    "repo": "3D-Stories/slopslap",
+    "path": "docs/reviews/2026-07-12-slopslap-reconciled-spec-md-2026-07-12.md",
+    "lines": "22-22",
+    "words": 48,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "abstained",
+    "note": "tight review finding; hedges load-bearing."
+   },
+   {
+    "id": "25",
+    "repo": "3D-Stories/slopslap",
+    "path": "docs/reviews/increment-1-eval-fixtures-design-md-2026-07-12.md",
+    "lines": "39-39",
+    "words": 45,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "abstained",
+    "note": "no demonstrated harm."
+   },
+   {
+    "id": "26",
+    "repo": "3D-Stories/slopslap",
+    "path": "docs/reviews/increment-2-diff-2026-07-12.md",
+    "lines": "26-26",
+    "words": 53,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "abstained",
+    "note": "no demonstrated harm."
+   },
+   {
+    "id": "27",
+    "repo": "3D-Stories/slopslap",
+    "path": "docs/reviews/increment-4-diff-2026-07-12.md",
+    "lines": "43-43",
+    "words": 48,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "abstained",
+    "note": "no demonstrated harm."
+   },
+   {
+    "id": "28",
+    "repo": "3D-Stories/slopslap",
+    "path": "docs/reviews/increment-5-diff-2026-07-12.md",
+    "lines": "30-30",
+    "words": 48,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "abstained",
+    "note": "no demonstrated harm."
+   },
+   {
+    "id": "29",
+    "repo": "3D-Stories/slopslap",
+    "path": "docs/reviews/increment-6-eval-run-design-md-2026-07-12.md",
+    "lines": "53-53",
+    "words": 59,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "abstained",
+    "note": "no demonstrated harm."
+   },
+   {
+    "id": "30",
+    "repo": "3D-Stories/slopslap",
+    "path": "docs/reviews/rawgentic-adv-diff-81-patch-2026-07-15.md",
+    "lines": "19-19",
+    "words": 46,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "abstained",
+    "note": "no demonstrated harm."
+   },
+   {
+    "id": "31",
+    "repo": "3D-Stories/slopslap",
+    "path": "docs/reviews/rawgentic-adv-diff-84-patch-2026-07-15.md",
+    "lines": "20-20",
+    "words": 64,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "disposition": "abstained",
+    "note": "no demonstrated harm."
+   }
+  ],
+  "status_note": "**AC4 asked for 5 to 10 pairs; this run ships 3.** The shortfall is a measured property of slopslap's default autonomous path on the owner's public prose, not a sampling accident: 31 paragraphs were sampled, the auto-classified `spec` genre authorized edits in 18, the engine proposed repairs in 9, and the byte-exact verifier accepted 3. No genre was declared to widen the authorized ranges (declaring `general` or `prd` on a design doc would misdeclare it to buy edits), and no private text was used. Two product limitations surfaced while trying: (1) a review-stage `edit` decision on any paragraph that carries an invariant is always rejected — the verifier reports every ledger entry inside the replaced span as `entry_dropped` even when the replacement preserves it byte for byte (probe: `tests` reproduce it with a number + negation paragraph); (2) `technical` is a valid genre in the recommendation table but not in `genre._DECL_ALIASES`, so `--declared-genre technical` silently falls through to auto-classification. Ways to widen the set, for the owner to choose: amend AC4 to the measured 3; authorize a declared genre for the 13 `not_authorized` planning paragraphs and re-run the recipe; publish paragraphs from a private repo; or fix the two limitations and re-run.",
+  "file": "docs/reviews/102-eval/sampled-paragraphs.json"
+ },
+ "human": {
+  "raters": []
+ },
+ "llm_judge": {
+  "schema_version": 1,
+  "status": "completed",
+  "model": "gpt-5.6-sol",
+  "model_confirmed": false,
+  "engine_models": [
+   "claude-fable-5-1"
+  ],
+  "run_id": "237b50e2d519a507413177e9b134b186",
+  "seed": "102-judge-2026-09-02",
+  "trials_per_pair": 3,
+  "timeout_s": 180.0,
+  "created_at": "2026-09-02T09:09:53Z",
+  "pairs": [
+   {
+    "pair_id": "0ba7d23e832b2c78",
+    "dir_name": "pair-102-15-control-api-auth-passive",
+    "genre": "spec",
+    "trials": [
+     {
+      "trial": 0,
+      "applied_side": "A",
+      "a_side_hash": "f3b731e8d3ea7b30cb0106eabff3429c93b3ad3992f710defa25789268ff1950",
+      "b_side_hash": "d56e7cf969c9535e446186280062f0c521659abe4c00a2b3785d33d4042953bf",
+      "ok": true,
+      "preferred_side": "B",
+      "preferred_role": "original",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "original",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "original",
+       "edit_locality_and_justification": "original",
+       "seeded_defect_fixed_without_normalizing": "original"
+      },
+      "reason": "B makes the single, local improvement of naming the control API directly instead of routing the statement through “the artifact.” It preserves every substantive claim and uncertainty while slightly reducing abstraction and reader effort."
+     },
+     {
+      "trial": 1,
+      "applied_side": "A",
+      "a_side_hash": "f3b731e8d3ea7b30cb0106eabff3429c93b3ad3992f710defa25789268ff1950",
+      "b_side_hash": "d56e7cf969c9535e446186280062f0c521659abe4c00a2b3785d33d4042953bf",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "applied",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "equal",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "equal",
+       "seeded_defect_fixed_without_normalizing": "equal"
+      },
+      "reason": "The versions differ only in the opening clause. A identifies the artifact as the source of the requirement, giving the claim slightly clearer attribution and fitting evidence-oriented technical prose better; otherwise they are equivalent."
+     },
+     {
+      "trial": 2,
+      "applied_side": "B",
+      "a_side_hash": "d56e7cf969c9535e446186280062f0c521659abe4c00a2b3785d33d4042953bf",
+      "b_side_hash": "f3b731e8d3ea7b30cb0106eabff3429c93b3ad3992f710defa25789268ff1950",
+      "ok": true,
+      "preferred_side": "B",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "applied",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "B makes the artifact the explicit source of the requirement, removing a small passive-voice ambiguity while preserving every substantive claim and leaving the rest of the paragraph unchanged."
+     }
+    ],
+    "valid_trials": 3,
+    "verdict": {
+     "present": true,
+     "errored": false,
+     "beat": true,
+     "detail": "",
+     "candidate_median": {
+      "meaning_preservation": 1,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 2,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 1,
+      "voice_distance_from_samples": 1,
+      "genre_fitness": 2,
+      "edit_locality_and_justification": 1,
+      "seeded_defect_fixed_without_normalizing": 1
+     },
+     "baseline_median": {
+      "meaning_preservation": 1,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 0,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 1,
+      "voice_distance_from_samples": 1,
+      "genre_fitness": 0,
+      "edit_locality_and_justification": 1,
+      "seeded_defect_fixed_without_normalizing": 1
+     }
+    },
+    "applied_preferred_trials": 2,
+    "original_preferred_trials": 1,
+    "equal_trials": 0,
+    "majority_applied": true
+   },
+   {
+    "pair_id": "71736cd1002e46bd",
+    "dir_name": "pair-102-17-gc-sha-503-intensifier",
+    "genre": "spec",
+    "trials": [
+     {
+      "trial": 0,
+      "applied_side": "A",
+      "a_side_hash": "efdbb4ed87b1877011e1323d67a9905a499d5e7841a111e99a1ff61c6e26da30",
+      "b_side_hash": "49a4686636cb49afc479c2cf80c77463db08182ddb54521e371ea9e97531cafa",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "applied",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "A removes the unnecessary and mildly minimizing adverb “simply” while leaving the paragraph’s technical meaning, responsibilities, uncertainty, and distinctive phrasing intact."
+     },
+     {
+      "trial": 1,
+      "applied_side": "B",
+      "a_side_hash": "49a4686636cb49afc479c2cf80c77463db08182ddb54521e371ea9e97531cafa",
+      "b_side_hash": "efdbb4ed87b1877011e1323d67a9905a499d5e7841a111e99a1ff61c6e26da30",
+      "ok": true,
+      "preferred_side": "B",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "applied",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "B removes the redundant intensifier “simply” while preserving the paragraph’s meaning, responsibilities, uncertainty, and distinctive technical voice. The edit is strictly local and makes the claim slightly more direct."
+     },
+     {
+      "trial": 2,
+      "applied_side": "B",
+      "a_side_hash": "49a4686636cb49afc479c2cf80c77463db08182ddb54521e371ea9e97531cafa",
+      "b_side_hash": "efdbb4ed87b1877011e1323d67a9905a499d5e7841a111e99a1ff61c6e26da30",
+      "ok": true,
+      "preferred_side": "B",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "applied",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "B removes the minimizing and unnecessary word “simply,” making the technical distinction slightly more precise without changing meaning, responsibility, claims, or the visibility of the unresolved specification gap."
+     }
+    ],
+    "valid_trials": 3,
+    "verdict": {
+     "present": true,
+     "errored": false,
+     "beat": true,
+     "detail": "",
+     "candidate_median": {
+      "meaning_preservation": 1,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 1,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 2,
+      "voice_distance_from_samples": 2,
+      "genre_fitness": 2,
+      "edit_locality_and_justification": 2,
+      "seeded_defect_fixed_without_normalizing": 2
+     },
+     "baseline_median": {
+      "meaning_preservation": 1,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 1,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 0,
+      "voice_distance_from_samples": 0,
+      "genre_fitness": 0,
+      "edit_locality_and_justification": 0,
+      "seeded_defect_fixed_without_normalizing": 0
+     }
+    },
+    "applied_preferred_trials": 3,
+    "original_preferred_trials": 0,
+    "equal_trials": 0,
+    "majority_applied": true
+   },
+   {
+    "pair_id": "dfac22100c2c8b78",
+    "dir_name": "pair-102-21-publish-verification-passive",
+    "genre": "spec",
+    "trials": [
+     {
+      "trial": 0,
+      "applied_side": "A",
+      "a_side_hash": "aaf2e775cf00a9741cd1b8b2b64a277d76f6ee3d4d64170a4c1f0688aefe98ec",
+      "b_side_hash": "f88795baaa77b5c9f001c655fb42a1c1ebd1f97235d9d0aefbeb929058d2f40d",
+      "ok": true,
+      "preferred_side": "B",
+      "preferred_role": "original",
+      "dimensions_role": {
+       "meaning_preservation": "original",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "original",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "original",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "original",
+       "edit_locality_and_justification": "original",
+       "seeded_defect_fixed_without_normalizing": "original"
+      },
+      "reason": "B replaces the awkward and potentially misleading attribution that “the artifact expects” verification with the clearer statement that the server is expected to perform it. The single localized edit preserves the paragraph’s technical meaning, uncertainty, and claims while making responsibility easier to understand."
+     },
+     {
+      "trial": 1,
+      "applied_side": "A",
+      "a_side_hash": "aaf2e775cf00a9741cd1b8b2b64a277d76f6ee3d4d64170a4c1f0688aefe98ec",
+      "b_side_hash": "f88795baaa77b5c9f001c655fb42a1c1ebd1f97235d9d0aefbeb929058d2f40d",
+      "ok": true,
+      "preferred_side": "B",
+      "preferred_role": "original",
+      "dimensions_role": {
+       "meaning_preservation": "original",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "original",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "original",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "original",
+       "edit_locality_and_justification": "original",
+       "seeded_defect_fixed_without_normalizing": "original"
+      },
+      "reason": "B makes the server—not the artifact—the subject of the verification expectation, clarifying responsibility and fixing the localized anthropomorphic phrasing without changing the paragraph’s claims, open question, or distinctive wording elsewhere."
+     },
+     {
+      "trial": 2,
+      "applied_side": "A",
+      "a_side_hash": "aaf2e775cf00a9741cd1b8b2b64a277d76f6ee3d4d64170a4c1f0688aefe98ec",
+      "b_side_hash": "f88795baaa77b5c9f001c655fb42a1c1ebd1f97235d9d0aefbeb929058d2f40d",
+      "ok": true,
+      "preferred_side": "B",
+      "preferred_role": "original",
+      "dimensions_role": {
+       "meaning_preservation": "original",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "original",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "original",
+       "voice_distance_from_samples": "original",
+       "genre_fitness": "original",
+       "edit_locality_and_justification": "original",
+       "seeded_defect_fixed_without_normalizing": "original"
+      },
+      "reason": "B makes the server’s responsibility direct and idiomatic by replacing the artifact’s anthropomorphic expectation, while preserving the paragraph’s claims, uncertainty, and otherwise distinctive wording."
+     }
+    ],
+    "valid_trials": 3,
+    "verdict": {
+     "present": true,
+     "errored": false,
+     "beat": false,
+     "detail": "",
+     "candidate_median": {
+      "meaning_preservation": 0,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 0,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 0,
+      "voice_distance_from_samples": 1,
+      "genre_fitness": 0,
+      "edit_locality_and_justification": 0,
+      "seeded_defect_fixed_without_normalizing": 0
+     },
+     "baseline_median": {
+      "meaning_preservation": 2,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 2,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 2,
+      "voice_distance_from_samples": 1,
+      "genre_fitness": 2,
+      "edit_locality_and_justification": 2,
+      "seeded_defect_fixed_without_normalizing": 2
+     }
+    },
+    "applied_preferred_trials": 0,
+    "original_preferred_trials": 3,
+    "equal_trials": 0,
+    "majority_applied": false
+   }
+  ],
+  "summary": {
+   "pairs": 3,
+   "pairs_completed": 3,
+   "pairs_errored": 0,
+   "trials_valid": 9,
+   "trials_failed": 0,
+   "applied_preferred_trials": 5,
+   "original_preferred_trials": 4,
+   "equal_trials": 0,
+   "applied_preference_pct_of_decided": 55.6,
+   "pairs_majority_applied": 2,
+   "pairs_beat": 2
+  }
+ }
+}
