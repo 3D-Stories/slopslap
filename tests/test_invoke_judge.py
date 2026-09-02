@@ -168,3 +168,19 @@ def test_models_match_uses_the_token_rule():
     assert models_match("gpt-5.6-sol", ["gpt-5.6-sol"]) is True
     assert models_match("opus", ["claude-opusx-9"]) is False   # no loose substring match (#31e)
     assert models_match("sonnet", []) is False
+
+
+def test_child_env_carries_no_anthropic_or_claude_variable(fake, monkeypatch):
+    """#102 Step 8a: the judge is a DIFFERENT vendor, so an Anthropic credential must never cross
+    into it. The allowlist inherited `_ENV_ALLOW_PREFIXES` from the claude transport, which passes
+    every CLAUDE*/ANTHROPIC* variable — including an API key — to the codex child."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-must-not-cross")
+    monkeypatch.setenv("CLAUDE_CODE_SESSION_ID", "must-not-cross")
+    monkeypatch.setenv("XDG_CONFIG_HOME", "/tmp/xdg-kept")
+    monkeypatch.setenv("CODEX_HOME_PROBE", "kept")
+    invoke_judge("MODE:ok", model="m", schema=SCHEMA, executable=str(fake))
+    env = _record(fake)["env"]
+    assert [k for k in env if k.startswith(("ANTHROPIC", "CLAUDE"))] == []
+    assert "sk-ant-must-not-cross" not in json.dumps(env)
+    assert "PATH" in env and "HOME" in env
+    assert env.get("CODEX_HOME_PROBE") == "kept" and env.get("XDG_CONFIG_HOME") == "/tmp/xdg-kept"

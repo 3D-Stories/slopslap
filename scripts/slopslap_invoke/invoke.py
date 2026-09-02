@@ -365,7 +365,10 @@ def invoke_semantic(
 # scrubbed env, own process group, SIGTERM->SIGKILL on timeout, never raises on an environmental
 # failure — but a separate function: `_run_claude` is security-hardened and pinned by tests, and a
 # shared "run any CLI" abstraction would widen its surface for no gain.
-_CODEX_ENV_ALLOW_PREFIXES = _ENV_ALLOW_PREFIXES + ("CODEX",)  # auth lives under HOME (~/.codex)
+# NOT `_ENV_ALLOW_PREFIXES + ("CODEX",)`: that list exists for the Anthropic transport, and
+# reusing it here hands every CLAUDE_*/ANTHROPIC_* variable — an API key among them — to a
+# DIFFERENT vendor's process. The judge needs neither. Codex auth lives under HOME (~/.codex).
+_CODEX_ENV_ALLOW_PREFIXES = ("CODEX", "XDG")
 
 
 def _scrub_env_codex() -> dict:
