@@ -130,7 +130,10 @@ def load_eval_pairs(fixtures_dir: str) -> List[EvalPair]:
         try:
             replayed = apply_edits(original, parse_edits(raw_edits))
         except Exception as err:  # noqa: BLE001 - any parse/apply failure is one refusal
-            raise PairError(f"{name}: the committed edit script does not replay ({err})") from err
+            # Name the FILE and the error class first: a bare interpreter message like "string
+            # indices must be integers" reads as a slopslap bug rather than a bad fixture.
+            raise PairError(f"{name}: {edits_name} is not a usable edit script "
+                            f"({type(err).__name__}: {err})") from err
         if replayed != applied:
             raise PairError(f"{name}: replaying the committed edit script does not reproduce the "
                             f"applied side — those bytes are not this edit script's output")
@@ -432,6 +435,7 @@ def run_judge(pairs: List[EvalPair], blind: dict, *, model: str, trials: int, ti
     fn = J.judge_fn_for(model, timeout_s=timeout_s, transport=transport, status_sink=sink)
     run_id, seed = blind["run_id"], blind["seed"]
     out_pairs = []
+    tot_attempted = 0                     # calls we actually made, so a reason cannot misreport it
     tot_valid = tot_failed = 0            # raw judge CALLS: how the transport did
     tot_scored = tot_app = tot_orig = tot_eq = 0   # only pairs with a present, non-errored verdict
     for bp in blind["pairs"]:
@@ -441,6 +445,7 @@ def run_judge(pairs: List[EvalPair], blind: dict, *, model: str, trials: int, ti
         recs, jtrials = [], []
         app = orig = eq = 0
         for t in range(trials):
+            tot_attempted += 1
             applied_first = random.Random(f"{seed}:{fx.pair_id}:{t}").random() < 0.5
             a, b = (fx.applied, fx.original) if applied_first else (fx.original, fx.applied)
             applied_side = "A" if applied_first else "B"
@@ -502,9 +507,14 @@ def run_judge(pairs: List[EvalPair], blind: dict, *, model: str, trials: int, ti
            "engine_models": sorted({p.engine_model for p in pairs if p.engine_model}),
            "run_id": run_id, "seed": seed, "trials_per_pair": trials, "timeout_s": timeout_s,
            "created_at": _now(), "pairs": out_pairs, "summary": summary}
-    if status == "failed":
-        obj["reason"] = (f"every judge call failed (last invocation_status="
-                         f"{sink.get('invocation_status', 'unknown')}); nothing to score")
+    if status == "failed" and not tot_attempted:
+        # "every call failed" would send an operator hunting a transport fault that never happened.
+        obj["reason"] = (f"no judge call was attempted (trials_per_pair={trials} over "
+                         f"{len(out_pairs)} pair(s)); nothing to score")
+    elif status == "failed":
+        obj["reason"] = (f"every judge call failed ({tot_attempted} attempted, last "
+                         f"invocation_status={sink.get('invocation_status', 'unknown')}); "
+                         f"nothing to score")
     elif status == "partial":
         obj["reason"] = (f"{summary['pairs_completed']} of {summary['pairs']} pair(s) reached a "
                          f"present, non-errored verdict with {trials} valid trial(s) each; "
@@ -514,6 +524,10 @@ def run_judge(pairs: List[EvalPair], blind: dict, *, model: str, trials: int, ti
 
 def _cmd_judge(args, stdin, stdout, judge_transport=None) -> int:
     from eval.judge import live_judge_available  # noqa: PLC0415
+    if args.trials < 1:
+        raise PairError(f"--trials must be at least 1, not {args.trials}; a run that asks for no "
+                        f"trial cannot produce a verdict (and note judge.evaluate needs 3 for a "
+                        f"non-errored one)")
     pairs = load_eval_pairs(args.fixtures)
     _cross_model_guard(args.model, sorted({p.engine_model for p in pairs}))
     blind = _blind_from_args(args)
@@ -572,9 +586,18 @@ def _fixture_for_pick(pk: dict, by_id: dict, by_sides: dict) -> EvalPair:
             raise PairError(f"pick names unknown pair_id {pid!r}")
         return fx
     a, b = pk.get("a_side_hash"), pk.get("b_side_hash")
-    fx = by_sides.get(frozenset((a, b))) if isinstance(a, str) and isinstance(b, str) else None
+    label = pk.get("token")
+    # Name the ACTUAL cause. Falling through to the side-hash lookup reported "matches no fixture"
+    # for a pick that carried no identifier at all, and for one whose two hashes were equal.
+    if not isinstance(a, str) or not isinstance(b, str) or not a or not b:
+        raise PairError(f"pick {label!r} carries neither a pair_id nor two side hashes, so nothing "
+                        f"identifies which pair it rates")
+    if a == b:
+        raise PairError(f"pick {label!r}: its two side hashes are equal, so the pair it rates "
+                        f"cannot be identified and no preference could be recovered from it")
+    fx = by_sides.get(frozenset((a, b)))
     if fx is None:
-        raise PairError(f"pick {pk.get('token')!r}: its side hashes match no fixture under this run_id")
+        raise PairError(f"pick {label!r}: its side hashes match no fixture under this run_id")
     return fx
 
 

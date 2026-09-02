@@ -904,3 +904,60 @@ def test_page_embeds_no_literal_angle_bracket_from_fixture_data(tmp_path):
     assert json.loads(payload)["pairs"], "the payload still parses as JSON"
     # exactly the page's OWN two script tags survive: the fixture's `<script>` bytes are escaped
     assert page.count("<script") == 2 and page.lower().count("</script>") == 2
+
+
+# ------------------------------- inline Medium and Low findings from the Step 11 round
+# Each is a message-quality defect on a refusal that already behaved correctly. Owner asked for
+# them, so each one gets the same treatment as any other finding: a failing test first.
+
+def test_judge_refuses_a_trial_count_below_one(fixtures, tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("SLOPSLAP_LIVE", "1")
+    t = _Transport([_judge_reply()] * 6)
+    rc = P.main(["judge", "--fixtures", str(fixtures), "--model", "m", "--trials", "0",
+                 "--out", str(tmp_path / "j.json")], judge_transport=t)
+    assert rc == 2 and "trials" in capsys.readouterr().err
+    assert t.calls == [], "a refusal must not spend a judge call"
+
+
+def test_a_judge_run_that_attempted_no_call_does_not_claim_calls_failed(fixtures, tmp_path,
+                                                                        monkeypatch):
+    """`trials=0` reported 'every judge call failed' although zero calls were made, which sends an
+    operator hunting a transport fault that does not exist. The CLI now refuses below 1, so this
+    covers the library path a caller can still reach directly."""
+    monkeypatch.setenv("SLOPSLAP_LIVE", "1")
+    pairs = P.load_eval_pairs(str(fixtures))
+    blind = P.build_pairs(pairs, seed="s")
+    obj = P.run_judge(pairs, blind, model="m", trials=0, timeout_s=1.0,
+                      transport=_Transport([_judge_reply()] * 6))
+    assert obj["status"] == "failed"
+    assert "no judge call was attempted" in obj["reason"]
+    assert "every judge call failed" not in obj["reason"]
+
+
+def test_a_pick_with_no_identifier_says_so(fixtures, tmp_path):
+    by_id = {p.pair_id: p for p in P.load_eval_pairs(str(fixtures))}
+    blind = _blind(fixtures)
+    with pytest.raises(P.PairError, match="carries neither"):
+        P.score_picks({"schema_version": 1, "run_id": blind["run_id"], "rater": "r",
+                       "picks": [{"pick": "A"}]}, by_id)
+
+
+def test_a_pick_with_equal_side_hashes_says_so(fixtures, tmp_path):
+    """It used to report 'side hashes match no fixture', which names the wrong cause."""
+    by_id = {p.pair_id: p for p in P.load_eval_pairs(str(fixtures))}
+    blind = _blind(fixtures)
+    h = blind["pairs"][0]["a_side_hash"]
+    with pytest.raises(P.PairError, match="equal"):
+        P.score_picks({"schema_version": 1, "run_id": blind["run_id"], "rater": "r",
+                       "picks": [{"token": blind["pairs"][0]["token"], "pick": "A",
+                                  "a_side_hash": h, "b_side_hash": h}]}, by_id)
+
+
+def test_a_malformed_edit_script_is_named_as_a_file_problem(tmp_path):
+    """The refusal was right but its detail was a bare Python message, e.g. 'string indices must be
+    integers'. It now names the file and the error class before that detail."""
+    root = tmp_path / "eval"
+    root.mkdir()
+    _write_pair(root, "pair-badedits", ALPHA_O, ALPHA_A, edits={"not": "a list"})
+    with pytest.raises(P.PairError, match=r"edits\.json is not a usable edit script \(TypeError"):
+        P.load_eval_pairs(str(root))
