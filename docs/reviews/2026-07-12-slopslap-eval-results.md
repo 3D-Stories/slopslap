@@ -37,7 +37,7 @@ Engine: `opus-4.8` — authoring engine recorded, not selected by the plugin (ad
 
 ## LLM-judge (secondary, non-gating): **NOT_RUN**
 
-> secondary + non-gating (contract §7). A cross-model blinded A/B (Codex gpt-5.6-sol) is a documented follow-up; the PRIMARY proof is the programmatic hard gates + abstention below.
+> secondary + non-gating (contract §7). This offline proof never calls a judge. The cross-model blinded A/B (#102) runs separately: `SLOPSLAP_LIVE=1 python3 scripts/eval/preference.py judge --model gpt-5.6-sol`; its measured result lives in docs/reviews/2026-09-02-102-blind-paired-preference-results.md. The PRIMARY proof is the programmatic hard gates + abstention below.
 
 ## Provenance & limitations
 
