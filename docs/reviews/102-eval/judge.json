@@ -1,0 +1,854 @@
+{
+ "schema_version": 1,
+ "status": "completed",
+ "model": "gpt-5.6-sol",
+ "model_confirmed": false,
+ "engine_models": [
+  "claude-fable-5-1"
+ ],
+ "run_id": "257f3edc3a450a4527157d41959583e5",
+ "seed": "102-judge-2026-09-02-hg",
+ "trials_per_pair": 3,
+ "timeout_s": 180.0,
+ "created_at": "2026-09-02T16:56:13Z",
+ "pairs": [
+  {
+   "pair_id": "21ba57a51f81f2be",
+   "dir_name": "pair-102-p008-leadership-program-intensifier",
+   "genre": "spec",
+   "trials": [
+    {
+     "trial": 0,
+     "applied_side": "A",
+     "a_side_hash": "57ae3007663933663ee6e52d353f6e5a94203656e0544df676ccaa1a216a9e3b",
+     "b_side_hash": "7dfa87a888fa748d32b1fdd9412d97e5ed8bdb5fa7dce73c33c64286485d7082",
+     "ok": true,
+     "preferred_side": "A",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "equal",
+      "unsupported_claim_introduction": "applied",
+      "actor_responsibility_preservation": "equal",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "equal",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "A removes the unsupported, promotional intensifier “truly” while leaving the paragraph’s meaning, responsibilities, and surrounding voice intact. The single-word difference makes A slightly tighter and better suited to organizational prose."
+    },
+    {
+     "trial": 1,
+     "applied_side": "A",
+     "a_side_hash": "57ae3007663933663ee6e52d353f6e5a94203656e0544df676ccaa1a216a9e3b",
+     "b_side_hash": "7dfa87a888fa748d32b1fdd9412d97e5ed8bdb5fa7dce73c33c64286485d7082",
+     "ok": true,
+     "preferred_side": "A",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "applied",
+      "unsupported_claim_introduction": "applied",
+      "actor_responsibility_preservation": "equal",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "applied",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "A removes the unsupported and unnecessary intensifier “truly” while leaving the paragraph’s meaning, responsibilities, structure, and voice otherwise intact."
+    },
+    {
+     "trial": 2,
+     "applied_side": "B",
+     "a_side_hash": "7dfa87a888fa748d32b1fdd9412d97e5ed8bdb5fa7dce73c33c64286485d7082",
+     "b_side_hash": "57ae3007663933663ee6e52d353f6e5a94203656e0544df676ccaa1a216a9e3b",
+     "ok": true,
+     "preferred_side": "B",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "applied",
+      "unsupported_claim_introduction": "applied",
+      "actor_responsibility_preservation": "equal",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "equal",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "B removes only the unsupported intensifier “truly,” preserving the paragraph’s meaning, responsibilities, and voice while making the institutional prose slightly cleaner and more credible."
+    }
+   ],
+   "valid_trials": 3,
+   "verdict": {
+    "present": true,
+    "errored": false,
+    "beat": true,
+    "detail": "",
+    "candidate_median": {
+     "meaning_preservation": 2,
+     "unsupported_claim_introduction": 2,
+     "actor_responsibility_preservation": 1,
+     "unresolved_intent_visibility": 1,
+     "editorial_cost_reduction": 2,
+     "voice_distance_from_samples": 1,
+     "genre_fitness": 2,
+     "edit_locality_and_justification": 2,
+     "seeded_defect_fixed_without_normalizing": 2
+    },
+    "baseline_median": {
+     "meaning_preservation": 0,
+     "unsupported_claim_introduction": 0,
+     "actor_responsibility_preservation": 1,
+     "unresolved_intent_visibility": 1,
+     "editorial_cost_reduction": 0,
+     "voice_distance_from_samples": 1,
+     "genre_fitness": 0,
+     "edit_locality_and_justification": 0,
+     "seeded_defect_fixed_without_normalizing": 0
+    }
+   },
+   "applied_preferred_trials": 3,
+   "original_preferred_trials": 0,
+   "equal_trials": 0,
+   "majority_applied": true
+  },
+  {
+   "pair_id": "00191c3aa2e36b7b",
+   "dir_name": "pair-102-p040-unique-insights-intensifier",
+   "genre": "spec",
+   "trials": [
+    {
+     "trial": 0,
+     "applied_side": "A",
+     "a_side_hash": "92a781364d950767a57a968254a1a3451881cc1b9561f2adf6e238f8922d56c5",
+     "b_side_hash": "a6aa2b782286420fc56d18c2eb51270870c03741635e18955c7e9f478f848c75",
+     "ok": true,
+     "preferred_side": "A",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "applied",
+      "unsupported_claim_introduction": "applied",
+      "actor_responsibility_preservation": "equal",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "equal",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "A removes the unsupported and unnecessary claim that the insights are “unique,” while preserving the paragraph’s meaning, responsibilities, structure, and motivational voice."
+    },
+    {
+     "trial": 1,
+     "applied_side": "A",
+     "a_side_hash": "92a781364d950767a57a968254a1a3451881cc1b9561f2adf6e238f8922d56c5",
+     "b_side_hash": "a6aa2b782286420fc56d18c2eb51270870c03741635e18955c7e9f478f848c75",
+     "ok": true,
+     "preferred_side": "A",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "applied",
+      "unsupported_claim_introduction": "applied",
+      "actor_responsibility_preservation": "equal",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "equal",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "A is more precise and economical: B adds “unique,” an unsupported qualifier that does not clarify the leadership-feedback paragraph. The actor, responsibilities, open intent, and overall voice otherwise remain unchanged."
+    },
+    {
+     "trial": 2,
+     "applied_side": "A",
+     "a_side_hash": "92a781364d950767a57a968254a1a3451881cc1b9561f2adf6e238f8922d56c5",
+     "b_side_hash": "a6aa2b782286420fc56d18c2eb51270870c03741635e18955c7e9f478f848c75",
+     "ok": true,
+     "preferred_side": "A",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "applied",
+      "unsupported_claim_introduction": "applied",
+      "actor_responsibility_preservation": "equal",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "applied",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "A removes the unsupported and redundant claim that the insights are “unique,” reducing promotional excess while preserving the paragraph’s meaning, responsibilities, and distinctive corporate voice."
+    }
+   ],
+   "valid_trials": 3,
+   "verdict": {
+    "present": true,
+    "errored": false,
+    "beat": true,
+    "detail": "",
+    "candidate_median": {
+     "meaning_preservation": 2,
+     "unsupported_claim_introduction": 2,
+     "actor_responsibility_preservation": 1,
+     "unresolved_intent_visibility": 1,
+     "editorial_cost_reduction": 2,
+     "voice_distance_from_samples": 1,
+     "genre_fitness": 2,
+     "edit_locality_and_justification": 2,
+     "seeded_defect_fixed_without_normalizing": 2
+    },
+    "baseline_median": {
+     "meaning_preservation": 0,
+     "unsupported_claim_introduction": 0,
+     "actor_responsibility_preservation": 1,
+     "unresolved_intent_visibility": 1,
+     "editorial_cost_reduction": 0,
+     "voice_distance_from_samples": 1,
+     "genre_fitness": 0,
+     "edit_locality_and_justification": 0,
+     "seeded_defect_fixed_without_normalizing": 0
+    }
+   },
+   "applied_preferred_trials": 3,
+   "original_preferred_trials": 0,
+   "equal_trials": 0,
+   "majority_applied": true
+  },
+  {
+   "pair_id": "e6147f16c164e536",
+   "dir_name": "pair-102-p087-knowledge-gained-passive",
+   "genre": "spec",
+   "trials": [
+    {
+     "trial": 0,
+     "applied_side": "B",
+     "a_side_hash": "6268b6684214a59cb99aa5bd606d148a7ebedc4514dad111cd0bd653dbb71ee9",
+     "b_side_hash": "251ef80d5c2f1f2c3dba5d0ac372fe3c97f4f015185915e94057522c841a12bd",
+     "ok": true,
+     "preferred_side": "B",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "applied",
+      "unsupported_claim_introduction": "equal",
+      "actor_responsibility_preservation": "applied",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "equal",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "B makes the leaders explicitly responsible for gaining the knowledge, replacing an unnecessarily passive construction without changing the paragraph’s claims or broader voice."
+    },
+    {
+     "trial": 1,
+     "applied_side": "B",
+     "a_side_hash": "6268b6684214a59cb99aa5bd606d148a7ebedc4514dad111cd0bd653dbb71ee9",
+     "b_side_hash": "251ef80d5c2f1f2c3dba5d0ac372fe3c97f4f015185915e94057522c841a12bd",
+     "ok": true,
+     "preferred_side": "B",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "applied",
+      "unsupported_claim_introduction": "equal",
+      "actor_responsibility_preservation": "applied",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "equal",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "B makes the leaders’ responsibility explicit by replacing the passive “it must be gained” with “they must gain it.” The edit is local, preserves the paragraph’s meaning and voice, and reduces ambiguity without adding an unsupported claim."
+    },
+    {
+     "trial": 2,
+     "applied_side": "A",
+     "a_side_hash": "251ef80d5c2f1f2c3dba5d0ac372fe3c97f4f015185915e94057522c841a12bd",
+     "b_side_hash": "6268b6684214a59cb99aa5bd606d148a7ebedc4514dad111cd0bd653dbb71ee9",
+     "ok": true,
+     "preferred_side": "A",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "applied",
+      "unsupported_claim_introduction": "equal",
+      "actor_responsibility_preservation": "applied",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "equal",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "A clearly preserves the leaders as the actors responsible for gaining the knowledge; B replaces that responsibility with an actorless passive construction. The change is otherwise local and does not alter the paragraph’s voice or introduce a new claim."
+    }
+   ],
+   "valid_trials": 3,
+   "verdict": {
+    "present": true,
+    "errored": false,
+    "beat": true,
+    "detail": "",
+    "candidate_median": {
+     "meaning_preservation": 2,
+     "unsupported_claim_introduction": 1,
+     "actor_responsibility_preservation": 2,
+     "unresolved_intent_visibility": 1,
+     "editorial_cost_reduction": 2,
+     "voice_distance_from_samples": 1,
+     "genre_fitness": 2,
+     "edit_locality_and_justification": 2,
+     "seeded_defect_fixed_without_normalizing": 2
+    },
+    "baseline_median": {
+     "meaning_preservation": 0,
+     "unsupported_claim_introduction": 1,
+     "actor_responsibility_preservation": 0,
+     "unresolved_intent_visibility": 1,
+     "editorial_cost_reduction": 0,
+     "voice_distance_from_samples": 1,
+     "genre_fitness": 0,
+     "edit_locality_and_justification": 0,
+     "seeded_defect_fixed_without_normalizing": 0
+    }
+   },
+   "applied_preferred_trials": 3,
+   "original_preferred_trials": 0,
+   "equal_trials": 0,
+   "majority_applied": true
+  },
+  {
+   "pair_id": "df7edb42b9ee2864",
+   "dir_name": "pair-102-p093-thought-leadership-transition",
+   "genre": "spec",
+   "trials": [
+    {
+     "trial": 0,
+     "applied_side": "A",
+     "a_side_hash": "fba3efffac1c24dde0f21e57cda820b9cbb83383ba0edcef6fff0edd168fa8ca",
+     "b_side_hash": "a9f60efc184c110b51b70271fd63b57afbc44148984c3150315fa12221b73dc7",
+     "ok": true,
+     "preferred_side": "A",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "equal",
+      "unsupported_claim_introduction": "equal",
+      "actor_responsibility_preservation": "equal",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "equal",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "A removes the unnecessary transitional word “Furthermore,” making the paragraph slightly leaner without changing its meaning, responsibilities, claims, or voice."
+    },
+    {
+     "trial": 1,
+     "applied_side": "A",
+     "a_side_hash": "fba3efffac1c24dde0f21e57cda820b9cbb83383ba0edcef6fff0edd168fa8ca",
+     "b_side_hash": "a9f60efc184c110b51b70271fd63b57afbc44148984c3150315fa12221b73dc7",
+     "ok": true,
+     "preferred_side": "A",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "equal",
+      "unsupported_claim_introduction": "equal",
+      "actor_responsibility_preservation": "equal",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "equal",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "A is more direct: removing the unnecessary transitional word “Furthermore” improves flow and economy without changing meaning, responsibility, claims, or the paragraph’s surrounding voice."
+    },
+    {
+     "trial": 2,
+     "applied_side": "A",
+     "a_side_hash": "fba3efffac1c24dde0f21e57cda820b9cbb83383ba0edcef6fff0edd168fa8ca",
+     "b_side_hash": "a9f60efc184c110b51b70271fd63b57afbc44148984c3150315fa12221b73dc7",
+     "ok": true,
+     "preferred_side": "A",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "equal",
+      "unsupported_claim_introduction": "equal",
+      "actor_responsibility_preservation": "equal",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "equal",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "A removes the unnecessary transition “Furthermore,” while preserving every substantive claim, responsibility, example, and feature of the paragraph’s voice. The small deletion improves flow without collateral rewriting."
+    }
+   ],
+   "valid_trials": 3,
+   "verdict": {
+    "present": true,
+    "errored": false,
+    "beat": true,
+    "detail": "",
+    "candidate_median": {
+     "meaning_preservation": 1,
+     "unsupported_claim_introduction": 1,
+     "actor_responsibility_preservation": 1,
+     "unresolved_intent_visibility": 1,
+     "editorial_cost_reduction": 2,
+     "voice_distance_from_samples": 1,
+     "genre_fitness": 2,
+     "edit_locality_and_justification": 2,
+     "seeded_defect_fixed_without_normalizing": 2
+    },
+    "baseline_median": {
+     "meaning_preservation": 1,
+     "unsupported_claim_introduction": 1,
+     "actor_responsibility_preservation": 1,
+     "unresolved_intent_visibility": 1,
+     "editorial_cost_reduction": 0,
+     "voice_distance_from_samples": 1,
+     "genre_fitness": 0,
+     "edit_locality_and_justification": 0,
+     "seeded_defect_fixed_without_normalizing": 0
+    }
+   },
+   "applied_preferred_trials": 3,
+   "original_preferred_trials": 0,
+   "equal_trials": 0,
+   "majority_applied": true
+  },
+  {
+   "pair_id": "1703ed5c5b62b30e",
+   "dir_name": "pair-102-p104-detached-leadership-syntax",
+   "genre": "spec",
+   "trials": [
+    {
+     "trial": 0,
+     "applied_side": "B",
+     "a_side_hash": "1f3b4e5d3c79bb0a8b1f2ff09a143232aca1cbaacf8f01e57131120567a58eda",
+     "b_side_hash": "54bc8e5d846e7294da364de0c8a710963adeb0d0a38011e0c395e82914ddb0d0",
+     "ok": true,
+     "preferred_side": "B",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "applied",
+      "unsupported_claim_introduction": "equal",
+      "actor_responsibility_preservation": "equal",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "equal",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "B removes the ungrammatical construction “that with … that can create” by deleting only the first “that.” The meaning, attribution, and distinctive phrasing remain intact, while the sentence becomes easier to parse."
+    },
+    {
+     "trial": 1,
+     "applied_side": "A",
+     "a_side_hash": "54bc8e5d846e7294da364de0c8a710963adeb0d0a38011e0c395e82914ddb0d0",
+     "b_side_hash": "1f3b4e5d3c79bb0a8b1f2ff09a143232aca1cbaacf8f01e57131120567a58eda",
+     "ok": true,
+     "preferred_side": "A",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "equal",
+      "unsupported_claim_introduction": "equal",
+      "actor_responsibility_preservation": "equal",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "equal",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "A removes the ungrammatical and redundant “that with … that can create” construction while leaving the paragraph’s meaning, responsibilities, claims, and distinctive phrasing intact."
+    },
+    {
+     "trial": 2,
+     "applied_side": "A",
+     "a_side_hash": "54bc8e5d846e7294da364de0c8a710963adeb0d0a38011e0c395e82914ddb0d0",
+     "b_side_hash": "1f3b4e5d3c79bb0a8b1f2ff09a143232aca1cbaacf8f01e57131120567a58eda",
+     "ok": true,
+     "preferred_side": "A",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "applied",
+      "unsupported_claim_introduction": "equal",
+      "actor_responsibility_preservation": "equal",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "equal",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "A removes the ungrammatical and redundant “with … that” construction while preserving the paragraph’s meaning, responsibilities, claims, and distinctive voice. The edit is minimal and makes the argument easier to read."
+    }
+   ],
+   "valid_trials": 3,
+   "verdict": {
+    "present": true,
+    "errored": false,
+    "beat": true,
+    "detail": "",
+    "candidate_median": {
+     "meaning_preservation": 2,
+     "unsupported_claim_introduction": 1,
+     "actor_responsibility_preservation": 1,
+     "unresolved_intent_visibility": 1,
+     "editorial_cost_reduction": 2,
+     "voice_distance_from_samples": 1,
+     "genre_fitness": 2,
+     "edit_locality_and_justification": 2,
+     "seeded_defect_fixed_without_normalizing": 2
+    },
+    "baseline_median": {
+     "meaning_preservation": 0,
+     "unsupported_claim_introduction": 1,
+     "actor_responsibility_preservation": 1,
+     "unresolved_intent_visibility": 1,
+     "editorial_cost_reduction": 0,
+     "voice_distance_from_samples": 1,
+     "genre_fitness": 0,
+     "edit_locality_and_justification": 0,
+     "seeded_defect_fixed_without_normalizing": 0
+    }
+   },
+   "applied_preferred_trials": 3,
+   "original_preferred_trials": 0,
+   "equal_trials": 0,
+   "majority_applied": true
+  },
+  {
+   "pair_id": "32e2aac826f4cf00",
+   "dir_name": "pair-102-p128-safe-environment-passive",
+   "genre": "spec",
+   "trials": [
+    {
+     "trial": 0,
+     "applied_side": "B",
+     "a_side_hash": "e4a394ae8c0153763d989bd674e231200c0cebf875573d013990c9f628c278eb",
+     "b_side_hash": "5a7ae971c4d14b12d9e2b159fcd63402a7b5c5f6c4b29b3bfbf8d52fc7bdbc56",
+     "ok": true,
+     "preferred_side": "B",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "equal",
+      "unsupported_claim_introduction": "equal",
+      "actor_responsibility_preservation": "applied",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "original",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "original",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "B fixes the dangling passive by making leaders responsible for conducting the opportunities, improving clarity and fitness for guidance. Its deletion of “truly” is unnecessary and slightly flattens the prose, but the core meaning remains intact and the responsibility fix outweighs that collateral edit."
+    },
+    {
+     "trial": 1,
+     "applied_side": "B",
+     "a_side_hash": "e4a394ae8c0153763d989bd674e231200c0cebf875573d013990c9f628c278eb",
+     "b_side_hash": "5a7ae971c4d14b12d9e2b159fcd63402a7b5c5f6c4b29b3bfbf8d52fc7bdbc56",
+     "ok": true,
+     "preferred_side": "B",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "original",
+      "unsupported_claim_introduction": "equal",
+      "actor_responsibility_preservation": "applied",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "original",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "B cleanly replaces the awkward passive construction with a clear responsible actor, improving readability and instructional fitness. Its only drawback is the unnecessary removal of “truly,” which slightly reduces emphasis and voice."
+    },
+    {
+     "trial": 2,
+     "applied_side": "A",
+     "a_side_hash": "5a7ae971c4d14b12d9e2b159fcd63402a7b5c5f6c4b29b3bfbf8d52fc7bdbc56",
+     "b_side_hash": "e4a394ae8c0153763d989bd674e231200c0cebf875573d013990c9f628c278eb",
+     "ok": true,
+     "preferred_side": "A",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "applied",
+      "unsupported_claim_introduction": "applied",
+      "actor_responsibility_preservation": "applied",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "original",
+      "voice_distance_from_samples": "applied",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "equal"
+     },
+     "reason": "B smooths the awkward phrase “leaders should conduct the opportunities,” but its passive construction obscures responsibility and “truly” adds unsupported emphasis. A is clearer about the leader’s role and otherwise preserves the intended guidance without embellishment."
+    }
+   ],
+   "valid_trials": 3,
+   "verdict": {
+    "present": true,
+    "errored": false,
+    "beat": false,
+    "detail": "",
+    "candidate_median": {
+     "meaning_preservation": 1,
+     "unsupported_claim_introduction": 1,
+     "actor_responsibility_preservation": 2,
+     "unresolved_intent_visibility": 1,
+     "editorial_cost_reduction": 2,
+     "voice_distance_from_samples": 0,
+     "genre_fitness": 2,
+     "edit_locality_and_justification": 2,
+     "seeded_defect_fixed_without_normalizing": 2
+    },
+    "baseline_median": {
+     "meaning_preservation": 1,
+     "unsupported_claim_introduction": 1,
+     "actor_responsibility_preservation": 0,
+     "unresolved_intent_visibility": 1,
+     "editorial_cost_reduction": 0,
+     "voice_distance_from_samples": 2,
+     "genre_fitness": 0,
+     "edit_locality_and_justification": 0,
+     "seeded_defect_fixed_without_normalizing": 0
+    }
+   },
+   "applied_preferred_trials": 3,
+   "original_preferred_trials": 0,
+   "equal_trials": 0,
+   "majority_applied": true
+  },
+  {
+   "pair_id": "bf52a6cedbf1c818",
+   "dir_name": "pair-102-p133-recognition-filler",
+   "genre": "spec",
+   "trials": [
+    {
+     "trial": 0,
+     "applied_side": "A",
+     "a_side_hash": "6e635e6946a62747929487e389ced6f02b6dce656f0d640092ef8aab394fd095",
+     "b_side_hash": "d089d52e194f6cc8f442b77f61809363e41bb615c8a66d6dfd3fb73167a686e7",
+     "ok": true,
+     "preferred_side": "A",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "equal",
+      "unsupported_claim_introduction": "equal",
+      "actor_responsibility_preservation": "equal",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "equal",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "A preserves the same meaning while replacing the cumbersome phrase “in recognition of the fact that” with the cleaner “recognizing that.” The edit is local, concise, and leaves the paragraph’s voice and responsibilities intact."
+    },
+    {
+     "trial": 1,
+     "applied_side": "A",
+     "a_side_hash": "6e635e6946a62747929487e389ced6f02b6dce656f0d640092ef8aab394fd095",
+     "b_side_hash": "d089d52e194f6cc8f442b77f61809363e41bb615c8a66d6dfd3fb73167a686e7",
+     "ok": true,
+     "preferred_side": "A",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "equal",
+      "unsupported_claim_introduction": "equal",
+      "actor_responsibility_preservation": "equal",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "equal",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "A preserves the full meaning while replacing the needlessly wordy “in recognition of the fact that” with the cleaner “recognizing that”; the rest of the paragraph remains unchanged."
+    },
+    {
+     "trial": 2,
+     "applied_side": "B",
+     "a_side_hash": "d089d52e194f6cc8f442b77f61809363e41bb615c8a66d6dfd3fb73167a686e7",
+     "b_side_hash": "6e635e6946a62747929487e389ced6f02b6dce656f0d640092ef8aab394fd095",
+     "ok": true,
+     "preferred_side": "B",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "applied",
+      "unsupported_claim_introduction": "equal",
+      "actor_responsibility_preservation": "equal",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "applied",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "B replaces the wordy phrase “in recognition of the fact that” with the cleaner “recognizing that,” preserving the paragraph’s meaning, responsibility, and distinctive voice while reducing reader effort. The edit is precise and introduces no unsupported claim."
+    }
+   ],
+   "valid_trials": 3,
+   "verdict": {
+    "present": true,
+    "errored": false,
+    "beat": true,
+    "detail": "",
+    "candidate_median": {
+     "meaning_preservation": 1,
+     "unsupported_claim_introduction": 1,
+     "actor_responsibility_preservation": 1,
+     "unresolved_intent_visibility": 1,
+     "editorial_cost_reduction": 2,
+     "voice_distance_from_samples": 1,
+     "genre_fitness": 2,
+     "edit_locality_and_justification": 2,
+     "seeded_defect_fixed_without_normalizing": 2
+    },
+    "baseline_median": {
+     "meaning_preservation": 1,
+     "unsupported_claim_introduction": 1,
+     "actor_responsibility_preservation": 1,
+     "unresolved_intent_visibility": 1,
+     "editorial_cost_reduction": 0,
+     "voice_distance_from_samples": 1,
+     "genre_fitness": 0,
+     "edit_locality_and_justification": 0,
+     "seeded_defect_fixed_without_normalizing": 0
+    }
+   },
+   "applied_preferred_trials": 3,
+   "original_preferred_trials": 0,
+   "equal_trials": 0,
+   "majority_applied": true
+  },
+  {
+   "pair_id": "f560cbea279df8de",
+   "dir_name": "pair-102-p139-planning-style-passive",
+   "genre": "spec",
+   "trials": [
+    {
+     "trial": 0,
+     "applied_side": "A",
+     "a_side_hash": "de1fb71b61569ea6b8de3e155c95e0384d242912e3fec1b693ba93c12b87dd99",
+     "b_side_hash": "55f095ef91caaf1466de392bd1268b507219b2a685a20c22e691567af8b73139",
+     "ok": true,
+     "preferred_side": "A",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "equal",
+      "unsupported_claim_introduction": "applied",
+      "actor_responsibility_preservation": "applied",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "equal",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "applied",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "A is more direct about the leader choosing the planning style and avoids B’s unnecessary “of course,” which adds an unsupported presumption and slight editorial clutter. Otherwise, the paragraph’s meaning and voice are substantially unchanged."
+    },
+    {
+     "trial": 1,
+     "applied_side": "B",
+     "a_side_hash": "55f095ef91caaf1466de392bd1268b507219b2a685a20c22e691567af8b73139",
+     "b_side_hash": "de1fb71b61569ea6b8de3e155c95e0384d242912e3fec1b693ba93c12b87dd99",
+     "ok": true,
+     "preferred_side": "B",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "equal",
+      "unsupported_claim_introduction": "equal",
+      "actor_responsibility_preservation": "applied",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "original",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "original",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "B clarifies that the leader chooses the planning style and slightly reduces reader effort, while preserving the paragraph’s meaning. However, deleting “of course” is an unnecessary tonal normalization, so A better preserves the distinctive voice and keeps the edit more local."
+    },
+    {
+     "trial": 2,
+     "applied_side": "B",
+     "a_side_hash": "55f095ef91caaf1466de392bd1268b507219b2a685a20c22e691567af8b73139",
+     "b_side_hash": "de1fb71b61569ea6b8de3e155c95e0384d242912e3fec1b693ba93c12b87dd99",
+     "ok": true,
+     "preferred_side": "B",
+     "preferred_role": "applied",
+     "dimensions_role": {
+      "meaning_preservation": "equal",
+      "unsupported_claim_introduction": "equal",
+      "actor_responsibility_preservation": "applied",
+      "unresolved_intent_visibility": "equal",
+      "editorial_cost_reduction": "applied",
+      "voice_distance_from_samples": "original",
+      "genre_fitness": "applied",
+      "edit_locality_and_justification": "original",
+      "seeded_defect_fixed_without_normalizing": "applied"
+     },
+     "reason": "B more clearly assigns the choice of planning style to the leader and slightly reduces reader effort. Its deletion of “of course” is unnecessary and marginally flattens the voice, but the responsibility clarification is the more consequential improvement."
+    }
+   ],
+   "valid_trials": 3,
+   "verdict": {
+    "present": true,
+    "errored": false,
+    "beat": false,
+    "detail": "",
+    "candidate_median": {
+     "meaning_preservation": 1,
+     "unsupported_claim_introduction": 1,
+     "actor_responsibility_preservation": 2,
+     "unresolved_intent_visibility": 1,
+     "editorial_cost_reduction": 2,
+     "voice_distance_from_samples": 0,
+     "genre_fitness": 2,
+     "edit_locality_and_justification": 0,
+     "seeded_defect_fixed_without_normalizing": 2
+    },
+    "baseline_median": {
+     "meaning_preservation": 1,
+     "unsupported_claim_introduction": 1,
+     "actor_responsibility_preservation": 0,
+     "unresolved_intent_visibility": 1,
+     "editorial_cost_reduction": 0,
+     "voice_distance_from_samples": 2,
+     "genre_fitness": 0,
+     "edit_locality_and_justification": 2,
+     "seeded_defect_fixed_without_normalizing": 0
+    }
+   },
+   "applied_preferred_trials": 3,
+   "original_preferred_trials": 0,
+   "equal_trials": 0,
+   "majority_applied": true
+  }
+ ],
+ "summary": {
+  "pairs": 8,
+  "pairs_completed": 8,
+  "pairs_errored": 0,
+  "trials_valid": 24,
+  "trials_failed": 0,
+  "trials_scored": 24,
+  "applied_preferred_trials": 24,
+  "original_preferred_trials": 0,
+  "equal_trials": 0,
+  "applied_preference_pct_of_decided": 100.0,
+  "pairs_majority_applied": 8,
+  "pairs_beat": 6
+ }
+}

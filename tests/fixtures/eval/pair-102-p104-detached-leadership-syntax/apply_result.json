@@ -1,0 +1,378 @@
+{
+ "schema_version": 1,
+ "run_id": "334ee4e4491f",
+ "status": "ok",
+ "semantic_mode": "live",
+ "stages": [
+  {
+   "stage": "audit",
+   "status": "ok",
+   "code": "ok",
+   "message": "audit complete",
+   "data": {
+    "schema_version": 1,
+    "run_id": "334ee4e4491f",
+    "source_path": "<workspace-state>/p104/doc.md",
+    "source_sha256": "334ee4e4491fcabd0c0fa3a59b606a70bdecefc8c630bef8530a191e4f6b9ed6",
+    "byte_length": 452,
+    "fmt": "markdown",
+    "genre": "spec",
+    "genre_confidence": "low",
+    "genre_reason": "no usable genre signal; asymmetric-failure fallback to the most-preservation-heavy profile (spec)",
+    "audit_status": "flagged",
+    "metrics": {
+     "sentence_length_distribution": {
+      "eligible_units": 2,
+      "count": 2,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "sent-dist-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "distribution": {
+       "min": 23,
+       "p10": 24.6,
+       "p25": 27.0,
+       "median": 31.0,
+       "p75": 35.0,
+       "p90": 37.4,
+       "max": 39,
+       "mean": 31,
+       "sd": 8.0
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "sentence_length_dispersion": {
+      "eligible_units": 2,
+      "count": 2,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "sent-disp-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "dispersion": {
+       "iqr_over_median": 0.258,
+       "cov": 0.258,
+       "median_adjacent_diff": 16
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "punctuation_rates": {
+      "eligible_units": 62,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "punct-v2",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "rates": {
+       "em_dash_per_1k": 0.0,
+       "semicolon_per_1k": 0.0,
+       "em_dash": 0,
+       "semicolon": 0
+      },
+      "thresholds": {
+       "em_dash_per_1k": 12.0,
+       "semicolon_per_1k": 8.0
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "negative_parallelism": {
+      "eligible_units": 62,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "negparallel-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "thresholds": {
+       "flag_at_count": 5
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "rule_of_three": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "tricolon-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "paragraph_sentence_count_runs": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "para-runs-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "bold_label_density": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "bold-label-v2",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "repeated_openers": {
+      "eligible_units": 2,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "openers-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "transition_clusters": {
+      "eligible_units": 62,
+      "count": 1,
+      "rate": 16.129,
+      "locations": [
+       {
+        "opener": "therefore",
+        "line_start": 1
+       }
+      ],
+      "soft_flag": true,
+      "metric_version": "transition-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "vague_attribution": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "vague-attr-tables-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "stock_lexical_clusters": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "stock-tables-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "generic_diction": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "generic-diction-tables-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     }
+    },
+    "authorization": {
+     "state": "authorized",
+     "ranges": [
+      {
+       "start_byte": 0,
+       "end_byte": 452
+      }
+     ]
+    },
+    "protected_spans": [],
+    "invariant_regions": [
+     {
+      "start_byte": 0,
+      "end_byte": 288,
+      "checks": [
+       "modality",
+       "conditions"
+      ]
+     },
+     {
+      "start_byte": 289,
+      "end_byte": 451,
+      "checks": [
+       "modality"
+      ]
+     }
+    ],
+    "ledger": {
+     "canonical": {
+      "schema_version": 1,
+      "source_sha256": "334ee4e4491fcabd0c0fa3a59b606a70bdecefc8c630bef8530a191e4f6b9ed6",
+      "entries": [
+       {
+        "id": "e0_conditions",
+        "kind": "condition",
+        "source": {
+         "start_byte": 0,
+         "end_byte": 288,
+         "text_hash": "1ff3072f73b99962683f3602d11a6e741c3d48da1e287ea26828db8325141783"
+        },
+        "extracted": {
+         "whenever": 1
+        },
+        "preservation": "relationship_exact",
+        "confidence": 850
+       },
+       {
+        "id": "e0_modality",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 0,
+         "end_byte": 288,
+         "text_hash": "1ff3072f73b99962683f3602d11a6e741c3d48da1e287ea26828db8325141783"
+        },
+        "extracted": {
+         "modals": {
+          "can": 1
+         },
+         "neg": {}
+        },
+        "preservation": "semantic_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e1_modality",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 289,
+         "end_byte": 451,
+         "text_hash": "bb05c1772b3da1652eed67a932d8503826e561f1f2e98411018a9d476febded4"
+        },
+        "extracted": {
+         "modals": {
+          "should": 1
+         },
+         "neg": {}
+        },
+        "preservation": "semantic_exact",
+        "confidence": 950
+       }
+      ],
+      "protected_spans": []
+     },
+     "sha256": "19a092f85b06b8f78b34e900b926e15900db7575793737f5ab54d9bee696910b"
+    }
+   },
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "candidate",
+   "status": "ok",
+   "code": "ok",
+   "message": "candidate validated",
+   "data": [
+    {
+     "start_byte": 20,
+     "end_byte": 40,
+     "replacement_b64": "dGhhdCBpbmNyZWFzaW5n"
+    },
+    {
+     "start_byte": 137,
+     "end_byte": 154,
+     "replacement_b64": "LCBjYW4gY3JlYXRl"
+    }
+   ],
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "verify",
+   "status": "ok",
+   "code": "ok",
+   "message": "proposal is shippable",
+   "data": {
+    "decision": "ACCEPT",
+    "proposal_status": "ACCEPT",
+    "semantic_status": "clean",
+    "findings": [],
+    "hunks": [
+     {
+      "hunk_id": "h0",
+      "original_range": [
+       20,
+       40
+      ],
+      "decision": "ACCEPT",
+      "finding_ids": [],
+      "revertable": true
+     },
+     {
+      "hunk_id": "h1",
+      "original_range": [
+       137,
+       154
+      ],
+      "decision": "ACCEPT",
+      "finding_ids": [],
+      "revertable": true
+     }
+    ],
+    "ledger_sha256": "19a092f85b06b8f78b34e900b926e15900db7575793737f5ab54d9bee696910b"
+   },
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "apply",
+   "status": "ok",
+   "code": "ok",
+   "message": "apply applied",
+   "data": {
+    "status": "applied",
+    "mutated": true,
+    "source": "<workspace-state>/p104/doc.md",
+    "backup": {
+     "path": "<state-home>/slopslap/backups/20260902T155906Z_01788364746550481205_b9049643_doc.md.bak",
+     "metadata": "<state-home>/slopslap/backups/20260902T155906Z_01788364746550481205_b9049643_doc.md.bak.json",
+     "restore_command": "cp -- <state-home>/slopslap/backups/20260902T155906Z_01788364746550481205_b9049643_doc.md.bak <workspace-state>/p104/doc.md",
+     "restore_argv": [
+      "cp",
+      "--",
+      "<state-home>/slopslap/backups/20260902T155906Z_01788364746550481205_b9049643_doc.md.bak",
+      "<workspace-state>/p104/doc.md"
+     ],
+     "containment": "external"
+    },
+    "warnings": [
+     "fsync skipped (durability best-effort; set SLOPSLAP_FSYNC=1)"
+    ],
+    "errors": [],
+    "original_digest": "334ee4e4491fcabd0c0fa3a59b606a70bdecefc8c630bef8530a191e4f6b9ed6",
+    "verification_attempts": 2,
+    "applied_hunks": [
+     "h0",
+     "h1"
+    ],
+    "withheld_hunks": [],
+    "final_verification": "ACCEPT",
+    "final_digest": "735e2d4d9e0c32d7ffbcd7edbb5c578500d210d71835d0a42ca06b936f135d0d"
+   },
+   "errors": [],
+   "warnings": [
+    "fsync skipped (durability best-effort; set SLOPSLAP_FSYNC=1)"
+   ]
+  }
+ ]
+}

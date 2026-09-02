@@ -1,0 +1,80 @@
+{
+ "schema_version": 1,
+ "run_id": "257f3edc3a450a4527157d41959583e5",
+ "seed": "102-judge-2026-09-02-hg",
+ "created_at": "2026-09-02T16:11:47Z",
+ "pairs": [
+  {
+   "pair_id": "21ba57a51f81f2be",
+   "token": "19da69eb24295467",
+   "source_sha256": "b26b5b9a8e5cfd74e4c9eb6180a948649d1e6663c36f0df17b55ff159aa65a5b",
+   "a_text": "Doing something that’s never been done before means things are constantly changing at a rapid pace. While we don’t have the power to control everything, we can control how we lead teams and how we work together. The leadership program is truly an extension of our values and our guiding principle. Using the program’s collective approach to leadership, we will be able to build an organization through empowerment and innovation.\n",
+   "b_text": "Doing something that’s never been done before means things are constantly changing at a rapid pace. While we don’t have the power to control everything, we can control how we lead teams and how we work together. The leadership program is an extension of our values and our guiding principle. Using the program’s collective approach to leadership, we will be able to build an organization through empowerment and innovation.\n",
+   "a_side_hash": "7dfa87a888fa748d32b1fdd9412d97e5ed8bdb5fa7dce73c33c64286485d7082",
+   "b_side_hash": "57ae3007663933663ee6e52d353f6e5a94203656e0544df676ccaa1a216a9e3b"
+  },
+  {
+   "pair_id": "00191c3aa2e36b7b",
+   "token": "66de5dc06cc2959b",
+   "source_sha256": "c86ef6a74d79954abeae992398a20b16ed4d93b655df998f0fde5e73dfc17b1c",
+   "a_text": "People look to you because you are a strategic and data-driven leader. Your unique insights help you identify, analyze, and carve out impactful opportunities to contribute to our audacious goals. Whether you are solving complex problems or navigating change, you empower your team through understanding and awareness.\n",
+   "b_text": "People look to you because you are a strategic and data-driven leader. Your insights help you identify, analyze, and carve out impactful opportunities to contribute to our audacious goals. Whether you are solving complex problems or navigating change, you empower your team through understanding and awareness.\n",
+   "a_side_hash": "a6aa2b782286420fc56d18c2eb51270870c03741635e18955c7e9f478f848c75",
+   "b_side_hash": "92a781364d950767a57a968254a1a3451881cc1b9561f2adf6e238f8922d56c5"
+  },
+  {
+   "pair_id": "e6147f16c164e536",
+   "token": "759ac382cff6c8e3",
+   "source_sha256": "8f088b340cdbc0599848d4cdad2cec40ca8398bc74d8763b8f4f3b1b188a52d9",
+   "a_text": "In addition to being knowledgeable in their profession, company leaders must also be competent across the digital engagement domain and understand our industry verticals such as telco, financial and utilities. They must know how to solve problems, make timely decisions and be expert communicators. The company’s leaders most often do not come to us with this well-rounded knowledge and it must be gained through training, mentoring and experience.\n",
+   "b_text": "In addition to being knowledgeable in their profession, company leaders must also be competent across the digital engagement domain and understand our industry verticals such as telco, financial and utilities. They must know how to solve problems, make timely decisions and be expert communicators. The company’s leaders most often do not come to us with this well-rounded knowledge and they must gain it through training, mentoring and experience.\n",
+   "a_side_hash": "6268b6684214a59cb99aa5bd606d148a7ebedc4514dad111cd0bd653dbb71ee9",
+   "b_side_hash": "251ef80d5c2f1f2c3dba5d0ac372fe3c97f4f015185915e94057522c841a12bd"
+  },
+  {
+   "pair_id": "df7edb42b9ee2864",
+   "token": "4a0868c41549e64f",
+   "source_sha256": "9712987fb09f994efb071ea2d5256734b45898c52eec372c4d741db04074d0c0",
+   "a_text": "All company leaders must have competence in engagement science, collections knowledge and other key tenets of our industry. The degree to which a company leader will need to immerse themselves will be dependent on position and seniority, but as a minimum, leaders must be fully conversant with the company’s overall strategy, product, and client base. Furthermore, company leaders should actively contribute to the development of thought leadership, by joining the debate and commenting, and sharing their experiences to inform the lessons learned process. A few examples of how this can be achieved are by joining industry panels, authoring articles, delivering training sessions and contributing to the company’s blog.\n",
+   "b_text": "All company leaders must have competence in engagement science, collections knowledge and other key tenets of our industry. The degree to which a company leader will need to immerse themselves will be dependent on position and seniority, but as a minimum, leaders must be fully conversant with the company’s overall strategy, product, and client base. Company leaders should actively contribute to the development of thought leadership, by joining the debate and commenting, and sharing their experiences to inform the lessons learned process. A few examples of how this can be achieved are by joining industry panels, authoring articles, delivering training sessions and contributing to the company’s blog.\n",
+   "a_side_hash": "a9f60efc184c110b51b70271fd63b57afbc44148984c3150315fa12221b73dc7",
+   "b_side_hash": "fba3efffac1c24dde0f21e57cda820b9cbb83383ba0edcef6fff0edd168fa8ca"
+  },
+  {
+   "pair_id": "1703ed5c5b62b30e",
+   "token": "a5cda0f049992076",
+   "source_sha256": "334ee4e4491fcabd0c0fa3a59b606a70bdecefc8c630bef8530a191e4f6b9ed6",
+   "a_text": "There is the danger that increasing communication channels and information flows within the company, available wherever and whenever, can create detached leadership, especially as the ‘future of work’ becomes more defined and we increasingly become geographically dispersed. Therefore, company leaders should make every effort to ensure they are using whatever means to gain understanding, project their personality and influence events.\n",
+   "b_text": "There is the danger that with increasing communication channels and information flows within the company, available wherever and whenever, that can create detached leadership, especially as the ‘future of work’ becomes more defined and we increasingly become geographically dispersed. Therefore, company leaders should make every effort to ensure they are using whatever means to gain understanding, project their personality and influence events.\n",
+   "a_side_hash": "54bc8e5d846e7294da364de0c8a710963adeb0d0a38011e0c395e82914ddb0d0",
+   "b_side_hash": "1f3b4e5d3c79bb0a8b1f2ff09a143232aca1cbaacf8f01e57131120567a58eda"
+  },
+  {
+   "pair_id": "32e2aac826f4cf00",
+   "token": "93df7597b019eefd",
+   "source_sha256": "0bb28e953c452b00656392f9af440425d921498a443d7a42d559fd44227b59d8",
+   "a_text": "Challenge. Leaders must create challenging opportunities for others to develop. These opportunities should seek to push individuals out of their comfort zone, forcing them to accept responsibility and try new ideas. The opportunities should be conducted, if possible, in a safe learning environment, where experimentation and even failure are encouraged to provide a truly developmental experience. If a safe learning environment is not available, then the leader must mitigate against risks.\n",
+   "b_text": "Challenge. Leaders must create challenging opportunities for others to develop. These opportunities should seek to push individuals out of their comfort zone, forcing them to accept responsibility and try new ideas. Leaders should conduct the opportunities, if possible, in a safe learning environment, where experimentation and even failure are encouraged to provide a developmental experience. If a safe learning environment is not available, then the leader must mitigate against risks.\n",
+   "a_side_hash": "e4a394ae8c0153763d989bd674e231200c0cebf875573d013990c9f628c278eb",
+   "b_side_hash": "5a7ae971c4d14b12d9e2b159fcd63402a7b5c5f6c4b29b3bfbf8d52fc7bdbc56"
+  },
+  {
+   "pair_id": "bf52a6cedbf1c818",
+   "token": "f439852875ce576d",
+   "source_sha256": "e3635525cf6effcdf24cea2d4084b106a0c76aceccacabf2e095b580490be50e",
+   "a_text": "Foster Identity. A strong team identity encourages buy-in and commitment from individuals, in recognition of the fact that they are part of something greater than themselves. The company purposefully speaks to and leads with its guiding principle – treating people with empathy. This guiding principle permeates everything we do. However, organizational structures alone will not foster this identity; it will also take determined effort by leaders.\n",
+   "b_text": "Foster Identity. A strong team identity encourages buy-in and commitment from individuals, recognizing that they are part of something greater than themselves. The company purposefully speaks to and leads with its guiding principle – treating people with empathy. This guiding principle permeates everything we do. However, organizational structures alone will not foster this identity; it will also take determined effort by leaders.\n",
+   "a_side_hash": "d089d52e194f6cc8f442b77f61809363e41bb615c8a66d6dfd3fb73167a686e7",
+   "b_side_hash": "6e635e6946a62747929487e389ced6f02b6dce656f0d640092ef8aab394fd095"
+  },
+  {
+   "pair_id": "f560cbea279df8de",
+   "token": "1ce2159747126d86",
+   "source_sha256": "d2f552d58b396fc7a99db1ac6f181bf207b13c703b0f4e5ed73f9ef40e4b6899",
+   "a_text": "Cooperative Planning. In cooperative planning, the leader is both developing the level of understanding necessary for the successful execution of their plan and goals, and building a unity and synergy between leader, colleagues and team members that is vital to achieve our goal of delegation of authority. When conducting cooperative planning, the discussion pre-decision needs to be distinct from and matched by wholehearted commitment post-decision. Whatever style of planning is used, the leader should not lose sight of their responsibility for the decision and the team. There will, of course, be times when time pressure or other factors guide a leader to choose a more directive style.\n",
+   "b_text": "Cooperative Planning. In cooperative planning, the leader is both developing the level of understanding necessary for the successful execution of their plan and goals, and building a unity and synergy between leader, colleagues and team members that is vital to achieve our goal of delegation of authority. When conducting cooperative planning, the discussion pre-decision needs to be distinct from and matched by wholehearted commitment post-decision. Whatever style of planning the leader uses, they should not lose sight of their responsibility for the decision and the team. There will be times when time pressure or other factors guide a leader to choose a more directive style.\n",
+   "a_side_hash": "55f095ef91caaf1466de392bd1268b507219b2a685a20c22e691567af8b73139",
+   "b_side_hash": "de1fb71b61569ea6b8de3e155c95e0384d242912e3fec1b693ba93c12b87dd99"
+  }
+ ]
+}

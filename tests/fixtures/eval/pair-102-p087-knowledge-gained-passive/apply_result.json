@@ -1,0 +1,393 @@
+{
+ "schema_version": 1,
+ "run_id": "8f088b340cdb",
+ "status": "ok",
+ "semantic_mode": "live",
+ "stages": [
+  {
+   "stage": "audit",
+   "status": "ok",
+   "code": "ok",
+   "message": "audit complete",
+   "data": {
+    "schema_version": 1,
+    "run_id": "8f088b340cdb",
+    "source_path": "<workspace-state>/p087/doc.md",
+    "source_sha256": "8f088b340cdbc0599848d4cdad2cec40ca8398bc74d8763b8f4f3b1b188a52d9",
+    "byte_length": 451,
+    "fmt": "markdown",
+    "genre": "spec",
+    "genre_confidence": "medium",
+    "genre_reason": "structural markers: 3 normative modals",
+    "audit_status": "flagged",
+    "metrics": {
+     "sentence_length_distribution": {
+      "eligible_units": 3,
+      "count": 3,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "sent-dist-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "distribution": {
+       "min": 14,
+       "p10": 16.2,
+       "p25": 19.5,
+       "median": 25.0,
+       "p75": 27.5,
+       "p90": 29.0,
+       "max": 30,
+       "mean": 23,
+       "sd": 6.683
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "sentence_length_dispersion": {
+      "eligible_units": 3,
+      "count": 3,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "sent-disp-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "dispersion": {
+       "iqr_over_median": 0.32,
+       "cov": 0.291,
+       "median_adjacent_diff": 13.5
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "punctuation_rates": {
+      "eligible_units": 69,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "punct-v2",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "rates": {
+       "em_dash_per_1k": 0.0,
+       "semicolon_per_1k": 0.0,
+       "em_dash": 0,
+       "semicolon": 0
+      },
+      "thresholds": {
+       "em_dash_per_1k": 12.0,
+       "semicolon_per_1k": 8.0
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "negative_parallelism": {
+      "eligible_units": 69,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "negparallel-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "thresholds": {
+       "flag_at_count": 5
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "rule_of_three": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "tricolon-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "paragraph_sentence_count_runs": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "para-runs-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "bold_label_density": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "bold-label-v2",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "repeated_openers": {
+      "eligible_units": 3,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "openers-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "transition_clusters": {
+      "eligible_units": 69,
+      "count": 1,
+      "rate": 14.493,
+      "locations": [
+       {
+        "opener": "in addition",
+        "line_start": 1
+       }
+      ],
+      "soft_flag": true,
+      "metric_version": "transition-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "vague_attribution": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "vague-attr-tables-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "stock_lexical_clusters": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "stock-tables-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "generic_diction": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "generic-diction-tables-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     }
+    },
+    "authorization": {
+     "state": "authorized",
+     "ranges": [
+      {
+       "start_byte": 0,
+       "end_byte": 451
+      }
+     ]
+    },
+    "protected_spans": [],
+    "invariant_regions": [
+     {
+      "start_byte": 0,
+      "end_byte": 209,
+      "checks": [
+       "modality"
+      ]
+     },
+     {
+      "start_byte": 210,
+      "end_byte": 298,
+      "checks": [
+       "modality"
+      ]
+     },
+     {
+      "start_byte": 299,
+      "end_byte": 450,
+      "checks": [
+       "modality",
+       "negation"
+      ]
+     }
+    ],
+    "ledger": {
+     "canonical": {
+      "schema_version": 1,
+      "source_sha256": "8f088b340cdbc0599848d4cdad2cec40ca8398bc74d8763b8f4f3b1b188a52d9",
+      "entries": [
+       {
+        "id": "e0_modality",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 0,
+         "end_byte": 209,
+         "text_hash": "e09286a08754216bfc2aa9df34126909447c284317ca2421ec95fb6b0c996411"
+        },
+        "extracted": {
+         "modals": {
+          "must": 1
+         },
+         "neg": {}
+        },
+        "preservation": "semantic_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e1_modality",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 210,
+         "end_byte": 298,
+         "text_hash": "2d0ac27e64a6327d15f702c985385264ebb6ebc35c1fa1de695736278e9646b6"
+        },
+        "extracted": {
+         "modals": {
+          "must": 1
+         },
+         "neg": {}
+        },
+        "preservation": "semantic_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e2_modality",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 299,
+         "end_byte": 450,
+         "text_hash": "4557313c51d30b205af38128e2f6361b12c08779e26d65ccbb18d8736d0c0a72"
+        },
+        "extracted": {
+         "modals": {
+          "must": 1
+         },
+         "neg": {
+          "not": 1
+         }
+        },
+        "preservation": "semantic_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e2_negation",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 299,
+         "end_byte": 450,
+         "text_hash": "4557313c51d30b205af38128e2f6361b12c08779e26d65ccbb18d8736d0c0a72"
+        },
+        "extracted": {
+         "modals": {
+          "must": 1
+         },
+         "neg": {
+          "not": 1
+         }
+        },
+        "preservation": "semantic_exact",
+        "confidence": 900
+       }
+      ],
+      "protected_spans": []
+     },
+     "sha256": "6c187805e168252c0d296d8c04c293d744e598829b3e54ff21446387882cbcff"
+    }
+   },
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "candidate",
+   "status": "ok",
+   "code": "ok",
+   "message": "candidate validated",
+   "data": [
+    {
+     "start_byte": 385,
+     "end_byte": 449,
+     "replacement_b64": "YW5kIHRoZXkgbXVzdCBnYWluIGl0IHRocm91Z2ggdHJhaW5pbmcsIG1lbnRvcmluZyBhbmQgZXhwZXJpZW5jZQ=="
+    }
+   ],
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "verify",
+   "status": "ok",
+   "code": "ok",
+   "message": "proposal is shippable",
+   "data": {
+    "decision": "ACCEPT",
+    "proposal_status": "ACCEPT",
+    "semantic_status": "clean",
+    "findings": [],
+    "hunks": [
+     {
+      "hunk_id": "h0",
+      "original_range": [
+       385,
+       449
+      ],
+      "decision": "ACCEPT",
+      "finding_ids": [],
+      "revertable": true
+     }
+    ],
+    "ledger_sha256": "6c187805e168252c0d296d8c04c293d744e598829b3e54ff21446387882cbcff"
+   },
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "apply",
+   "status": "ok",
+   "code": "ok",
+   "message": "apply applied",
+   "data": {
+    "status": "applied",
+    "mutated": true,
+    "source": "<workspace-state>/p087/doc.md",
+    "backup": {
+     "path": "<state-home>/slopslap/backups/20260902T155554Z_01788364554107425570_e0ecd600_doc.md.bak",
+     "metadata": "<state-home>/slopslap/backups/20260902T155554Z_01788364554107425570_e0ecd600_doc.md.bak.json",
+     "restore_command": "cp -- <state-home>/slopslap/backups/20260902T155554Z_01788364554107425570_e0ecd600_doc.md.bak <workspace-state>/p087/doc.md",
+     "restore_argv": [
+      "cp",
+      "--",
+      "<state-home>/slopslap/backups/20260902T155554Z_01788364554107425570_e0ecd600_doc.md.bak",
+      "<workspace-state>/p087/doc.md"
+     ],
+     "containment": "external"
+    },
+    "warnings": [
+     "fsync skipped (durability best-effort; set SLOPSLAP_FSYNC=1)"
+    ],
+    "errors": [],
+    "original_digest": "8f088b340cdbc0599848d4cdad2cec40ca8398bc74d8763b8f4f3b1b188a52d9",
+    "verification_attempts": 2,
+    "applied_hunks": [
+     "h0"
+    ],
+    "withheld_hunks": [],
+    "final_verification": "ACCEPT",
+    "final_digest": "6c89ff4818cd7b17b6666c2d797f043ac531847a754258373ef054254ee282ad"
+   },
+   "errors": [],
+   "warnings": [
+    "fsync skipped (durability best-effort; set SLOPSLAP_FSYNC=1)"
+   ]
+  }
+ ]
+}

@@ -356,3 +356,175 @@ def invoke_semantic(
         return dict(_AMBIGUOUS)
     _record_status(status_sink, "ok")
     return parsed
+
+
+# --------------------------------------------------------------------------- #102: judge transport
+# A SECOND, independent runner for the blind paired-preference eval's LLM judge. The judge runs on a
+# different vendor than the rewrite engine (cross-model), so the transport is the Codex CLI
+# (`codex exec`), not `claude -p`. Same lockdown philosophy as `_run_claude` — fresh empty temp cwd,
+# scrubbed env, own process group, SIGTERM->SIGKILL on timeout, never raises on an environmental
+# failure — but a separate function: `_run_claude` is security-hardened and pinned by tests, and a
+# shared "run any CLI" abstraction would widen its surface for no gain.
+# NOT `_ENV_ALLOW_PREFIXES + ("CODEX",)`: that list exists for the Anthropic transport, and
+# reusing it here hands every CLAUDE_*/ANTHROPIC_* variable — an API key among them — to a
+# DIFFERENT vendor's process. The judge needs neither. Codex auth lives under HOME (~/.codex).
+_CODEX_ENV_ALLOW_PREFIXES = ("CODEX", "XDG")
+
+
+def _scrub_env_codex() -> dict:
+    return {
+        k: v
+        for k, v in os.environ.items()
+        if k in _ENV_ALLOW_NAMES or k.startswith(_CODEX_ENV_ALLOW_PREFIXES)
+    }
+
+
+def _run_codex(request: str, *, model: str, timeout_s: float, executable: str, schema: dict,
+               reasoning_effort: str = "medium") -> InvocationResult:
+    """Run one `codex exec` judge call under the pinned lockdown argv (probed live 2026-09-02).
+
+    The prompt goes on stdin; the answer comes back through `--output-schema` + `-o` (a JSON object
+    the CLI validates against the schema) — never parsed out of free text. The CLI reports NO model
+    identity in any output, so `envelope` carries the parsed `-o` object and the caller must treat
+    the model as pinned-by-request, not confirmed. Returns an explicit status; raises `ValueError`
+    only for a caller bug (empty model).
+    """
+    if not model:
+        raise ValueError("model must be a non-empty string")
+    cwd = tempfile.mkdtemp(prefix="slopslap-judge-")
+    start = time.monotonic()
+    try:
+        schema_path = os.path.join(cwd, "schema.json")
+        out_path = os.path.join(cwd, "out.json")
+        # 0600 from creation: the answer file is written by the CLI, but the schema is ours.
+        with os.fdopen(os.open(schema_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600),
+                       "w", encoding="utf-8") as fh:
+            json.dump(schema, fh)
+        argv = [
+            executable, "exec",
+            "-m", model,
+            "--sandbox", "read-only",
+            "--output-schema", schema_path,
+            "-o", out_path,
+            "-c", f"model_reasoning_effort={reasoning_effort}",
+            "--ephemeral",
+            "--color", "never",
+            "-c", "project_doc_max_bytes=0",
+            "-C", cwd,
+            "--skip-git-repo-check",
+            "-",
+        ]
+        try:
+            proc = subprocess.Popen(  # noqa: S603 - argv list, no shell, scrubbed env
+                argv,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=cwd,
+                env=_scrub_env_codex(),
+                start_new_session=True,
+            )
+        except FileNotFoundError:
+            return InvocationResult(status="cli_missing", duration_s=time.monotonic() - start,
+                                    diagnostic_code=_DIAG_TRANSPORT)
+        except OSError as err:
+            return InvocationResult(status="nonzero_exit", duration_s=time.monotonic() - start,
+                                    stderr_tail=repr(err)[-_STDERR_TAIL_BYTES:],
+                                    diagnostic_code=_DIAG_TRANSPORT)
+
+        pgid = proc.pid  # own group leader (start_new_session=True)
+        timed_out = False
+        err_bytes = b""
+        try:
+            # ponytail: communicate() has no byte cap — the judge's stdout is the CLI's final
+            # message only (the answer rides in `-o`). Upgrade path: the _drain cap from _run_claude.
+            _out, err_bytes = proc.communicate(request.encode("utf-8"), timeout=timeout_s)
+        except subprocess.TimeoutExpired:
+            timed_out = True
+            _killpg(pgid, signal.SIGTERM)
+            try:
+                proc.wait(timeout=_KILL_GRACE_S)
+            except subprocess.TimeoutExpired:
+                _killpg(pgid, signal.SIGKILL)
+                proc.wait()
+            _killpg(pgid, signal.SIGKILL)  # close every inherited pipe end (descendants too)
+            try:
+                _out, err_bytes = proc.communicate(timeout=_KILL_GRACE_S)
+            except (subprocess.TimeoutExpired, ValueError, OSError):
+                err_bytes = b""
+        duration = time.monotonic() - start
+        stderr_tail = (err_bytes or b"")[-_STDERR_TAIL_BYTES:].decode("utf-8", "replace")
+
+        if timed_out:
+            return InvocationResult(status="timeout", duration_s=duration,
+                                    stderr_tail=stderr_tail, diagnostic_code=_DIAG_TIMEOUT)
+        if proc.returncode != 0:
+            return InvocationResult(status="nonzero_exit", duration_s=duration,
+                                    stderr_tail=stderr_tail, diagnostic_code=_DIAG_TRANSPORT)
+        try:
+            with open(out_path, "r", encoding="utf-8") as fh:
+                payload = fh.read()
+        except OSError:
+            payload = ""
+        if not payload.strip():
+            # exit 0 with no answer file is NOT an answer — fail closed, never fall back to stdout.
+            return InvocationResult(status="parse_error", duration_s=duration,
+                                    stderr_tail=stderr_tail, diagnostic_code=_DIAG_INVALID)
+        try:
+            obj = json.loads(payload)
+        except (ValueError, TypeError):
+            return InvocationResult(status="parse_error", result_text=payload, duration_s=duration,
+                                    stderr_tail=stderr_tail, diagnostic_code=_DIAG_INVALID)
+        if not isinstance(obj, dict):
+            return InvocationResult(status="parse_error", result_text=payload, duration_s=duration,
+                                    stderr_tail=stderr_tail, diagnostic_code=_DIAG_INVALID)
+        return InvocationResult(status="ok", result_text=payload, envelope=obj,
+                                duration_s=duration, stderr_tail=stderr_tail)
+    finally:
+        shutil.rmtree(cwd, ignore_errors=True)
+
+
+def models_match(alias: str, reported) -> bool:
+    """Public form of the requested-vs-reported token rule (`_model_confirmed`), for callers that
+    must compare two model identities — e.g. the eval's cross-model guard (judge != engine)."""
+    return _model_confirmed(alias, list(reported or []))
+
+
+def invoke_judge(
+    request: str,
+    *,
+    model: str,
+    schema: dict,
+    timeout_s: float = 180.0,
+    executable: Optional[str] = None,
+    status_sink: Optional[dict] = None,
+    reasoning_effort: str = "medium",
+) -> Optional[dict]:
+    """CLOSED public judge seam (#102). Returns the schema-shaped JSON object the judge wrote, or
+    ``None`` on ANY failure (logged with a diagnostic code; never raises on an environmental
+    failure). The caller validates the object's CONTENT — this seam only guarantees "a JSON
+    object came back from a run that exited 0".
+
+    ``status_sink`` follows `invoke_semantic`'s contract (sticky-worst ``invocation_status``) and
+    additionally carries ``model_confirmed`` — always ``False`` for this transport, because the
+    Codex CLI reports no model identity in its output; the model is pinned by ``-m`` only.
+    """
+    if not model:
+        raise ValueError("model must be a non-empty string")
+    if not isinstance(schema, dict) or not schema:
+        raise ValueError("schema must be a non-empty dict")
+    if status_sink is not None:
+        status_sink["model_confirmed"] = False
+    exe = executable if executable is not None else shutil.which("codex")
+    if not exe:
+        _LOG.warning("%s: codex executable not found (which('codex') is None)", _DIAG_TRANSPORT)
+        _record_status(status_sink, "cli_missing")
+        return None
+    result = _run_codex(request, model=model, timeout_s=timeout_s, executable=exe, schema=schema,
+                        reasoning_effort=reasoning_effort)
+    if result.status != "ok":
+        _LOG.warning("%s: judge invocation failed (status=%s)", result.diagnostic_code, result.status)
+        _record_status(status_sink, result.status)
+        return None
+    _record_status(status_sink, "ok")
+    return result.envelope

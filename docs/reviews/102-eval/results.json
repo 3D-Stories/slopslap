@@ -1,0 +1,2679 @@
+{
+ "schema_version": 1,
+ "issue": 102,
+ "created_at": "2026-09-02T17:24:36Z",
+ "fixtures": [
+  {
+   "dir_name": "pair-102-p008-leadership-program-intensifier",
+   "pair_id": "21ba57a51f81f2be",
+   "genre": "spec",
+   "engine_model": "claude-fable-5-1",
+   "source_sha256": "b26b5b9a8e5cfd74e4c9eb6180a948649d1e6663c36f0df17b55ff159aa65a5b",
+   "applied_sha256": "8bd7613cf985349a8f5f700b89cd329a3676768097ec664cabf3efbbee35541e",
+   "source": {
+    "kind": "owner-supplied",
+    "document": "an internal leadership handbook (June 2021), human-authored, supplied by the repository owner from their own files; company, program, principle and person names replaced with neutral words before publication",
+    "anonymized": true,
+    "license": "owner-granted",
+    "extract_id": "p008"
+   }
+  },
+  {
+   "dir_name": "pair-102-p040-unique-insights-intensifier",
+   "pair_id": "00191c3aa2e36b7b",
+   "genre": "spec",
+   "engine_model": "claude-fable-5-1",
+   "source_sha256": "c86ef6a74d79954abeae992398a20b16ed4d93b655df998f0fde5e73dfc17b1c",
+   "applied_sha256": "11653cc1d0737688e350ce3b60d1bae0e8e626158d342ac6282392c726e6ad19",
+   "source": {
+    "kind": "owner-supplied",
+    "document": "an internal leadership handbook (June 2021), human-authored, supplied by the repository owner from their own files; company, program, principle and person names replaced with neutral words before publication",
+    "anonymized": true,
+    "license": "owner-granted",
+    "extract_id": "p040"
+   }
+  },
+  {
+   "dir_name": "pair-102-p087-knowledge-gained-passive",
+   "pair_id": "e6147f16c164e536",
+   "genre": "spec",
+   "engine_model": "claude-fable-5-1",
+   "source_sha256": "8f088b340cdbc0599848d4cdad2cec40ca8398bc74d8763b8f4f3b1b188a52d9",
+   "applied_sha256": "6c89ff4818cd7b17b6666c2d797f043ac531847a754258373ef054254ee282ad",
+   "source": {
+    "kind": "owner-supplied",
+    "document": "an internal leadership handbook (June 2021), human-authored, supplied by the repository owner from their own files; company, program, principle and person names replaced with neutral words before publication",
+    "anonymized": true,
+    "license": "owner-granted",
+    "extract_id": "p087"
+   }
+  },
+  {
+   "dir_name": "pair-102-p093-thought-leadership-transition",
+   "pair_id": "df7edb42b9ee2864",
+   "genre": "spec",
+   "engine_model": "claude-fable-5-1",
+   "source_sha256": "9712987fb09f994efb071ea2d5256734b45898c52eec372c4d741db04074d0c0",
+   "applied_sha256": "1d2e05b6ec8d7a16ff7680c29a6fe7d756c2356a422d6a64036d86d72673c390",
+   "source": {
+    "kind": "owner-supplied",
+    "document": "an internal leadership handbook (June 2021), human-authored, supplied by the repository owner from their own files; company, program, principle and person names replaced with neutral words before publication",
+    "anonymized": true,
+    "license": "owner-granted",
+    "extract_id": "p093"
+   }
+  },
+  {
+   "dir_name": "pair-102-p104-detached-leadership-syntax",
+   "pair_id": "1703ed5c5b62b30e",
+   "genre": "spec",
+   "engine_model": "claude-fable-5-1",
+   "source_sha256": "334ee4e4491fcabd0c0fa3a59b606a70bdecefc8c630bef8530a191e4f6b9ed6",
+   "applied_sha256": "735e2d4d9e0c32d7ffbcd7edbb5c578500d210d71835d0a42ca06b936f135d0d",
+   "source": {
+    "kind": "owner-supplied",
+    "document": "an internal leadership handbook (June 2021), human-authored, supplied by the repository owner from their own files; company, program, principle and person names replaced with neutral words before publication",
+    "anonymized": true,
+    "license": "owner-granted",
+    "extract_id": "p104"
+   }
+  },
+  {
+   "dir_name": "pair-102-p128-safe-environment-passive",
+   "pair_id": "32e2aac826f4cf00",
+   "genre": "spec",
+   "engine_model": "claude-fable-5-1",
+   "source_sha256": "0bb28e953c452b00656392f9af440425d921498a443d7a42d559fd44227b59d8",
+   "applied_sha256": "e2d3a2a0a96f791b93bd1fb4686ad6c364d2502cdcc4bc104f9ba2e7b1faa75a",
+   "source": {
+    "kind": "owner-supplied",
+    "document": "an internal leadership handbook (June 2021), human-authored, supplied by the repository owner from their own files; company, program, principle and person names replaced with neutral words before publication",
+    "anonymized": true,
+    "license": "owner-granted",
+    "extract_id": "p128"
+   }
+  },
+  {
+   "dir_name": "pair-102-p133-recognition-filler",
+   "pair_id": "bf52a6cedbf1c818",
+   "genre": "spec",
+   "engine_model": "claude-fable-5-1",
+   "source_sha256": "e3635525cf6effcdf24cea2d4084b106a0c76aceccacabf2e095b580490be50e",
+   "applied_sha256": "19b73b8fa3d854cfd177b05c359a8ae291ce727c5749668bb7961e008f8c3daf",
+   "source": {
+    "kind": "owner-supplied",
+    "document": "an internal leadership handbook (June 2021), human-authored, supplied by the repository owner from their own files; company, program, principle and person names replaced with neutral words before publication",
+    "anonymized": true,
+    "license": "owner-granted",
+    "extract_id": "p133"
+   }
+  },
+  {
+   "dir_name": "pair-102-p139-planning-style-passive",
+   "pair_id": "f560cbea279df8de",
+   "genre": "spec",
+   "engine_model": "claude-fable-5-1",
+   "source_sha256": "d2f552d58b396fc7a99db1ac6f181bf207b13c703b0f4e5ed73f9ef40e4b6899",
+   "applied_sha256": "595bee7fa16a54ae93e304900a7a42aa2b6faaf21e9dfe40ff3798cadde20acc",
+   "source": {
+    "kind": "owner-supplied",
+    "document": "an internal leadership handbook (June 2021), human-authored, supplied by the repository owner from their own files; company, program, principle and person names replaced with neutral words before publication",
+    "anonymized": true,
+    "license": "owner-granted",
+    "extract_id": "p139"
+   }
+  }
+ ],
+ "abstentions": {
+  "schema_version": 1,
+  "issue": 102,
+  "sampled": 101,
+  "count": 93,
+  "engine_model": "claude-fable-5-1",
+  "selection": "5 human-written documents the owner supplied from their own files (about 58,700 words: a leadership handbook, a servant-leadership reading, a talk on a data-transformation toolchain, a strategic-vision activity, a job profile). Every paragraph of 40 to 200 words was extracted (101, from 4 of the 5 — the job profile carried none of that length) and audited offline with `assemble.py audit`; every paragraph auto-classified as genre `spec`. Company, program, principle and person names were replaced with neutral words before any text entered this repository, and the owner approved each published paragraph individually. No public repo and no machine-authored text was used.",
+  "funnel": [
+   {
+    "stage": "sampled",
+    "count": 101,
+    "meaning": "paragraphs of 40 to 200 words extracted from the owner's human-written documents (4 of the 5 supplied documents carried paragraphs of that length)"
+   },
+   {
+    "stage": "authorized",
+    "count": 15,
+    "meaning": "the free offline audit (`assemble.py audit`) authorized at least one range under the auto-classified genre"
+   },
+   {
+    "stage": "eligible",
+    "count": 11,
+    "meaning": "still authorized after names were replaced with neutral words, not quoting a third party, and approved by the owner one paragraph at a time"
+   },
+   {
+    "stage": "repaired",
+    "count": 8,
+    "meaning": "the engine proposed a repair, the byte-exact verifier accepted it, and a live `assemble.py apply` wrote it"
+   },
+   {
+    "stage": "paired",
+    "count": 8,
+    "meaning": "shipped as a blind A/B pair (`tests/fixtures/eval/pair-102-p*`)"
+   }
+  ],
+  "breakdown": {
+   "not_authorized": 86,
+   "excluded_third_party": 2,
+   "shipped": 8,
+   "verifier_withheld": 1,
+   "dropped_on_anonymization": 2,
+   "abstained": 2
+  },
+  "items": [
+   {
+    "id": "vision-activity/p000",
+    "document": "strategic-vision workshop activity, human-authored",
+    "extract_id": "p000",
+    "words": 52,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "vision-activity/p001",
+    "document": "strategic-vision workshop activity, human-authored",
+    "extract_id": "p001",
+    "words": 137,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "vision-activity/p009",
+    "document": "strategic-vision workshop activity, human-authored",
+    "extract_id": "p009",
+    "words": 43,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "vision-activity/p017",
+    "document": "strategic-vision workshop activity, human-authored",
+    "extract_id": "p017",
+    "words": 52,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "vision-activity/p020",
+    "document": "strategic-vision workshop activity, human-authored",
+    "extract_id": "p020",
+    "words": 45,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "vision-activity/p021",
+    "document": "strategic-vision workshop activity, human-authored",
+    "extract_id": "p021",
+    "words": 54,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "toolchain-talk/p001",
+    "document": "talk notes on a data-transformation toolchain, human-authored",
+    "extract_id": "p001",
+    "words": 76,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "toolchain-talk/p002",
+    "document": "talk notes on a data-transformation toolchain, human-authored",
+    "extract_id": "p002",
+    "words": 45,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [
+     "rule_of_three"
+    ],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its tells (rule_of_three) all recommend keep, so the autonomous path authorized no range."
+   },
+   {
+    "id": "toolchain-talk/p007",
+    "document": "talk notes on a data-transformation toolchain, human-authored",
+    "extract_id": "p007",
+    "words": 72,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "toolchain-talk/p008",
+    "document": "talk notes on a data-transformation toolchain, human-authored",
+    "extract_id": "p008",
+    "words": 141,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "toolchain-talk/p014",
+    "document": "talk notes on a data-transformation toolchain, human-authored",
+    "extract_id": "p014",
+    "words": 51,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "servant-leadership-reading/p004",
+    "document": "servant-leadership pre-work reading (2021), human-authored; quotes and paraphrases a third-party author",
+    "extract_id": "p004",
+    "words": 44,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "servant-leadership-reading/p006",
+    "document": "servant-leadership pre-work reading (2021), human-authored; quotes and paraphrases a third-party author",
+    "extract_id": "p006",
+    "words": 58,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [
+     "rule_of_three"
+    ],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its tells (rule_of_three) all recommend keep, so the autonomous path authorized no range."
+   },
+   {
+    "id": "servant-leadership-reading/p007",
+    "document": "servant-leadership pre-work reading (2021), human-authored; quotes and paraphrases a third-party author",
+    "extract_id": "p007",
+    "words": 59,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "servant-leadership-reading/p010",
+    "document": "servant-leadership pre-work reading (2021), human-authored; quotes and paraphrases a third-party author",
+    "extract_id": "p010",
+    "words": 71,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "servant-leadership-reading/p011",
+    "document": "servant-leadership pre-work reading (2021), human-authored; quotes and paraphrases a third-party author",
+    "extract_id": "p011",
+    "words": 91,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [
+     "rule_of_three"
+    ],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its tells (rule_of_three) all recommend keep, so the autonomous path authorized no range."
+   },
+   {
+    "id": "servant-leadership-reading/p014",
+    "document": "servant-leadership pre-work reading (2021), human-authored; quotes and paraphrases a third-party author",
+    "extract_id": "p014",
+    "words": 113,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "servant-leadership-reading/p015",
+    "document": "servant-leadership pre-work reading (2021), human-authored; quotes and paraphrases a third-party author",
+    "extract_id": "p015",
+    "words": 65,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "servant-leadership-reading/p016",
+    "document": "servant-leadership pre-work reading (2021), human-authored; quotes and paraphrases a third-party author",
+    "extract_id": "p016",
+    "words": 44,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "servant-leadership-reading/p018",
+    "document": "servant-leadership pre-work reading (2021), human-authored; quotes and paraphrases a third-party author",
+    "extract_id": "p018",
+    "words": 44,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "servant-leadership-reading/p019",
+    "document": "servant-leadership pre-work reading (2021), human-authored; quotes and paraphrases a third-party author",
+    "extract_id": "p019",
+    "words": 97,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [
+     "negative_parallelism"
+    ],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its tells (negative_parallelism) all recommend keep, so the autonomous path authorized no range."
+   },
+   {
+    "id": "servant-leadership-reading/p020",
+    "document": "servant-leadership pre-work reading (2021), human-authored; quotes and paraphrases a third-party author",
+    "extract_id": "p020",
+    "words": 80,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "servant-leadership-reading/p021",
+    "document": "servant-leadership pre-work reading (2021), human-authored; quotes and paraphrases a third-party author",
+    "extract_id": "p021",
+    "words": 118,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "tells": [
+     "transition_clusters"
+    ],
+    "disposition": "excluded_third_party",
+    "note": "authorized, but the paragraph quotes and paraphrases a named third-party author; excluded before anonymization."
+   },
+   {
+    "id": "servant-leadership-reading/p022",
+    "document": "servant-leadership pre-work reading (2021), human-authored; quotes and paraphrases a third-party author",
+    "extract_id": "p022",
+    "words": 116,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "servant-leadership-reading/p023",
+    "document": "servant-leadership pre-work reading (2021), human-authored; quotes and paraphrases a third-party author",
+    "extract_id": "p023",
+    "words": 112,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [
+     "negative_parallelism"
+    ],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its tells (negative_parallelism) all recommend keep, so the autonomous path authorized no range."
+   },
+   {
+    "id": "servant-leadership-reading/p026",
+    "document": "servant-leadership pre-work reading (2021), human-authored; quotes and paraphrases a third-party author",
+    "extract_id": "p026",
+    "words": 72,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [
+     "rule_of_three"
+    ],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its tells (rule_of_three) all recommend keep, so the autonomous path authorized no range."
+   },
+   {
+    "id": "servant-leadership-reading/p027",
+    "document": "servant-leadership pre-work reading (2021), human-authored; quotes and paraphrases a third-party author",
+    "extract_id": "p027",
+    "words": 63,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "tells": [
+     "transition_clusters"
+    ],
+    "disposition": "excluded_third_party",
+    "note": "authorized, but the paragraph quotes and paraphrases a named third-party author; excluded before anonymization."
+   },
+   {
+    "id": "handbook/p003",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p003",
+    "words": 84,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [
+     "repeated_openers"
+    ],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its tells (repeated_openers) all recommend keep, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p006",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p006",
+    "words": 45,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p008",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p008",
+    "words": 69,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "tells": [
+     "generic_diction"
+    ],
+    "disposition": "shipped",
+    "note": "anonymized, still authorized, owner-approved; engine repair proposed, byte-exact verifier ACCEPT, live Layer-3 clean, applied → `pair-102-p008-leadership-program-intensifier`.",
+    "pair_dir": "pair-102-p008-leadership-program-intensifier"
+   },
+   {
+    "id": "handbook/p013",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p013",
+    "words": 44,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p014",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p014",
+    "words": 47,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p017",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p017",
+    "words": 50,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p018",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p018",
+    "words": 50,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [
+     "rule_of_three"
+    ],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its tells (rule_of_three) all recommend keep, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p023",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p023",
+    "words": 60,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p024",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p024",
+    "words": 71,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p026",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p026",
+    "words": 68,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p028",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p028",
+    "words": 62,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p032",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p032",
+    "words": 58,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p034",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p034",
+    "words": 87,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p036",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p036",
+    "words": 80,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p037",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p037",
+    "words": 73,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [
+     "rule_of_three"
+    ],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its tells (rule_of_three) all recommend keep, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p040",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p040",
+    "words": 50,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "tells": [
+     "generic_diction",
+     "rule_of_three"
+    ],
+    "disposition": "shipped",
+    "note": "anonymized, still authorized, owner-approved; engine repair proposed, byte-exact verifier ACCEPT, live Layer-3 clean, applied → `pair-102-p040-unique-insights-intensifier`.",
+    "pair_dir": "pair-102-p040-unique-insights-intensifier"
+   },
+   {
+    "id": "handbook/p042",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p042",
+    "words": 94,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p044",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p044",
+    "words": 80,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p047",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p047",
+    "words": 61,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p050",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p050",
+    "words": 55,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p053",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p053",
+    "words": 59,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p055",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p055",
+    "words": 90,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p057",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p057",
+    "words": 82,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [
+     "rule_of_three"
+    ],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its tells (rule_of_three) all recommend keep, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p061",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p061",
+    "words": 59,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p066",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p066",
+    "words": 64,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p068",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p068",
+    "words": 51,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [
+     "rule_of_three"
+    ],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its tells (rule_of_three) all recommend keep, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p075",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p075",
+    "words": 98,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p079",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p079",
+    "words": 55,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p087",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p087",
+    "words": 67,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "tells": [
+     "transition_clusters"
+    ],
+    "disposition": "shipped",
+    "note": "anonymized, still authorized, owner-approved; engine repair proposed, byte-exact verifier ACCEPT, live Layer-3 clean, applied → `pair-102-p087-knowledge-gained-passive`.",
+    "pair_dir": "pair-102-p087-knowledge-gained-passive"
+   },
+   {
+    "id": "handbook/p089",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p089",
+    "words": 68,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p091",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p091",
+    "words": 45,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p093",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p093",
+    "words": 106,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "tells": [
+     "rule_of_three",
+     "transition_clusters"
+    ],
+    "disposition": "shipped",
+    "note": "anonymized, still authorized, owner-approved; engine repair proposed, byte-exact verifier ACCEPT, live Layer-3 clean, applied → `pair-102-p093-thought-leadership-transition`.",
+    "pair_dir": "pair-102-p093-thought-leadership-transition"
+   },
+   {
+    "id": "handbook/p095",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p095",
+    "words": 96,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p098",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p098",
+    "words": 103,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p100",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p100",
+    "words": 67,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p102",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p102",
+    "words": 67,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p104",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p104",
+    "words": 61,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "tells": [
+     "transition_clusters"
+    ],
+    "disposition": "shipped",
+    "note": "anonymized, still authorized, owner-approved; engine repair proposed, byte-exact verifier ACCEPT, live Layer-3 clean, applied → `pair-102-p104-detached-leadership-syntax`.",
+    "pair_dir": "pair-102-p104-detached-leadership-syntax"
+   },
+   {
+    "id": "handbook/p105",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p105",
+    "words": 94,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p106",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p106",
+    "words": 68,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p109",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p109",
+    "words": 131,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "tells": [
+     "generic_diction"
+    ],
+    "disposition": "verifier_withheld",
+    "note": "anonymized, still authorized, owner-approved; engine repair proposed, verify stage ACCEPT, but the live Layer-3 semantic check withheld hunk(s) ['h0'] at apply time after 3 attempts (apply status no_op, exit 0) — nothing written, no pair. Not re-run: repeating the same edit until the verifier agrees would be selecting a verdict."
+   },
+   {
+    "id": "handbook/p111",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p111",
+    "words": 66,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p112",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p112",
+    "words": 134,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p113",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p113",
+    "words": 70,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "tells": [
+     "generic_diction"
+    ],
+    "disposition": "dropped_on_anonymization",
+    "note": "authorized on the raw text (generic_diction); after the names were replaced with neutral words the audit found no tell (reject_all) — the tell WAS the name."
+   },
+   {
+    "id": "handbook/p114",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p114",
+    "words": 55,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "tells": [
+     "stock_lexical_clusters"
+    ],
+    "disposition": "abstained",
+    "note": "anonymized, still authorized, owner-approved; the engine found no demonstrated harm: authorized (stock_lexical_clusters) but no demonstrated harm: 'can be applied in all situations' hides no actor the reader could mistake, and 'As explained in previous sections' is a cross-reference (an invariant). When in doubt, change nothing."
+   },
+   {
+    "id": "handbook/p115",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p115",
+    "words": 167,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p120",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p120",
+    "words": 120,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p121",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p121",
+    "words": 72,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "tells": [
+     "transition_clusters"
+    ],
+    "disposition": "abstained",
+    "note": "anonymized, still authorized, owner-approved; the engine found no demonstrated harm: authorized (transition_clusters) but no demonstrated harm: 'therefore' carries a causal claim and 'Furthermore' introduces a distinct trait in a list of traits; stripping either loses meaning or creates a repeated opener. When in doubt, change nothing."
+   },
+   {
+    "id": "handbook/p122",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p122",
+    "words": 67,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p123",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p123",
+    "words": 59,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p125",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p125",
+    "words": 116,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [
+     "negative_parallelism"
+    ],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its tells (negative_parallelism) all recommend keep, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p128",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p128",
+    "words": 72,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "tells": [
+     "generic_diction"
+    ],
+    "disposition": "shipped",
+    "note": "anonymized, still authorized, owner-approved; engine repair proposed, byte-exact verifier ACCEPT, live Layer-3 clean, applied → `pair-102-p128-safe-environment-passive`.",
+    "pair_dir": "pair-102-p128-safe-environment-passive"
+   },
+   {
+    "id": "handbook/p129",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p129",
+    "words": 111,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p130",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p130",
+    "words": 87,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p132",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p132",
+    "words": 73,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [
+     "rule_of_three"
+    ],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: its tells (rule_of_three) all recommend keep, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p133",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p133",
+    "words": 66,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "tells": [
+     "transition_clusters"
+    ],
+    "disposition": "shipped",
+    "note": "anonymized, still authorized, owner-approved; engine repair proposed, byte-exact verifier ACCEPT, live Layer-3 clean, applied → `pair-102-p133-recognition-filler`.",
+    "pair_dir": "pair-102-p133-recognition-filler"
+   },
+   {
+    "id": "handbook/p138",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p138",
+    "words": 61,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p139",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p139",
+    "words": 108,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "tells": [
+     "generic_diction"
+    ],
+    "disposition": "shipped",
+    "note": "anonymized, still authorized, owner-approved; engine repair proposed, byte-exact verifier ACCEPT, live Layer-3 clean, applied → `pair-102-p139-planning-style-passive`.",
+    "pair_dir": "pair-102-p139-planning-style-passive"
+   },
+   {
+    "id": "handbook/p141",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p141",
+    "words": 53,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p142",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p142",
+    "words": 49,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p143",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p143",
+    "words": 80,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p147",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p147",
+    "words": 88,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p151",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p151",
+    "words": 41,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p152",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p152",
+    "words": 64,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p154",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p154",
+    "words": 114,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p157",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p157",
+    "words": 74,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p158",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p158",
+    "words": 50,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p163",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p163",
+    "words": 43,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p165",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p165",
+    "words": 48,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p176",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p176",
+    "words": 96,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p180",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p180",
+    "words": 119,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p182",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p182",
+    "words": 43,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p184",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p184",
+    "words": 42,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p189",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p189",
+    "words": 72,
+    "classified_genre": "spec",
+    "authorization": "reject_all",
+    "tells": [],
+    "disposition": "not_authorized",
+    "note": "reject_all under the auto-classified spec genre: no tell at all, so the autonomous path authorized no range."
+   },
+   {
+    "id": "handbook/p193",
+    "document": "internal leadership handbook (June 2021), human-authored",
+    "extract_id": "p193",
+    "words": 50,
+    "classified_genre": "spec",
+    "authorization": "authorized",
+    "tells": [
+     "generic_diction"
+    ],
+    "disposition": "dropped_on_anonymization",
+    "note": "authorized on the raw text (generic_diction); after the names were replaced with neutral words the audit found no tell (reject_all) — the tell WAS the name."
+   }
+  ],
+  "status_note": "**AC4 asked for 5 to 10 pairs; this run ships 8** — the floor is met. The set is the owner's own human-written prose, anonymized and approved one paragraph at a time; the first run's 3 pairs were machine-authored review prose and were discarded (see `superseded_public_sample`). Funnel: 101 sampled → 15 authorized → 11 eligible → 8 repaired → 8 paired. The 86 paragraphs the audit did not authorize are the honest majority result: on this prose the autonomous path finds nothing to strip most of the time. The published judge run uses the genre-neutral rubric adopted at the Step 11 re-run (the rubric had anchored genre fitness to a technical design document); the first run under that rubric — 23 of 24 trials — is recorded in the design document beside the re-run.",
+  "superseded_public_sample": {
+   "note": "The FIRST run of this eval sampled 31 paragraphs from the owner's two public repos and shipped 3 pairs. Cross-referencing every sampled file's header showed 16 of the 31 were machine-authored review reports (`# Adversarial Review` / `- Reviewer: Codex (model deepseek-v4-pro)`), including ALL 3 shipped pairs and 10 of the 11 abstentions; zero pairs came from human prose. Both cross-model review rounds missed it. Those 3 pairs and every artifact derived from them were discarded; the items are kept here, marked, so the finding stays on the record.",
+   "sampled": 31,
+   "authorship_tally": {
+    "machine-authored": 16,
+    "no machine self-declaration": 15
+   },
+   "pairs_shipped_from_machine_prose": 3,
+   "pairs_shipped_from_human_prose": 0,
+   "classifier_caveat": "the classifier detects only self-declaring headers and review filenames; git author is the owner for every file, so 'no machine self-declaration' means exactly that and nothing more.",
+   "selection": "paragraphs of 40–200 words from the owner's two PUBLIC repos (3D-Stories/slopslap @1591b61, 3D-Stories/design-doc-publish @0aa220d3, both MIT) where the measure-only scanner reported at least one tell; every paragraph auto-classified as genre `spec`; private repos excluded so no private text is published.",
+   "breakdown": {
+    "not_authorized": 13,
+    "abstained": 11,
+    "shipped": 3,
+    "verifier_blocked": 3,
+    "excluded_circular": 1
+   },
+   "count": 28,
+   "items": [
+    {
+     "id": "01",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/planning/2026-08-24-34-doc-harness-service.md",
+     "lines": "336-343",
+     "words": 108,
+     "classified_genre": "spec",
+     "authorization": "reject_all",
+     "disposition": "not_authorized",
+     "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone.",
+     "authorship": "no machine self-declaration"
+    },
+    {
+     "id": "02",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/planning/2026-08-24-35-harness-go-live.md",
+     "lines": "420-426",
+     "words": 99,
+     "classified_genre": "spec",
+     "authorization": "reject_all",
+     "disposition": "not_authorized",
+     "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone.",
+     "authorship": "no machine self-declaration"
+    },
+    {
+     "id": "03",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/design-language.md",
+     "lines": "314-319",
+     "words": 82,
+     "classified_genre": "spec",
+     "authorization": "reject_all",
+     "disposition": "not_authorized",
+     "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone.",
+     "authorship": "no machine self-declaration"
+    },
+    {
+     "id": "04",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/planning/2026-08-10-1-move-package-to-own-repo.md",
+     "lines": "276-283",
+     "words": 79,
+     "classified_genre": "spec",
+     "authorization": "reject_all",
+     "disposition": "not_authorized",
+     "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone.",
+     "authorship": "no machine self-declaration"
+    },
+    {
+     "id": "05",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/planning/2026-08-24-36-publish-to-harness.md",
+     "lines": "493-498",
+     "words": 71,
+     "classified_genre": "spec",
+     "authorization": "reject_all",
+     "disposition": "not_authorized",
+     "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone.",
+     "authorship": "no machine self-declaration"
+    },
+    {
+     "id": "06",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/runbooks/2026-08-24-37-vercel-backfill.md",
+     "lines": "102-106",
+     "words": 66,
+     "classified_genre": "spec",
+     "authorization": "reject_all",
+     "disposition": "not_authorized",
+     "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone.",
+     "authorship": "no machine self-declaration"
+    },
+    {
+     "id": "07",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/planning/campaign-log.md",
+     "lines": "109-116",
+     "words": 113,
+     "classified_genre": "spec",
+     "authorization": "reject_all",
+     "disposition": "not_authorized",
+     "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone.",
+     "authorship": "no machine self-declaration"
+    },
+    {
+     "id": "08",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/planning/2026-08-24-36-publish-to-harness.md",
+     "lines": "162-168",
+     "words": 96,
+     "classified_genre": "spec",
+     "authorization": "reject_all",
+     "disposition": "not_authorized",
+     "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone.",
+     "authorship": "no machine self-declaration"
+    },
+    {
+     "id": "09",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/planning/2026-08-24-36-publish-to-harness.md",
+     "lines": "198-204",
+     "words": 96,
+     "classified_genre": "spec",
+     "authorization": "reject_all",
+     "disposition": "not_authorized",
+     "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone.",
+     "authorship": "no machine self-declaration"
+    },
+    {
+     "id": "10",
+     "repo": "3D-Stories/slopslap",
+     "path": "docs/planning/2026-07-12-30-corpus-integration.md",
+     "lines": "90-100",
+     "words": 118,
+     "classified_genre": "spec",
+     "authorization": "reject_all",
+     "disposition": "not_authorized",
+     "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone.",
+     "authorship": "no machine self-declaration"
+    },
+    {
+     "id": "11",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/planning/2026-08-25-access-architecture-consult.md",
+     "lines": "1-1",
+     "words": 97,
+     "classified_genre": "spec",
+     "authorization": "reject_all",
+     "disposition": "not_authorized",
+     "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone.",
+     "authorship": "no machine self-declaration"
+    },
+    {
+     "id": "12",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/planning/2026-08-10-9-first-run-setup-flow.md",
+     "lines": "537-542",
+     "words": 97,
+     "classified_genre": "spec",
+     "authorization": "reject_all",
+     "disposition": "not_authorized",
+     "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone.",
+     "authorship": "no machine self-declaration"
+    },
+    {
+     "id": "13",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/planning/2026-08-24-35-harness-go-live.md",
+     "lines": "510-517",
+     "words": 142,
+     "classified_genre": "spec",
+     "authorization": "reject_all",
+     "disposition": "not_authorized",
+     "note": "reject_all under the auto-classified spec genre: its only tells (negative_parallelism / repeated_openers / rule_of_three) recommend keep, so the autonomous path authorizes no range. Engine proposals existed for 01, 02, 08, 13 (an intensifier, two passives, a significance opener) but were never authorized; `--declared-genre technical` is not declarable and declaring general/prd was rejected as gaming the keystone.",
+     "authorship": "no machine self-declaration"
+    },
+    {
+     "id": "14",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/planning/2026-08-24-34-doc-harness-service.md",
+     "lines": "566-573",
+     "words": 110,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "abstained",
+     "note": "authorized (transition_clusters strip) but the engine found no demonstrated harm.",
+     "authorship": "no machine self-declaration"
+    },
+    {
+     "id": "15",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+     "lines": "19-19",
+     "words": 160,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "shipped",
+     "note": "pair-102-15: passive→active with the actor the paragraph already names; ACCEPT, live Layer-3 clean.",
+     "authorship": "machine-authored"
+    },
+    {
+     "id": "16",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+     "lines": "28-28",
+     "words": 149,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "verifier_blocked",
+     "note": "engine proposed deleting a tautological clause ('so byte equality is impossible unless…'); byte-exact verifier REJECTED it (entry_dropped: negation + condition entries); no verifier-safe alternative → no pair.",
+     "authorship": "machine-authored"
+    },
+    {
+     "id": "17",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+     "lines": "78-78",
+     "words": 124,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "shipped",
+     "note": "pair-102-17: first proposal (delete a restated sentence) BLOCKED (entry_dropped: negation); revised to deleting the intensifier 'simply'; ACCEPT, live clean.",
+     "authorship": "machine-authored"
+    },
+    {
+     "id": "18",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+     "lines": "86-86",
+     "words": 110,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "abstained",
+     "note": "authorized but every hedge is load-bearing; no demonstrated harm.",
+     "authorship": "machine-authored"
+    },
+    {
+     "id": "19",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+     "lines": "70-70",
+     "words": 96,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "verifier_blocked",
+     "note": "two proposals (delete / compress a restated sentence) both REJECTED: the normative_statement entry spans from the modal 'could' to the sentence end.",
+     "authorship": "machine-authored"
+    },
+    {
+     "id": "20",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+     "lines": "94-94",
+     "words": 93,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "verifier_blocked",
+     "note": "two proposals (delete / compress 'The byte-compare will fail…, blocking migration.') both REJECTED: modality entry 'will' spans to the sentence end.",
+     "authorship": "machine-authored"
+    },
+    {
+     "id": "21",
+     "repo": "3D-Stories/design-doc-publish",
+     "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+     "lines": "53-53",
+     "words": 131,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "shipped",
+     "note": "pair-102-21: passive→active with the actor the paragraph already names; ACCEPT, live clean (in-process seam, 300 s semantic timeout after two CLI timeouts).",
+     "authorship": "machine-authored"
+    },
+    {
+     "id": "22",
+     "repo": "3D-Stories/slopslap",
+     "path": "README.md",
+     "lines": "122-126",
+     "words": 70,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "excluded_circular",
+     "note": "slopslap's own worked example quoting slop phrases — not a design-doc paragraph.",
+     "authorship": "no machine self-declaration"
+    },
+    {
+     "id": "23",
+     "repo": "3D-Stories/slopslap",
+     "path": "docs/reviews/2026-07-12-26-platform-feasibility-spike-md-2026-07-12.md",
+     "lines": "22-22",
+     "words": 55,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "abstained",
+     "note": "tight review finding; no demonstrated harm.",
+     "authorship": "machine-authored"
+    },
+    {
+     "id": "24",
+     "repo": "3D-Stories/slopslap",
+     "path": "docs/reviews/2026-07-12-slopslap-reconciled-spec-md-2026-07-12.md",
+     "lines": "22-22",
+     "words": 48,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "abstained",
+     "note": "tight review finding; hedges load-bearing.",
+     "authorship": "machine-authored"
+    },
+    {
+     "id": "25",
+     "repo": "3D-Stories/slopslap",
+     "path": "docs/reviews/increment-1-eval-fixtures-design-md-2026-07-12.md",
+     "lines": "39-39",
+     "words": 45,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "abstained",
+     "note": "no demonstrated harm.",
+     "authorship": "machine-authored"
+    },
+    {
+     "id": "26",
+     "repo": "3D-Stories/slopslap",
+     "path": "docs/reviews/increment-2-diff-2026-07-12.md",
+     "lines": "26-26",
+     "words": 53,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "abstained",
+     "note": "no demonstrated harm.",
+     "authorship": "machine-authored"
+    },
+    {
+     "id": "27",
+     "repo": "3D-Stories/slopslap",
+     "path": "docs/reviews/increment-4-diff-2026-07-12.md",
+     "lines": "43-43",
+     "words": 48,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "abstained",
+     "note": "no demonstrated harm.",
+     "authorship": "machine-authored"
+    },
+    {
+     "id": "28",
+     "repo": "3D-Stories/slopslap",
+     "path": "docs/reviews/increment-5-diff-2026-07-12.md",
+     "lines": "30-30",
+     "words": 48,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "abstained",
+     "note": "no demonstrated harm.",
+     "authorship": "machine-authored"
+    },
+    {
+     "id": "29",
+     "repo": "3D-Stories/slopslap",
+     "path": "docs/reviews/increment-6-eval-run-design-md-2026-07-12.md",
+     "lines": "53-53",
+     "words": 59,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "abstained",
+     "note": "no demonstrated harm.",
+     "authorship": "machine-authored"
+    },
+    {
+     "id": "30",
+     "repo": "3D-Stories/slopslap",
+     "path": "docs/reviews/rawgentic-adv-diff-81-patch-2026-07-15.md",
+     "lines": "19-19",
+     "words": 46,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "abstained",
+     "note": "no demonstrated harm.",
+     "authorship": "machine-authored"
+    },
+    {
+     "id": "31",
+     "repo": "3D-Stories/slopslap",
+     "path": "docs/reviews/rawgentic-adv-diff-84-patch-2026-07-15.md",
+     "lines": "20-20",
+     "words": 64,
+     "classified_genre": "spec",
+     "authorization": "authorized",
+     "disposition": "abstained",
+     "note": "no demonstrated harm.",
+     "authorship": "machine-authored"
+    }
+   ]
+  },
+  "file": "docs/reviews/102-eval/sampled-paragraphs.json"
+ },
+ "human": {
+  "raters": [
+   {
+    "rater": "chris",
+    "mode": "askuserquestion",
+    "run_id": "257f3edc3a450a4527157d41959583e5",
+    "pairs_rated": 8,
+    "applied_preferred": 6,
+    "original_preferred": 2,
+    "equal": 0,
+    "applied_pct_of_decided": 75.0,
+    "picks": [
+     {
+      "pair_id": "21ba57a51f81f2be",
+      "dir_name": "pair-102-p008-leadership-program-intensifier",
+      "pick": "B",
+      "source_sha256": "b26b5b9a8e5cfd74e4c9eb6180a948649d1e6663c36f0df17b55ff159aa65a5b",
+      "applied_side": "B",
+      "role": "applied"
+     },
+     {
+      "pair_id": "00191c3aa2e36b7b",
+      "dir_name": "pair-102-p040-unique-insights-intensifier",
+      "pick": "A",
+      "source_sha256": "c86ef6a74d79954abeae992398a20b16ed4d93b655df998f0fde5e73dfc17b1c",
+      "applied_side": "B",
+      "role": "original"
+     },
+     {
+      "pair_id": "e6147f16c164e536",
+      "dir_name": "pair-102-p087-knowledge-gained-passive",
+      "pick": "B",
+      "source_sha256": "8f088b340cdbc0599848d4cdad2cec40ca8398bc74d8763b8f4f3b1b188a52d9",
+      "applied_side": "B",
+      "role": "applied"
+     },
+     {
+      "pair_id": "df7edb42b9ee2864",
+      "dir_name": "pair-102-p093-thought-leadership-transition",
+      "pick": "B",
+      "source_sha256": "9712987fb09f994efb071ea2d5256734b45898c52eec372c4d741db04074d0c0",
+      "applied_side": "B",
+      "role": "applied"
+     },
+     {
+      "pair_id": "1703ed5c5b62b30e",
+      "dir_name": "pair-102-p104-detached-leadership-syntax",
+      "pick": "A",
+      "source_sha256": "334ee4e4491fcabd0c0fa3a59b606a70bdecefc8c630bef8530a191e4f6b9ed6",
+      "applied_side": "A",
+      "role": "applied"
+     },
+     {
+      "pair_id": "32e2aac826f4cf00",
+      "dir_name": "pair-102-p128-safe-environment-passive",
+      "pick": "B",
+      "source_sha256": "0bb28e953c452b00656392f9af440425d921498a443d7a42d559fd44227b59d8",
+      "applied_side": "B",
+      "role": "applied"
+     },
+     {
+      "pair_id": "bf52a6cedbf1c818",
+      "dir_name": "pair-102-p133-recognition-filler",
+      "pick": "B",
+      "source_sha256": "e3635525cf6effcdf24cea2d4084b106a0c76aceccacabf2e095b580490be50e",
+      "applied_side": "B",
+      "role": "applied"
+     },
+     {
+      "pair_id": "f560cbea279df8de",
+      "dir_name": "pair-102-p139-planning-style-passive",
+      "pick": "A",
+      "source_sha256": "d2f552d58b396fc7a99db1ac6f181bf207b13c703b0f4e5ed73f9ef40e4b6899",
+      "applied_side": "B",
+      "role": "original"
+     }
+    ]
+   }
+  ]
+ },
+ "llm_judge": {
+  "schema_version": 1,
+  "status": "completed",
+  "model": "gpt-5.6-sol",
+  "model_confirmed": false,
+  "engine_models": [
+   "claude-fable-5-1"
+  ],
+  "run_id": "257f3edc3a450a4527157d41959583e5",
+  "seed": "102-judge-2026-09-02-hg",
+  "trials_per_pair": 3,
+  "timeout_s": 180.0,
+  "created_at": "2026-09-02T16:56:13Z",
+  "pairs": [
+   {
+    "pair_id": "21ba57a51f81f2be",
+    "dir_name": "pair-102-p008-leadership-program-intensifier",
+    "genre": "spec",
+    "trials": [
+     {
+      "trial": 0,
+      "applied_side": "A",
+      "a_side_hash": "57ae3007663933663ee6e52d353f6e5a94203656e0544df676ccaa1a216a9e3b",
+      "b_side_hash": "7dfa87a888fa748d32b1fdd9412d97e5ed8bdb5fa7dce73c33c64286485d7082",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "applied",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "A removes the unsupported, promotional intensifier “truly” while leaving the paragraph’s meaning, responsibilities, and surrounding voice intact. The single-word difference makes A slightly tighter and better suited to organizational prose."
+     },
+     {
+      "trial": 1,
+      "applied_side": "A",
+      "a_side_hash": "57ae3007663933663ee6e52d353f6e5a94203656e0544df676ccaa1a216a9e3b",
+      "b_side_hash": "7dfa87a888fa748d32b1fdd9412d97e5ed8bdb5fa7dce73c33c64286485d7082",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "applied",
+       "unsupported_claim_introduction": "applied",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "applied",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "A removes the unsupported and unnecessary intensifier “truly” while leaving the paragraph’s meaning, responsibilities, structure, and voice otherwise intact."
+     },
+     {
+      "trial": 2,
+      "applied_side": "B",
+      "a_side_hash": "7dfa87a888fa748d32b1fdd9412d97e5ed8bdb5fa7dce73c33c64286485d7082",
+      "b_side_hash": "57ae3007663933663ee6e52d353f6e5a94203656e0544df676ccaa1a216a9e3b",
+      "ok": true,
+      "preferred_side": "B",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "applied",
+       "unsupported_claim_introduction": "applied",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "B removes only the unsupported intensifier “truly,” preserving the paragraph’s meaning, responsibilities, and voice while making the institutional prose slightly cleaner and more credible."
+     }
+    ],
+    "valid_trials": 3,
+    "verdict": {
+     "present": true,
+     "errored": false,
+     "beat": true,
+     "detail": "",
+     "candidate_median": {
+      "meaning_preservation": 2,
+      "unsupported_claim_introduction": 2,
+      "actor_responsibility_preservation": 1,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 2,
+      "voice_distance_from_samples": 1,
+      "genre_fitness": 2,
+      "edit_locality_and_justification": 2,
+      "seeded_defect_fixed_without_normalizing": 2
+     },
+     "baseline_median": {
+      "meaning_preservation": 0,
+      "unsupported_claim_introduction": 0,
+      "actor_responsibility_preservation": 1,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 0,
+      "voice_distance_from_samples": 1,
+      "genre_fitness": 0,
+      "edit_locality_and_justification": 0,
+      "seeded_defect_fixed_without_normalizing": 0
+     }
+    },
+    "applied_preferred_trials": 3,
+    "original_preferred_trials": 0,
+    "equal_trials": 0,
+    "majority_applied": true
+   },
+   {
+    "pair_id": "00191c3aa2e36b7b",
+    "dir_name": "pair-102-p040-unique-insights-intensifier",
+    "genre": "spec",
+    "trials": [
+     {
+      "trial": 0,
+      "applied_side": "A",
+      "a_side_hash": "92a781364d950767a57a968254a1a3451881cc1b9561f2adf6e238f8922d56c5",
+      "b_side_hash": "a6aa2b782286420fc56d18c2eb51270870c03741635e18955c7e9f478f848c75",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "applied",
+       "unsupported_claim_introduction": "applied",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "A removes the unsupported and unnecessary claim that the insights are “unique,” while preserving the paragraph’s meaning, responsibilities, structure, and motivational voice."
+     },
+     {
+      "trial": 1,
+      "applied_side": "A",
+      "a_side_hash": "92a781364d950767a57a968254a1a3451881cc1b9561f2adf6e238f8922d56c5",
+      "b_side_hash": "a6aa2b782286420fc56d18c2eb51270870c03741635e18955c7e9f478f848c75",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "applied",
+       "unsupported_claim_introduction": "applied",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "A is more precise and economical: B adds “unique,” an unsupported qualifier that does not clarify the leadership-feedback paragraph. The actor, responsibilities, open intent, and overall voice otherwise remain unchanged."
+     },
+     {
+      "trial": 2,
+      "applied_side": "A",
+      "a_side_hash": "92a781364d950767a57a968254a1a3451881cc1b9561f2adf6e238f8922d56c5",
+      "b_side_hash": "a6aa2b782286420fc56d18c2eb51270870c03741635e18955c7e9f478f848c75",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "applied",
+       "unsupported_claim_introduction": "applied",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "applied",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "A removes the unsupported and redundant claim that the insights are “unique,” reducing promotional excess while preserving the paragraph’s meaning, responsibilities, and distinctive corporate voice."
+     }
+    ],
+    "valid_trials": 3,
+    "verdict": {
+     "present": true,
+     "errored": false,
+     "beat": true,
+     "detail": "",
+     "candidate_median": {
+      "meaning_preservation": 2,
+      "unsupported_claim_introduction": 2,
+      "actor_responsibility_preservation": 1,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 2,
+      "voice_distance_from_samples": 1,
+      "genre_fitness": 2,
+      "edit_locality_and_justification": 2,
+      "seeded_defect_fixed_without_normalizing": 2
+     },
+     "baseline_median": {
+      "meaning_preservation": 0,
+      "unsupported_claim_introduction": 0,
+      "actor_responsibility_preservation": 1,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 0,
+      "voice_distance_from_samples": 1,
+      "genre_fitness": 0,
+      "edit_locality_and_justification": 0,
+      "seeded_defect_fixed_without_normalizing": 0
+     }
+    },
+    "applied_preferred_trials": 3,
+    "original_preferred_trials": 0,
+    "equal_trials": 0,
+    "majority_applied": true
+   },
+   {
+    "pair_id": "e6147f16c164e536",
+    "dir_name": "pair-102-p087-knowledge-gained-passive",
+    "genre": "spec",
+    "trials": [
+     {
+      "trial": 0,
+      "applied_side": "B",
+      "a_side_hash": "6268b6684214a59cb99aa5bd606d148a7ebedc4514dad111cd0bd653dbb71ee9",
+      "b_side_hash": "251ef80d5c2f1f2c3dba5d0ac372fe3c97f4f015185915e94057522c841a12bd",
+      "ok": true,
+      "preferred_side": "B",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "applied",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "applied",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "B makes the leaders explicitly responsible for gaining the knowledge, replacing an unnecessarily passive construction without changing the paragraph’s claims or broader voice."
+     },
+     {
+      "trial": 1,
+      "applied_side": "B",
+      "a_side_hash": "6268b6684214a59cb99aa5bd606d148a7ebedc4514dad111cd0bd653dbb71ee9",
+      "b_side_hash": "251ef80d5c2f1f2c3dba5d0ac372fe3c97f4f015185915e94057522c841a12bd",
+      "ok": true,
+      "preferred_side": "B",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "applied",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "applied",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "B makes the leaders’ responsibility explicit by replacing the passive “it must be gained” with “they must gain it.” The edit is local, preserves the paragraph’s meaning and voice, and reduces ambiguity without adding an unsupported claim."
+     },
+     {
+      "trial": 2,
+      "applied_side": "A",
+      "a_side_hash": "251ef80d5c2f1f2c3dba5d0ac372fe3c97f4f015185915e94057522c841a12bd",
+      "b_side_hash": "6268b6684214a59cb99aa5bd606d148a7ebedc4514dad111cd0bd653dbb71ee9",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "applied",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "applied",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "A clearly preserves the leaders as the actors responsible for gaining the knowledge; B replaces that responsibility with an actorless passive construction. The change is otherwise local and does not alter the paragraph’s voice or introduce a new claim."
+     }
+    ],
+    "valid_trials": 3,
+    "verdict": {
+     "present": true,
+     "errored": false,
+     "beat": true,
+     "detail": "",
+     "candidate_median": {
+      "meaning_preservation": 2,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 2,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 2,
+      "voice_distance_from_samples": 1,
+      "genre_fitness": 2,
+      "edit_locality_and_justification": 2,
+      "seeded_defect_fixed_without_normalizing": 2
+     },
+     "baseline_median": {
+      "meaning_preservation": 0,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 0,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 0,
+      "voice_distance_from_samples": 1,
+      "genre_fitness": 0,
+      "edit_locality_and_justification": 0,
+      "seeded_defect_fixed_without_normalizing": 0
+     }
+    },
+    "applied_preferred_trials": 3,
+    "original_preferred_trials": 0,
+    "equal_trials": 0,
+    "majority_applied": true
+   },
+   {
+    "pair_id": "df7edb42b9ee2864",
+    "dir_name": "pair-102-p093-thought-leadership-transition",
+    "genre": "spec",
+    "trials": [
+     {
+      "trial": 0,
+      "applied_side": "A",
+      "a_side_hash": "fba3efffac1c24dde0f21e57cda820b9cbb83383ba0edcef6fff0edd168fa8ca",
+      "b_side_hash": "a9f60efc184c110b51b70271fd63b57afbc44148984c3150315fa12221b73dc7",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "A removes the unnecessary transitional word “Furthermore,” making the paragraph slightly leaner without changing its meaning, responsibilities, claims, or voice."
+     },
+     {
+      "trial": 1,
+      "applied_side": "A",
+      "a_side_hash": "fba3efffac1c24dde0f21e57cda820b9cbb83383ba0edcef6fff0edd168fa8ca",
+      "b_side_hash": "a9f60efc184c110b51b70271fd63b57afbc44148984c3150315fa12221b73dc7",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "A is more direct: removing the unnecessary transitional word “Furthermore” improves flow and economy without changing meaning, responsibility, claims, or the paragraph’s surrounding voice."
+     },
+     {
+      "trial": 2,
+      "applied_side": "A",
+      "a_side_hash": "fba3efffac1c24dde0f21e57cda820b9cbb83383ba0edcef6fff0edd168fa8ca",
+      "b_side_hash": "a9f60efc184c110b51b70271fd63b57afbc44148984c3150315fa12221b73dc7",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "A removes the unnecessary transition “Furthermore,” while preserving every substantive claim, responsibility, example, and feature of the paragraph’s voice. The small deletion improves flow without collateral rewriting."
+     }
+    ],
+    "valid_trials": 3,
+    "verdict": {
+     "present": true,
+     "errored": false,
+     "beat": true,
+     "detail": "",
+     "candidate_median": {
+      "meaning_preservation": 1,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 1,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 2,
+      "voice_distance_from_samples": 1,
+      "genre_fitness": 2,
+      "edit_locality_and_justification": 2,
+      "seeded_defect_fixed_without_normalizing": 2
+     },
+     "baseline_median": {
+      "meaning_preservation": 1,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 1,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 0,
+      "voice_distance_from_samples": 1,
+      "genre_fitness": 0,
+      "edit_locality_and_justification": 0,
+      "seeded_defect_fixed_without_normalizing": 0
+     }
+    },
+    "applied_preferred_trials": 3,
+    "original_preferred_trials": 0,
+    "equal_trials": 0,
+    "majority_applied": true
+   },
+   {
+    "pair_id": "1703ed5c5b62b30e",
+    "dir_name": "pair-102-p104-detached-leadership-syntax",
+    "genre": "spec",
+    "trials": [
+     {
+      "trial": 0,
+      "applied_side": "B",
+      "a_side_hash": "1f3b4e5d3c79bb0a8b1f2ff09a143232aca1cbaacf8f01e57131120567a58eda",
+      "b_side_hash": "54bc8e5d846e7294da364de0c8a710963adeb0d0a38011e0c395e82914ddb0d0",
+      "ok": true,
+      "preferred_side": "B",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "applied",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "B removes the ungrammatical construction “that with … that can create” by deleting only the first “that.” The meaning, attribution, and distinctive phrasing remain intact, while the sentence becomes easier to parse."
+     },
+     {
+      "trial": 1,
+      "applied_side": "A",
+      "a_side_hash": "54bc8e5d846e7294da364de0c8a710963adeb0d0a38011e0c395e82914ddb0d0",
+      "b_side_hash": "1f3b4e5d3c79bb0a8b1f2ff09a143232aca1cbaacf8f01e57131120567a58eda",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "A removes the ungrammatical and redundant “that with … that can create” construction while leaving the paragraph’s meaning, responsibilities, claims, and distinctive phrasing intact."
+     },
+     {
+      "trial": 2,
+      "applied_side": "A",
+      "a_side_hash": "54bc8e5d846e7294da364de0c8a710963adeb0d0a38011e0c395e82914ddb0d0",
+      "b_side_hash": "1f3b4e5d3c79bb0a8b1f2ff09a143232aca1cbaacf8f01e57131120567a58eda",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "applied",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "A removes the ungrammatical and redundant “with … that” construction while preserving the paragraph’s meaning, responsibilities, claims, and distinctive voice. The edit is minimal and makes the argument easier to read."
+     }
+    ],
+    "valid_trials": 3,
+    "verdict": {
+     "present": true,
+     "errored": false,
+     "beat": true,
+     "detail": "",
+     "candidate_median": {
+      "meaning_preservation": 2,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 1,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 2,
+      "voice_distance_from_samples": 1,
+      "genre_fitness": 2,
+      "edit_locality_and_justification": 2,
+      "seeded_defect_fixed_without_normalizing": 2
+     },
+     "baseline_median": {
+      "meaning_preservation": 0,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 1,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 0,
+      "voice_distance_from_samples": 1,
+      "genre_fitness": 0,
+      "edit_locality_and_justification": 0,
+      "seeded_defect_fixed_without_normalizing": 0
+     }
+    },
+    "applied_preferred_trials": 3,
+    "original_preferred_trials": 0,
+    "equal_trials": 0,
+    "majority_applied": true
+   },
+   {
+    "pair_id": "32e2aac826f4cf00",
+    "dir_name": "pair-102-p128-safe-environment-passive",
+    "genre": "spec",
+    "trials": [
+     {
+      "trial": 0,
+      "applied_side": "B",
+      "a_side_hash": "e4a394ae8c0153763d989bd674e231200c0cebf875573d013990c9f628c278eb",
+      "b_side_hash": "5a7ae971c4d14b12d9e2b159fcd63402a7b5c5f6c4b29b3bfbf8d52fc7bdbc56",
+      "ok": true,
+      "preferred_side": "B",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "applied",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "original",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "original",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "B fixes the dangling passive by making leaders responsible for conducting the opportunities, improving clarity and fitness for guidance. Its deletion of “truly” is unnecessary and slightly flattens the prose, but the core meaning remains intact and the responsibility fix outweighs that collateral edit."
+     },
+     {
+      "trial": 1,
+      "applied_side": "B",
+      "a_side_hash": "e4a394ae8c0153763d989bd674e231200c0cebf875573d013990c9f628c278eb",
+      "b_side_hash": "5a7ae971c4d14b12d9e2b159fcd63402a7b5c5f6c4b29b3bfbf8d52fc7bdbc56",
+      "ok": true,
+      "preferred_side": "B",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "original",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "applied",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "original",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "B cleanly replaces the awkward passive construction with a clear responsible actor, improving readability and instructional fitness. Its only drawback is the unnecessary removal of “truly,” which slightly reduces emphasis and voice."
+     },
+     {
+      "trial": 2,
+      "applied_side": "A",
+      "a_side_hash": "5a7ae971c4d14b12d9e2b159fcd63402a7b5c5f6c4b29b3bfbf8d52fc7bdbc56",
+      "b_side_hash": "e4a394ae8c0153763d989bd674e231200c0cebf875573d013990c9f628c278eb",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "applied",
+       "unsupported_claim_introduction": "applied",
+       "actor_responsibility_preservation": "applied",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "original",
+       "voice_distance_from_samples": "applied",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "equal"
+      },
+      "reason": "B smooths the awkward phrase “leaders should conduct the opportunities,” but its passive construction obscures responsibility and “truly” adds unsupported emphasis. A is clearer about the leader’s role and otherwise preserves the intended guidance without embellishment."
+     }
+    ],
+    "valid_trials": 3,
+    "verdict": {
+     "present": true,
+     "errored": false,
+     "beat": false,
+     "detail": "",
+     "candidate_median": {
+      "meaning_preservation": 1,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 2,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 2,
+      "voice_distance_from_samples": 0,
+      "genre_fitness": 2,
+      "edit_locality_and_justification": 2,
+      "seeded_defect_fixed_without_normalizing": 2
+     },
+     "baseline_median": {
+      "meaning_preservation": 1,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 0,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 0,
+      "voice_distance_from_samples": 2,
+      "genre_fitness": 0,
+      "edit_locality_and_justification": 0,
+      "seeded_defect_fixed_without_normalizing": 0
+     }
+    },
+    "applied_preferred_trials": 3,
+    "original_preferred_trials": 0,
+    "equal_trials": 0,
+    "majority_applied": true
+   },
+   {
+    "pair_id": "bf52a6cedbf1c818",
+    "dir_name": "pair-102-p133-recognition-filler",
+    "genre": "spec",
+    "trials": [
+     {
+      "trial": 0,
+      "applied_side": "A",
+      "a_side_hash": "6e635e6946a62747929487e389ced6f02b6dce656f0d640092ef8aab394fd095",
+      "b_side_hash": "d089d52e194f6cc8f442b77f61809363e41bb615c8a66d6dfd3fb73167a686e7",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "A preserves the same meaning while replacing the cumbersome phrase “in recognition of the fact that” with the cleaner “recognizing that.” The edit is local, concise, and leaves the paragraph’s voice and responsibilities intact."
+     },
+     {
+      "trial": 1,
+      "applied_side": "A",
+      "a_side_hash": "6e635e6946a62747929487e389ced6f02b6dce656f0d640092ef8aab394fd095",
+      "b_side_hash": "d089d52e194f6cc8f442b77f61809363e41bb615c8a66d6dfd3fb73167a686e7",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "A preserves the full meaning while replacing the needlessly wordy “in recognition of the fact that” with the cleaner “recognizing that”; the rest of the paragraph remains unchanged."
+     },
+     {
+      "trial": 2,
+      "applied_side": "B",
+      "a_side_hash": "d089d52e194f6cc8f442b77f61809363e41bb615c8a66d6dfd3fb73167a686e7",
+      "b_side_hash": "6e635e6946a62747929487e389ced6f02b6dce656f0d640092ef8aab394fd095",
+      "ok": true,
+      "preferred_side": "B",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "applied",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "equal",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "applied",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "B replaces the wordy phrase “in recognition of the fact that” with the cleaner “recognizing that,” preserving the paragraph’s meaning, responsibility, and distinctive voice while reducing reader effort. The edit is precise and introduces no unsupported claim."
+     }
+    ],
+    "valid_trials": 3,
+    "verdict": {
+     "present": true,
+     "errored": false,
+     "beat": true,
+     "detail": "",
+     "candidate_median": {
+      "meaning_preservation": 1,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 1,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 2,
+      "voice_distance_from_samples": 1,
+      "genre_fitness": 2,
+      "edit_locality_and_justification": 2,
+      "seeded_defect_fixed_without_normalizing": 2
+     },
+     "baseline_median": {
+      "meaning_preservation": 1,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 1,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 0,
+      "voice_distance_from_samples": 1,
+      "genre_fitness": 0,
+      "edit_locality_and_justification": 0,
+      "seeded_defect_fixed_without_normalizing": 0
+     }
+    },
+    "applied_preferred_trials": 3,
+    "original_preferred_trials": 0,
+    "equal_trials": 0,
+    "majority_applied": true
+   },
+   {
+    "pair_id": "f560cbea279df8de",
+    "dir_name": "pair-102-p139-planning-style-passive",
+    "genre": "spec",
+    "trials": [
+     {
+      "trial": 0,
+      "applied_side": "A",
+      "a_side_hash": "de1fb71b61569ea6b8de3e155c95e0384d242912e3fec1b693ba93c12b87dd99",
+      "b_side_hash": "55f095ef91caaf1466de392bd1268b507219b2a685a20c22e691567af8b73139",
+      "ok": true,
+      "preferred_side": "A",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "applied",
+       "actor_responsibility_preservation": "applied",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "equal",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "applied",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "A is more direct about the leader choosing the planning style and avoids B’s unnecessary “of course,” which adds an unsupported presumption and slight editorial clutter. Otherwise, the paragraph’s meaning and voice are substantially unchanged."
+     },
+     {
+      "trial": 1,
+      "applied_side": "B",
+      "a_side_hash": "55f095ef91caaf1466de392bd1268b507219b2a685a20c22e691567af8b73139",
+      "b_side_hash": "de1fb71b61569ea6b8de3e155c95e0384d242912e3fec1b693ba93c12b87dd99",
+      "ok": true,
+      "preferred_side": "B",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "applied",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "original",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "original",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "B clarifies that the leader chooses the planning style and slightly reduces reader effort, while preserving the paragraph’s meaning. However, deleting “of course” is an unnecessary tonal normalization, so A better preserves the distinctive voice and keeps the edit more local."
+     },
+     {
+      "trial": 2,
+      "applied_side": "B",
+      "a_side_hash": "55f095ef91caaf1466de392bd1268b507219b2a685a20c22e691567af8b73139",
+      "b_side_hash": "de1fb71b61569ea6b8de3e155c95e0384d242912e3fec1b693ba93c12b87dd99",
+      "ok": true,
+      "preferred_side": "B",
+      "preferred_role": "applied",
+      "dimensions_role": {
+       "meaning_preservation": "equal",
+       "unsupported_claim_introduction": "equal",
+       "actor_responsibility_preservation": "applied",
+       "unresolved_intent_visibility": "equal",
+       "editorial_cost_reduction": "applied",
+       "voice_distance_from_samples": "original",
+       "genre_fitness": "applied",
+       "edit_locality_and_justification": "original",
+       "seeded_defect_fixed_without_normalizing": "applied"
+      },
+      "reason": "B more clearly assigns the choice of planning style to the leader and slightly reduces reader effort. Its deletion of “of course” is unnecessary and marginally flattens the voice, but the responsibility clarification is the more consequential improvement."
+     }
+    ],
+    "valid_trials": 3,
+    "verdict": {
+     "present": true,
+     "errored": false,
+     "beat": false,
+     "detail": "",
+     "candidate_median": {
+      "meaning_preservation": 1,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 2,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 2,
+      "voice_distance_from_samples": 0,
+      "genre_fitness": 2,
+      "edit_locality_and_justification": 0,
+      "seeded_defect_fixed_without_normalizing": 2
+     },
+     "baseline_median": {
+      "meaning_preservation": 1,
+      "unsupported_claim_introduction": 1,
+      "actor_responsibility_preservation": 0,
+      "unresolved_intent_visibility": 1,
+      "editorial_cost_reduction": 0,
+      "voice_distance_from_samples": 2,
+      "genre_fitness": 0,
+      "edit_locality_and_justification": 2,
+      "seeded_defect_fixed_without_normalizing": 0
+     }
+    },
+    "applied_preferred_trials": 3,
+    "original_preferred_trials": 0,
+    "equal_trials": 0,
+    "majority_applied": true
+   }
+  ],
+  "summary": {
+   "pairs": 8,
+   "pairs_completed": 8,
+   "pairs_errored": 0,
+   "trials_valid": 24,
+   "trials_failed": 0,
+   "trials_scored": 24,
+   "applied_preferred_trials": 24,
+   "original_preferred_trials": 0,
+   "equal_trials": 0,
+   "applied_preference_pct_of_decided": 100.0,
+   "pairs_majority_applied": 8,
+   "pairs_beat": 6
+  }
+ }
+}

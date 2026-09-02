@@ -200,11 +200,72 @@ no edit. *When in doubt, it changes nothing.*
   (v0.8.4), #46 (v0.8.3), #36 (v0.8.2), #47 (v0.8.1).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
-- **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook; a live
-  cross-model LLM-judge A/B (currently secondary/not-run). Scanner thresholds stay measure-only until
-  a licensed calibration corpus with verbatim text clears the validation bar.
+- **Measured (#102):** the cross-model LLM-judge A/B has **run — 8 pairs, 24 blinded trials, the
+  slopslap-applied text preferred in 100% of decided trials (24 of 24; judge `gpt-5.6-sol`, model pinned
+  by request and not echoed by the CLI, genre-neutral rubric; a first run under a technical-document
+  rubric gave 23 of 24 and is recorded in the design doc)**; the human paired-preference rating has
+  **run with 1 rater (the owner, blind, via AskUserQuestion): the applied text preferred in 6 of 8
+  pairs (75% of decided), the original in 2**. The 8 pairs are anonymized paragraphs from the owner's own human-written documents,
+  approved one by one; 101 paragraphs entered the funnel and slopslap left 86 of them untouched. Both
+  results sit in `docs/reviews/2026-09-02-102-blind-paired-preference-results.md`, which leads with that
+  funnel. A first set of 3 pairs was discarded before publication: every one was a paragraph of a
+  machine-authored review report, not the owner's prose.
+- **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook. Scanner
+  thresholds stay measure-only until a licensed calibration corpus with verbatim text clears the
+  validation bar.
 
 ## Changelog
+
+- **0.15.0** — blind paired-preference eval of slopslap's own output (#102). `scripts/eval/preference.py`
+  (`build` / `human` / `judge` / `report`) shows each fixture pair as a randomized blind A/B: a human
+  rates in a terminal loop or a self-contained static page; the cross-model LLM judge (`gpt-5.6-sol`
+  through a new Codex transport, `invoke_judge`, gated on `SLOPSLAP_LIVE=1`, refusing any judge that
+  token-matches the rewrite engine) runs 3 blinded trials per pair through the existing 9-dimension
+  scaffold. Every pick binds to `source_sha256` plus a salted hash of the bytes on each side, so the
+  side order rides with the pick and a drifted fixture set is refused, never mis-scored — and the
+  rater-facing page carries neither `source_sha256` nor `pair_id`, since either lets a rater hash the
+  two texts on screen and read the source side off it; `report` re-binds each page pick from its side
+  hashes, so the binding survives without the page ever holding it. A cross-model review round also
+  hardened the numbers themselves: a pair may be picked only once and one rater gives one file (a
+  repeat used to inflate the percentage); an errored pair's trials are excluded from the percentages
+  the results doc already claimed excluded them; a judge run is `completed` only when EVERY pair
+  reached a full non-errored verdict (`partial`, exit 4, otherwise); `report` recomputes a supplied
+  `judge.json` against the current fixtures before publishing it; a fixture is loaded only when the
+  committed edit script replays to its applied bytes and it names an engine model; and the Codex judge
+  child no longer inherits `CLAUDE_*`/`ANTHROPIC_*` variables across the vendor boundary. A
+  second, whole-diff review round then closed six more: a supplied `pairs.json` must now cover the
+  whole fixture set (a trimmed one used to yield a `completed` run over its own subset); a judge
+  run must cover every fixture; every per-pair counter, the `majority_applied` flag and the
+  scaffold `beat` verdict are re-derived from the recorded trials rather than trusted, so
+  `pairs_majority_applied` and `pairs_beat` can no longer be published unchecked; an errored pair
+  is never counted as a majority win; a fixture's `apply_result.json` must bind to its own source;
+  `report` refuses `--picks` without the blind file the operator issued, and refuses a pick whose
+  `run_id` or `token` that file never handed out; and the rating page escapes every angle bracket,
+  so no fixture byte leaves a literal `<` in it. One reviewer claim was REFUTED by direct
+  measurement and is now pinned by `tests/test_eval_artifacts_102.py`: the committed judge run's
+  roles are correctly bound, and that guard now recomputes every published figure from the trials
+  instead of pinning a number. One limit is DEFERRED and stated in the
+  design doc: the Codex judge child runs under `--sandbox read-only`, which denies writes but not
+  reads (measured), so a tool-free transport is the real fix. **Provenance correction, same day:**
+  the first fixture set (3 pairs from the two public repos) was discarded before publication —
+  every pair was a paragraph of a machine-authored adversarial-review report, and 16 of the 31
+  sampled paragraphs were, which four cross-model review passes had missed. The set was re-sourced
+  from 5 human-written documents the owner supplied: 101 paragraphs → 15 authorized by the free
+  offline audit → 11 anonymized (names → neutral words) and approved by the owner one by one → 9
+  engine edit scripts → 8 live-applied pairs (`SHIPPED_FLOOR = 8`; the issue's floor of 5 is met).
+  `load_eval_pairs` now refuses any fixture sourced from `docs/reviews/` or opening with a review
+  header, fails closed on a missing or unknown `eval_pair.source`, and the results document leads
+  with the abstention funnel before any percentage — `report` refuses to publish a judge run or
+  human picks without the sampling ledger, and checks the ledger's arithmetic against its items. A
+  Step 11 re-run over the re-sourced commits found the judge rubric anchored to "a technical design
+  document" (`judge.py` and the rating page); the owner chose to make it genre-neutral and re-run.
+  Measured (published, neutral rubric): applied preferred in 24 of 24 trials (100% of decided),
+  applied majority on 8 of 8 pairs, scaffold BEAT on 6 of 8; the first run under the old rubric gave
+  23 of 24 and is recorded in the design doc. Human: 1 rater (the owner, blind), applied preferred
+  in 6 of 8 pairs (75% of decided), original in 2 — picks committed as
+  `docs/reviews/102-eval/picks-chris.json`. Results:
+  `docs/reviews/2026-09-02-102-blind-paired-preference-results.md`. Engine behavior unchanged: no
+  scanner rule, table, threshold or genre profile moved.
 
 - **0.14.1** — fix: marketing prose no longer misclassifies as `spec` and under-strips its cadence slop (#98, surfaced by the v0.14.0 UAT). Both `marketing-heavy` UAT candidates carried no first-person/PRD/modal signal, so they hit the asymmetric-failure fallback → `spec` → cadence recommended `keep`. `classify_genre` now emits a fifth genre, `marketing` (empty keep-set = strip-cadence, like general; the honest label also gives marketing its own `(genre, metric-class)` learning bucket), detected by a marketing/GTM lexicon-density tier placed LAST among the structural markers — count ≥ 8, density ≥ 0.8%, and ≥ 4 distinct lexemes (measured margin on the candidate set: 22–37 hits/1k words vs ≤ 2.3 everywhere else; the distinct-lexeme floor stops a single repeated term like "retention" from flipping a spec-like doc). Genuinely ambiguous docs still fall back to `spec`, and stronger signals (declaration, path, personal/PRD/modals) still win. Threaded through `GENRE_ENUM`, `_SCANNER_GENRES`, and `_DECL_ALIASES`; the feedback schema's `VALID_GENRES` and `_GENRE_KEEP_CLASSES` already carried forward-compat `marketing` entries.
 

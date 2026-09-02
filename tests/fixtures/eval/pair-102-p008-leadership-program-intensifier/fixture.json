@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "genre": "spec",
+  "control": false,
+  "pair": true,
+  "clean_file": "applied.md",
+  "provenance": "#102 eval pair. original.md = an owner-supplied, human-authored paragraph from an internal leadership handbook (June 2021), human-authored, supplied by the repository owner from their own files; company, program, principle and person names replaced with neutral words before publication; the anonymized text is byte-exact as the owner approved it for publication on 2026-09-02 (one yes per paragraph). applied.md = the bytes `scripts/slopslap_assemble/assemble.py apply --path <copy> --edits edits.json` wrote (SLOPSLAP_LIVE=1, semantic_mode live, exit 0); the edit-script was authored by the slopslap engine (session model claude-fable-5-1 applying skills/slopslap/SKILL.md) on 2026-09-02 — never hand-written. apply_result.json is the RunResult (no source bytes).",
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [
+    {
+      "start_byte": 0,
+      "end_byte": 436
+    }
+  ],
+  "protected_spans": [],
+  "invariant_regions": [],
+  "expected_invariants": [],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "emptiness",
+      "region": "sentence 3",
+      "note": "'The leadership program is truly an extension of our values' — 'truly' is an intensifier posing as evidence; it asserts sincerity the sentence cannot show. Repair: delete the word. No number, modal, negation or condition in the sentence. editorial-harm: low · diagnosis-confidence: high. Authorized range: the scanner's generic_diction tell made the whole paragraph the autonomous path's authorized range."
+    }
+  ],
+  "control_reason": null,
+  "eval_pair": {
+    "schema_version": 1,
+    "engine_model": "claude-fable-5-1",
+    "source_sha256": "b26b5b9a8e5cfd74e4c9eb6180a948649d1e6663c36f0df17b55ff159aa65a5b",
+    "applied_sha256": "8bd7613cf985349a8f5f700b89cd329a3676768097ec664cabf3efbbee35541e",
+    "apply_exit": 0,
+    "semantic_mode": "live",
+    "apply_path": "assemble.py apply --edits",
+    "declared_genre": null,
+    "classified_genre": "spec",
+    "authorization_state": "authorized",
+    "edits_file": "edits.json",
+    "apply_result_file": "apply_result.json",
+    "authored_at": "2026-09-02",
+    "source": {
+      "kind": "owner-supplied",
+      "document": "an internal leadership handbook (June 2021), human-authored, supplied by the repository owner from their own files; company, program, principle and person names replaced with neutral words before publication",
+      "anonymized": true,
+      "license": "owner-granted",
+      "extract_id": "p008"
+    }
+  }
+}

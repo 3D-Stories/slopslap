@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "genre": "spec",
+  "control": false,
+  "pair": true,
+  "clean_file": "applied.md",
+  "provenance": "#102 eval pair. original.md = an owner-supplied, human-authored paragraph from an internal leadership handbook (June 2021), human-authored, supplied by the repository owner from their own files; company, program, principle and person names replaced with neutral words before publication; the anonymized text is byte-exact as the owner approved it for publication on 2026-09-02 (one yes per paragraph). applied.md = the bytes `scripts/slopslap_assemble/assemble.py apply --path <copy> --edits edits.json` wrote (SLOPSLAP_LIVE=1, semantic_mode live, exit 0); the edit-script was authored by the slopslap engine (session model claude-fable-5-1 applying skills/slopslap/SKILL.md) on 2026-09-02 — never hand-written. apply_result.json is the RunResult (no source bytes).",
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [
+    {
+      "start_byte": 0,
+      "end_byte": 452
+    }
+  ],
+  "protected_spans": [],
+  "invariant_regions": [],
+  "expected_invariants": [],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "lexical_structural",
+      "region": "sentence 2",
+      "note": "'in recognition of the fact that they are part of something greater' — 'of the fact that' is a stock filler wrapping the clause; the recognition itself is the content. Repair: 'recognizing that they are part of…'. 'However' (contrast) and 'purposefully' (intent) are kept. editorial-harm: low · diagnosis-confidence: med. Authorized range: transition_clusters tell."
+    }
+  ],
+  "control_reason": null,
+  "eval_pair": {
+    "schema_version": 1,
+    "engine_model": "claude-fable-5-1",
+    "source_sha256": "e3635525cf6effcdf24cea2d4084b106a0c76aceccacabf2e095b580490be50e",
+    "applied_sha256": "19b73b8fa3d854cfd177b05c359a8ae291ce727c5749668bb7961e008f8c3daf",
+    "apply_exit": 0,
+    "semantic_mode": "live",
+    "apply_path": "assemble.py apply --edits",
+    "declared_genre": null,
+    "classified_genre": "spec",
+    "authorization_state": "authorized",
+    "edits_file": "edits.json",
+    "apply_result_file": "apply_result.json",
+    "authored_at": "2026-09-02",
+    "source": {
+      "kind": "owner-supplied",
+      "document": "an internal leadership handbook (June 2021), human-authored, supplied by the repository owner from their own files; company, program, principle and person names replaced with neutral words before publication",
+      "anonymized": true,
+      "license": "owner-granted",
+      "extract_id": "p133"
+    }
+  }
+}

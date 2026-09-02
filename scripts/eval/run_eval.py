@@ -216,9 +216,12 @@ def run_eval() -> dict:
                "engine_note": "authoring engine recorded, not selected by the plugin (advisory); "
                               "Fable 5 = OWNER-VERIFY (Fable API — no access confirmed)",
                "judge": {"status": "not_run",
-                         "note": "secondary + non-gating (contract §7). A cross-model blinded A/B "
-                                 "(Codex gpt-5.6-sol) is a documented follow-up; the PRIMARY proof is "
-                                 "the programmatic hard gates + abstention below."}}
+                         "note": "secondary + non-gating (contract §7). This offline proof never calls a "
+                                 "judge. The cross-model blinded A/B (#102) runs separately: "
+                                 "`SLOPSLAP_LIVE=1 python3 scripts/eval/preference.py judge --model "
+                                 "gpt-5.6-sol`; its measured result lives in "
+                                 "docs/reviews/2026-09-02-102-blind-paired-preference-results.md. The PRIMARY "
+                                 "proof is the programmatic hard gates + abstention below."}}
     by_baseline = {b: {} for b in BASELINES}
     for fx in CANONICAL + CONTROLS:
         results["fixtures"][fx] = {"is_control": fx in CONTROLS, "baselines": {}}

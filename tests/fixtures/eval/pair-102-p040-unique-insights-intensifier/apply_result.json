@@ -1,0 +1,303 @@
+{
+ "schema_version": 1,
+ "run_id": "c86ef6a74d79",
+ "status": "ok",
+ "semantic_mode": "live",
+ "stages": [
+  {
+   "stage": "audit",
+   "status": "ok",
+   "code": "ok",
+   "message": "audit complete",
+   "data": {
+    "schema_version": 1,
+    "run_id": "c86ef6a74d79",
+    "source_path": "<workspace-state>/p040/doc.md",
+    "source_sha256": "c86ef6a74d79954abeae992398a20b16ed4d93b655df998f0fde5e73dfc17b1c",
+    "byte_length": 318,
+    "fmt": "markdown",
+    "genre": "spec",
+    "genre_confidence": "low",
+    "genre_reason": "no usable genre signal; asymmetric-failure fallback to the most-preservation-heavy profile (spec)",
+    "audit_status": "flagged",
+    "metrics": {
+     "sentence_length_distribution": {
+      "eligible_units": 3,
+      "count": 3,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "sent-dist-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "distribution": {
+       "min": 13,
+       "p10": 13.8,
+       "p25": 15.0,
+       "median": 17.0,
+       "p75": 17.5,
+       "p90": 17.8,
+       "max": 18,
+       "mean": 16,
+       "sd": 2.16
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "sentence_length_dispersion": {
+      "eligible_units": 3,
+      "count": 3,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "sent-disp-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "dispersion": {
+       "iqr_over_median": 0.147,
+       "cov": 0.135,
+       "median_adjacent_diff": 3.0
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "punctuation_rates": {
+      "eligible_units": 48,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "punct-v2",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "rates": {
+       "em_dash_per_1k": 0.0,
+       "semicolon_per_1k": 0.0,
+       "em_dash": 0,
+       "semicolon": 0
+      },
+      "thresholds": {
+       "em_dash_per_1k": 12.0,
+       "semicolon_per_1k": 8.0
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "negative_parallelism": {
+      "eligible_units": 48,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "negparallel-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "thresholds": {
+       "flag_at_count": 5
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "rule_of_three": {
+      "eligible_units": 1,
+      "count": 1,
+      "rate": null,
+      "locations": [
+       {
+        "match": "identify, analyze, and carve",
+        "line_start": 1
+       }
+      ],
+      "soft_flag": null,
+      "metric_version": "tricolon-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "paragraph_sentence_count_runs": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "para-runs-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "bold_label_density": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "bold-label-v2",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "repeated_openers": {
+      "eligible_units": 3,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "openers-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "transition_clusters": {
+      "eligible_units": 48,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "transition-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "vague_attribution": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "vague-attr-tables-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "stock_lexical_clusters": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "stock-tables-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "generic_diction": {
+      "eligible_units": 1,
+      "count": 1,
+      "rate": null,
+      "locations": [
+       {
+        "word": "empower",
+        "kind": "buzzword",
+        "line_start": 1
+       }
+      ],
+      "soft_flag": false,
+      "metric_version": "generic-diction-tables-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     }
+    },
+    "authorization": {
+     "state": "authorized",
+     "ranges": [
+      {
+       "start_byte": 0,
+       "end_byte": 318
+      }
+     ]
+    },
+    "protected_spans": [],
+    "invariant_regions": [],
+    "ledger": {
+     "canonical": {
+      "schema_version": 1,
+      "source_sha256": "c86ef6a74d79954abeae992398a20b16ed4d93b655df998f0fde5e73dfc17b1c",
+      "entries": [],
+      "protected_spans": []
+     },
+     "sha256": "92bcb68ecb9d1313adf36c39ca49bbb39ac978e96d50963d731e30bb5a42e110"
+    }
+   },
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "candidate",
+   "status": "ok",
+   "code": "ok",
+   "message": "candidate validated",
+   "data": [
+    {
+     "start_byte": 71,
+     "end_byte": 91,
+     "replacement_b64": "WW91ciBpbnNpZ2h0cw=="
+    }
+   ],
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "verify",
+   "status": "ok",
+   "code": "ok",
+   "message": "proposal is shippable",
+   "data": {
+    "decision": "ACCEPT",
+    "proposal_status": "ACCEPT",
+    "semantic_status": "clean",
+    "findings": [],
+    "hunks": [
+     {
+      "hunk_id": "h0",
+      "original_range": [
+       71,
+       91
+      ],
+      "decision": "ACCEPT",
+      "finding_ids": [],
+      "revertable": true
+     }
+    ],
+    "ledger_sha256": "92bcb68ecb9d1313adf36c39ca49bbb39ac978e96d50963d731e30bb5a42e110"
+   },
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "apply",
+   "status": "ok",
+   "code": "ok",
+   "message": "apply applied",
+   "data": {
+    "status": "applied",
+    "mutated": true,
+    "source": "<workspace-state>/p040/doc.md",
+    "backup": {
+     "path": "<state-home>/slopslap/backups/20260902T155456Z_01788364496721791118_06084ad5_doc.md.bak",
+     "metadata": "<state-home>/slopslap/backups/20260902T155456Z_01788364496721791118_06084ad5_doc.md.bak.json",
+     "restore_command": "cp -- <state-home>/slopslap/backups/20260902T155456Z_01788364496721791118_06084ad5_doc.md.bak <workspace-state>/p040/doc.md",
+     "restore_argv": [
+      "cp",
+      "--",
+      "<state-home>/slopslap/backups/20260902T155456Z_01788364496721791118_06084ad5_doc.md.bak",
+      "<workspace-state>/p040/doc.md"
+     ],
+     "containment": "external"
+    },
+    "warnings": [
+     "fsync skipped (durability best-effort; set SLOPSLAP_FSYNC=1)"
+    ],
+    "errors": [],
+    "original_digest": "c86ef6a74d79954abeae992398a20b16ed4d93b655df998f0fde5e73dfc17b1c",
+    "verification_attempts": 2,
+    "applied_hunks": [
+     "h0"
+    ],
+    "withheld_hunks": [],
+    "final_verification": "ACCEPT",
+    "final_digest": "11653cc1d0737688e350ce3b60d1bae0e8e626158d342ac6282392c726e6ad19"
+   },
+   "errors": [],
+   "warnings": [
+    "fsync skipped (durability best-effort; set SLOPSLAP_FSYNC=1)"
+   ]
+  }
+ ]
+}
