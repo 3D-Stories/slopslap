@@ -200,11 +200,14 @@ no edit. *When in doubt, it changes nothing.*
   (v0.8.4), #46 (v0.8.3), #36 (v0.8.2), #47 (v0.8.1).
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
-- **Measured (#102):** the cross-model LLM-judge A/B has **run — 3 pairs, 9 blinded trials, the
-  slopslap-applied text preferred in 55.6% of decided trials (5 of 9; judge `gpt-5.6-sol`, model pinned
+- **Measured (#102):** the cross-model LLM-judge A/B has **run — 8 pairs, 24 blinded trials, the
+  slopslap-applied text preferred in 95.8% of decided trials (23 of 24; judge `gpt-5.6-sol`, model pinned
   by request and not echoed by the CLI)**; the human paired-preference rating is **built but not yet
-  run (0 raters)**. Both sit in `docs/reviews/2026-09-02-102-blind-paired-preference-results.md`, which
-  also records that the fixture set is 3 pairs against the issue's floor of 5 and why.
+  run (0 raters)**. The 8 pairs are anonymized paragraphs from the owner's own human-written documents,
+  approved one by one; 101 paragraphs entered the funnel and slopslap left 86 of them untouched. Both
+  results sit in `docs/reviews/2026-09-02-102-blind-paired-preference-results.md`, which leads with that
+  funnel. A first set of 3 pairs was discarded before publication: every one was a paragraph of a
+  machine-authored review report, not the owner's prose.
 - **Deferred (v2):** persistent voiceprint learning + its UserPromptSubmit capture hook. Scanner
   thresholds stay measure-only until a licensed calibration corpus with verbatim text clears the
   validation bar.
@@ -238,14 +241,20 @@ no edit. *When in doubt, it changes nothing.*
   `run_id` or `token` that file never handed out; and the rating page escapes every angle bracket,
   so no fixture byte leaves a literal `<` in it. One reviewer claim was REFUTED by direct
   measurement and is now pinned by `tests/test_eval_artifacts_102.py`: the committed judge run's
-  roles are correctly bound, so the 55.6% figure stands. One limit is DEFERRED and stated in the
+  roles are correctly bound, and that guard now recomputes every published figure from the trials
+  instead of pinning a number. One limit is DEFERRED and stated in the
   design doc: the Codex judge child runs under `--sandbox read-only`, which denies writes but not
-  reads (measured), so a tool-free transport is the real fix. Three
-  engine-applied `pair-102-*` fixtures (verbatim public design-doc paragraphs; `assemble.py apply`
-  output; reproducibility guard) — the issue's floor of 5 was NOT met on the default path
-  (31 sampled → 18 authorized under `spec` → 9 engine proposals → 3 verifier-accepted), stated in the
-  results doc with the owner's ways forward. Measured: LLM judge run, applied preferred in 5 of 9
-  trials (55.6% of decided), applied majority on 2 of 3 pairs; human: built, 0 raters yet. Results:
+  reads (measured), so a tool-free transport is the real fix. **Provenance correction, same day:**
+  the first fixture set (3 pairs from the two public repos) was discarded before publication —
+  every pair was a paragraph of a machine-authored adversarial-review report, and 16 of the 31
+  sampled paragraphs were, which four cross-model review passes had missed. The set was re-sourced
+  from 5 human-written documents the owner supplied: 101 paragraphs → 15 authorized by the free
+  offline audit → 11 anonymized (names → neutral words) and approved by the owner one by one → 9
+  engine edit scripts → 8 live-applied pairs (`SHIPPED_FLOOR = 8`; the issue's floor of 5 is met).
+  `load_eval_pairs` now refuses any fixture sourced from `docs/reviews/` or opening with a review
+  header, and the results document leads with the abstention funnel before any percentage.
+  Measured: LLM judge run, applied preferred in 23 of 24 trials (95.8% of decided), applied
+  majority on 8 of 8 pairs, scaffold BEAT on 6 of 8; human: built, 0 raters yet. Results:
   `docs/reviews/2026-09-02-102-blind-paired-preference-results.md`. Engine behavior unchanged: no
   scanner rule, table, threshold or genre profile moved.
 
