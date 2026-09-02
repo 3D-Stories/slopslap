@@ -269,6 +269,321 @@ def render_static_page(blind: dict) -> str:
     return _PAGE.replace("__DATA__", payload)
 
 
+# ---------------------------------------------------------------------------- judge (SLOPSLAP_LIVE)
+def _cross_model_guard(judge_model: str, engine_models: List[str]) -> None:
+    """Refuse a judge that is the rewrite engine (the same token rule as invoke._model_confirmed,
+    checked in both directions so an alias on either side still matches)."""
+    from slopslap_invoke.invoke import models_match  # noqa: PLC0415 (lazy; pure)
+    for em in engine_models:
+        if models_match(judge_model, [em]) or models_match(em, [judge_model]):
+            raise PairError(f"cross-model guard: judge model {judge_model!r} matches the rewrite "
+                            f"engine {em!r}; the judge must be a different model")
+
+
+def _verdict_json(v) -> dict:
+    return {"present": v.present, "errored": v.errored, "beat": v.beat, "detail": v.detail,
+            "candidate_median": v.candidate_median, "baseline_median": v.baseline_median}
+
+
+def run_judge(pairs: List[EvalPair], blind: dict, *, model: str, trials: int, timeout_s: float,
+              transport=None) -> dict:
+    """Live judge over every pair: `trials` blinded trials each, a fresh side order per trial,
+    scored through the judge.py scaffold. A failed call is a missing trial — never a verdict."""
+    from eval import judge as J  # noqa: PLC0415
+    by_id = {p.pair_id: p for p in pairs}
+    sink: dict = {}
+    fn = J.judge_fn_for(model, timeout_s=timeout_s, transport=transport, status_sink=sink)
+    run_id, seed = blind["run_id"], blind["seed"]
+    out_pairs = []
+    tot_valid = tot_failed = tot_app = tot_orig = tot_eq = 0
+    for bp in blind["pairs"]:
+        fx = by_id.get(bp["pair_id"])
+        if fx is None:
+            raise PairError(f"blind file pair {bp['pair_id']} is not in the fixture set (stale pairs.json)")
+        recs, jtrials = [], []
+        app = orig = eq = 0
+        for t in range(trials):
+            applied_first = random.Random(f"{seed}:{fx.pair_id}:{t}").random() < 0.5
+            a, b = (fx.applied, fx.original) if applied_first else (fx.original, fx.applied)
+            applied_side = "A" if applied_first else "B"
+            parsed = fn(a.decode("utf-8"), b.decode("utf-8"))
+            rec = {"trial": t, "applied_side": applied_side, "a_side_hash": side_hash(run_id, a),
+                   "b_side_hash": side_hash(run_id, b), "ok": parsed is not None}
+            if parsed is None:
+                rec.update(preferred_side=None, preferred_role=None)
+                tot_failed += 1
+            else:
+                role = J.role_of(parsed["preferred"], applied_side)
+                rec.update(preferred_side=parsed["preferred"], preferred_role=role,
+                           dimensions_role={d: J.role_of(v, applied_side) for d, v in parsed["dimensions"].items()},
+                           reason=parsed["reason"][:500])
+                jtrials.append(J.trial_from_blind(parsed, applied_side))
+                if role == "applied":
+                    app += 1
+                elif role == "original":
+                    orig += 1
+                else:
+                    eq += 1
+            recs.append(rec)
+        verdict = J.evaluate(jtrials)
+        tot_valid += len(jtrials); tot_app += app; tot_orig += orig; tot_eq += eq
+        out_pairs.append({"pair_id": fx.pair_id, "dir_name": fx.dir_name, "genre": fx.genre,
+                          "trials": recs, "valid_trials": len(jtrials), "verdict": _verdict_json(verdict),
+                          "applied_preferred_trials": app, "original_preferred_trials": orig,
+                          "equal_trials": eq, "majority_applied": app > orig})
+    decided = tot_app + tot_orig
+    summary = {
+        "pairs": len(out_pairs),
+        "pairs_completed": sum(1 for p in out_pairs if not p["verdict"]["errored"]),
+        "pairs_errored": sum(1 for p in out_pairs if p["verdict"]["errored"]),
+        "trials_valid": tot_valid, "trials_failed": tot_failed,
+        "applied_preferred_trials": tot_app, "original_preferred_trials": tot_orig, "equal_trials": tot_eq,
+        "applied_preference_pct_of_decided": (round(100.0 * tot_app / decided, 1) if decided else None),
+        "pairs_majority_applied": sum(1 for p in out_pairs if p["majority_applied"]),
+        "pairs_beat": sum(1 for p in out_pairs if p["verdict"]["beat"]),
+    }
+    status = "completed" if tot_valid else "failed"
+    obj = {"schema_version": SCHEMA_VERSION, "status": status, "model": model,
+           "model_confirmed": bool(sink.get("model_confirmed", False)),
+           "engine_models": sorted({p.engine_model for p in pairs if p.engine_model}),
+           "run_id": run_id, "seed": seed, "trials_per_pair": trials, "timeout_s": timeout_s,
+           "created_at": _now(), "pairs": out_pairs, "summary": summary}
+    if status == "failed":
+        obj["reason"] = (f"every judge call failed (last invocation_status="
+                         f"{sink.get('invocation_status', 'unknown')}); nothing to score")
+    return obj
+
+
+def _cmd_judge(args, stdin, stdout, judge_transport=None) -> int:
+    from eval.judge import live_judge_available  # noqa: PLC0415
+    pairs = load_eval_pairs(args.fixtures)
+    _cross_model_guard(args.model, sorted({p.engine_model for p in pairs if p.engine_model}))
+    blind = _blind_from_args(args)
+    if not live_judge_available():
+        _write_json(args.out, {
+            "schema_version": SCHEMA_VERSION, "status": "not_run", "model": args.model,
+            "model_confirmed": False, "created_at": _now(),
+            "reason": ("SLOPSLAP_LIVE is not '1' — the live judge did not run and nothing was called; "
+                       "set SLOPSLAP_LIVE=1 (Codex CLI + auth required) to run it")})
+        print(f"wrote {args.out}: judge not_run (SLOPSLAP_LIVE is not '1')", file=stdout)
+        return EXIT_OK
+    obj = run_judge(pairs, blind, model=args.model, trials=args.trials, timeout_s=args.timeout,
+                    transport=judge_transport)
+    _write_json(args.out, obj)
+    s = obj["summary"]
+    print(f"wrote {args.out}: status {obj['status']}, {s['pairs']} pair(s), {s['trials_valid']} valid trial(s), "
+          f"{s['trials_failed']} failed, applied preferred in {s['applied_preferred_trials']} "
+          f"({s['applied_preference_pct_of_decided']}% of decided)", file=stdout)
+    return EXIT_OK if obj["status"] == "completed" else EXIT_FAILED
+
+
+# ---------------------------------------------------------------------------- report
+def recover_applied_side(pick: dict, fx: EvalPair, run_id: str) -> str:
+    """Which blind side held the applied text, recovered from THIS fixture's bytes under the picks
+    file's run_id. Refuses (PairError) a drifted source, missing/equal side hashes, a side that
+    matches neither file or both, or a recovered role set other than exactly {original, applied}."""
+    pid = pick.get("pair_id")
+    if pick.get("source_sha256") != fx.source_sha256:
+        raise PairError(f"pick {pid}: source_sha256 does not match the fixture (drifted file / replay)")
+    a, b = pick.get("a_side_hash"), pick.get("b_side_hash")
+    if not isinstance(a, str) or not isinstance(b, str) or not a or not b or a == b:
+        raise PairError(f"pick {pid}: side hashes are missing or equal")
+    h_orig, h_app = side_hash(run_id, fx.original), side_hash(run_id, fx.applied)
+    roles = {}
+    for side, h in (("A", a), ("B", b)):
+        if h == h_orig and h != h_app:
+            roles[side] = "original"
+        elif h == h_app and h != h_orig:
+            roles[side] = "applied"
+        else:
+            raise PairError(f"pick {pid}: side {side} hash matches neither fixture file (or both) "
+                            f"under run_id {run_id!r}")
+    if set(roles.values()) != {"original", "applied"}:
+        raise PairError(f"pick {pid}: recovered roles are {sorted(roles.values())}, not exactly original+applied")
+    return "A" if roles["A"] == "applied" else "B"
+
+
+def score_picks(picks_obj: dict, by_id: dict) -> dict:
+    """One rater's picks → counts. Every pick is validated (PairError on any drift)."""
+    if not isinstance(picks_obj, dict) or picks_obj.get("schema_version") != SCHEMA_VERSION:
+        raise PairError("picks file is not schema_version 1")
+    run_id = picks_obj.get("run_id")
+    if not isinstance(run_id, str) or not run_id:
+        raise PairError("picks file has no run_id")
+    picks = picks_obj.get("picks")
+    if not isinstance(picks, list):
+        raise PairError("picks file has no picks list")
+    app = orig = eq = 0
+    out = []
+    for pk in picks:
+        if not isinstance(pk, dict):
+            raise PairError("a pick is not an object")
+        fx = by_id.get(pk.get("pair_id"))
+        if fx is None:
+            raise PairError(f"pick names unknown pair_id {pk.get('pair_id')!r}")
+        applied_side = recover_applied_side(pk, fx, run_id)
+        pick = pk.get("pick")
+        if pick not in ("A", "B", "equal"):
+            raise PairError(f"pick {fx.pair_id}: pick must be A, B or equal")
+        role = "equal" if pick == "equal" else ("applied" if pick == applied_side else "original")
+        if role == "applied":
+            app += 1
+        elif role == "original":
+            orig += 1
+        else:
+            eq += 1
+        out.append({"pair_id": fx.pair_id, "dir_name": fx.dir_name, "pick": pick,
+                    "applied_side": applied_side, "role": role})
+    decided = app + orig
+    return {"rater": str(picks_obj.get("rater") or "rater"), "mode": str(picks_obj.get("mode") or ""),
+            "run_id": run_id, "pairs_rated": len(out), "applied_preferred": app,
+            "original_preferred": orig, "equal": eq,
+            "applied_pct_of_decided": (round(100.0 * app / decided, 1) if decided else None),
+            "picks": out}
+
+
+def _pct(v) -> str:
+    return "n/a" if v is None else f"{v:g}%"
+
+
+def render_results_md(results: dict) -> str:
+    fx = results["fixtures"]
+    lines = [
+        "# Blind paired-preference eval of slopslap's own output — results (#102)", "",
+        f"Generated {results['created_at']} by `scripts/eval/preference.py report`. Human raters and the "
+        "LLM judge are reported in SEPARATE sections and never combined into one number. This document "
+        "reports preference counts and percentages only; it carries no single quality score of any kind.", "",
+        "## Method", "",
+        "- Each fixture is one real design-doc paragraph (`original.md`) and the output of "
+        "`scripts/slopslap_assemble/assemble.py apply` on it (`applied.md`), produced from a committed "
+        "edit-script authored by the slopslap engine — never hand-written.",
+        "- `build` shows the two as sides A and B in a seeded random order per pair; a rater picks A, B, or "
+        "no preference. The pick is recorded with both side hashes (so the side order rides with the pick) "
+        "and bound to the pair's `source_sha256`.",
+        "- The LLM judge sees the same blind A/B, three trials per pair with a fresh side order each time, and "
+        "answers per dimension plus an overall preference; the nine-dimension scaffold in "
+        "`scripts/eval/judge.py` scores each trial as applied-vs-original.",
+        "- Roles are recovered per fixture from the recorded hashes at report time; a pick that does not "
+        "resolve to exactly one original and one applied side is refused, never counted.", "",
+        f"## Fixture set — {len(fx)} pairs", "",
+        "| pair | source (repo · path · lines) | genre | engine |", "|---|---|---|---|",
+    ]
+    for f in fx:
+        src = f.get("source") or {}
+        where = " · ".join(str(src.get(k)) for k in ("repo", "path", "lines") if src.get(k)) or "(see fixture.json provenance)"
+        lines.append(f"| `{f['dir_name']}` | {where} | {f['genre']} | `{f['engine_model']}` |")
+    ab = results.get("abstentions")
+    if ab:
+        lines += ["", f"Abstentions: the engine abstained on {ab.get('count', len(ab.get('items', [])))} "
+                  f"sampled paragraph(s), which therefore yield no pair (listed in `{ab.get('file', 'the abstentions file')}`)."]
+    else:
+        lines += ["", "Abstentions: not recorded for this run."]
+    # ---- human
+    lines += ["", "## Human raters", ""]
+    raters = results["human"]["raters"]
+    if not raters:
+        lines += ["**Human mode: not yet run — 0 raters.** The rating page and the terminal loop are built "
+                  "(`preference.py human`), but no human has rated these pairs yet. No human preference "
+                  "percentage exists to report."]
+    else:
+        lines += [f"{len(raters)} rater(s). Percentages are of DECIDED picks (A or B); no-preference picks are "
+                  "counted separately and never folded into a percentage.", "",
+                  "| rater | mode | pairs rated | applied preferred | original preferred | no preference | applied % of decided |",
+                  "|---|---|---|---|---|---|---|"]
+        for r in raters:
+            lines.append(f"| {r['rater']} | {r['mode']} | {r['pairs_rated']} pairs | {r['applied_preferred']} | "
+                         f"{r['original_preferred']} | {r['equal']} | {_pct(r['applied_pct_of_decided'])} |")
+        n = len(raters)
+        lines += ["", f"Sample: {n} rater(s) over {len(fx)} pairs — a small sample; read the percentage as a "
+                  "direction, not a measurement."]
+    # ---- llm judge
+    lines += ["", "## LLM judge", ""]
+    lj = results["llm_judge"]
+    if lj.get("status") == "completed":
+        s = lj["summary"]
+        lines += [f"Judge model: `{lj['model']}` (pinned by `-m`, not echoed by the Codex CLI — "
+                  f"`model_confirmed: {str(lj.get('model_confirmed', False)).lower()}`). Rewrite engine(s): "
+                  f"{', '.join('`' + e + '`' for e in lj.get('engine_models', [])) or 'unrecorded'} — cross-model by construction.",
+                  "",
+                  f"{s['trials_valid']} trials over {s['pairs']} pairs ({lj['trials_per_pair']} per pair, "
+                  f"{s['trials_failed']} failed call(s), {s['pairs_errored']} pair(s) errored and excluded from percentages).",
+                  "",
+                  f"- Applied text preferred in **{s['applied_preferred_trials']}** trial(s), original in "
+                  f"**{s['original_preferred_trials']}**, no preference in **{s['equal_trials']}** → applied "
+                  f"preferred in **{_pct(s['applied_preference_pct_of_decided'])}** of decided trials.",
+                  f"- Pairs where the applied text won the majority of trials: **{s['pairs_majority_applied']} of {s['pairs']}**.",
+                  f"- Pairs that BEAT the original on the nine-dimension scaffold criterion: **{s['pairs_beat']} of {s['pairs']}**.",
+                  "", "| pair | valid trials | applied | original | no pref | beat |", "|---|---|---|---|---|---|"]
+        for p in lj["pairs"]:
+            lines.append(f"| `{p.get('dir_name', p['pair_id'])}` | {p['valid_trials']} | {p['applied_preferred_trials']} | "
+                         f"{p['original_preferred_trials']} | {p['equal_trials']} | "
+                         f"{'yes' if p['verdict']['beat'] else ('errored' if p['verdict']['errored'] else 'no')} |")
+    elif lj.get("status") == "failed":
+        lines += [f"**LLM judge: failed** — {lj.get('reason', 'no reason recorded')}. No judge percentage exists to report."]
+    else:
+        lines += [f"**LLM judge: not run** — {lj.get('reason', 'no judge.json was supplied')}."]
+    # ---- limitations + reproduce
+    lines += ["", "## Limitations", "",
+              f"- Sample size: {len(fx)} pairs. Any percentage here is a direction, not a measurement.",
+              "- Selection: paragraphs were sampled from the owner's public design docs where the measure-only scanner "
+              "reported at least one tell, so the set skews toward flagged prose; abstentions are reported, not hidden.",
+              "- The judge model is pinned by the request and not confirmed from the CLI's output.",
+              "- A rater who inspects the fixture directories, `judge.json`, or hashes the side texts can de-blind "
+              "themselves; the page and the blind file show no role in the clear.",
+              "- The rewrite engine and the judge are different models; a human rating is the primary evidence and "
+              "the LLM judge is secondary.", "",
+              "## Reproduce", "", "```bash",
+              "python3 scripts/eval/preference.py build --seed <seed> --out pairs.json",
+              "python3 scripts/eval/preference.py human --pairs pairs.json --static rate.html   # or --rater NAME",
+              "SLOPSLAP_LIVE=1 python3 scripts/eval/preference.py judge --pairs pairs.json --model gpt-5.6-sol --out judge.json",
+              "python3 scripts/eval/preference.py report --picks picks-<rater>.json --judge judge.json --out results.md --json results.json",
+              "```", ""]
+    return "\n".join(lines)
+
+
+def _cmd_report(args, stdin, stdout) -> int:
+    pairs = load_eval_pairs(args.fixtures)
+    by_id = {p.pair_id: p for p in pairs}
+    raters = []
+    for pf in (args.picks or []):
+        with open(pf, "r", encoding="utf-8") as fh:
+            obj = json.load(fh)
+        try:
+            raters.append(score_picks(obj, by_id))
+        except PairError as err:
+            raise PairError(f"{pf}: {err}") from err
+    if args.judge:
+        with open(args.judge, "r", encoding="utf-8") as fh:
+            lj = json.load(fh)
+        if not isinstance(lj, dict) or "status" not in lj:
+            raise PairError(f"{args.judge}: not a judge.json")
+    else:
+        lj = {"status": "not_run", "reason": "no judge.json was supplied to report"}
+    abst = None
+    if args.abstentions:
+        with open(args.abstentions, "r", encoding="utf-8") as fh:
+            abst = json.load(fh)
+        abst = dict(abst, file=os.path.relpath(args.abstentions, REPO)) if isinstance(abst, dict) else None
+    fixtures = []
+    for p in pairs:
+        with open(os.path.join(p.path, "fixture.json"), "r", encoding="utf-8") as fh:
+            m = json.load(fh)
+        src = m.get("eval_pair", {}).get("source") if isinstance(m.get("eval_pair"), dict) else None
+        fixtures.append({"dir_name": p.dir_name, "pair_id": p.pair_id, "genre": p.genre,
+                         "engine_model": p.engine_model, "source_sha256": p.source_sha256,
+                         "applied_sha256": p.applied_sha256, "source": src if isinstance(src, dict) else None})
+    results = {"schema_version": SCHEMA_VERSION, "issue": 102, "created_at": _now(), "fixtures": fixtures,
+               "abstentions": abst, "human": {"raters": raters}, "llm_judge": lj}
+    md = render_results_md(results)
+    os.makedirs(os.path.dirname(os.path.abspath(args.out)) or ".", exist_ok=True)
+    with open(args.out, "w", encoding="utf-8") as fh:
+        fh.write(md)
+    if args.json:
+        _write_json(args.json, results)
+    print(f"wrote {args.out}" + (f" and {args.json}" if args.json else ""), file=stdout)
+    return EXIT_OK
+
+
 # ---------------------------------------------------------------------------- CLI
 def _blind_from_args(args) -> dict:
     if getattr(args, "pairs", None):
@@ -315,13 +630,27 @@ def _build_argparser() -> argparse.ArgumentParser:
     h.add_argument("--rater", default=None)
     h.add_argument("--out", default="picks.json")
     h.add_argument("--static", default=None, help="write a self-contained rating page instead of the loop")
+
+    j = sub.add_parser("judge", help="cross-model LLM judge over the blind pairs (needs SLOPSLAP_LIVE=1)")
+    j.add_argument("--pairs", default=None, help="an existing blind pairs.json (else build internally)")
+    j.add_argument("--fixtures", default=FIXTURES_DEFAULT)
+    j.add_argument("--seed", default=None)
+    j.add_argument("--model", required=True, help="judge model id, e.g. gpt-5.6-sol (must differ from the engine)")
+    j.add_argument("--trials", type=int, default=3)
+    j.add_argument("--timeout", type=float, default=180.0)
+    j.add_argument("--out", default="judge.json")
+
+    r = sub.add_parser("report", help="score picks + judge.json into the results document")
+    r.add_argument("--fixtures", default=FIXTURES_DEFAULT)
+    r.add_argument("--picks", action="append", default=[], help="repeatable; a rater's picks JSON")
+    r.add_argument("--judge", default=None, help="the judge.json from `judge`")
+    r.add_argument("--abstentions", default=None, help="optional JSON listing sampled paragraphs the engine abstained on")
+    r.add_argument("--out", default="results.md")
+    r.add_argument("--json", default=None, help="also write the results object here")
     return ap
 
 
-_COMMANDS = {"build": _cmd_build, "human": _cmd_human}
-
-
-def main(argv=None, stdin=None, stdout=None) -> int:
+def main(argv=None, stdin=None, stdout=None, judge_transport=None) -> int:
     stdin = stdin if stdin is not None else sys.stdin
     stdout = stdout if stdout is not None else sys.stdout
     ap = _build_argparser()
@@ -330,7 +659,9 @@ def main(argv=None, stdin=None, stdout=None) -> int:
     except SystemExit as exc:
         return EXIT_OK if exc.code in (0, None) else EXIT_INVALID
     try:
-        return _COMMANDS[args.cmd](args, stdin, stdout)
+        if args.cmd == "judge":
+            return _cmd_judge(args, stdin, stdout, judge_transport=judge_transport)
+        return {"build": _cmd_build, "human": _cmd_human, "report": _cmd_report}[args.cmd](args, stdin, stdout)
     except PairError as err:
         print(f"preference {args.cmd}: refused — {err}", file=sys.stderr)
         return EXIT_INVALID
