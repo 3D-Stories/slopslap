@@ -333,6 +333,7 @@
   "equal_trials": 0,
   "applied_preference_pct_of_decided": 55.6,
   "pairs_majority_applied": 2,
-  "pairs_beat": 2
+  "pairs_beat": 2,
+  "trials_scored": 9
  }
 }

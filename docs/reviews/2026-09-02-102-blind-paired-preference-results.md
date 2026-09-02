@@ -1,6 +1,6 @@
 # Blind paired-preference eval of slopslap's own output — results (#102)
 
-Generated 2026-09-02T09:11:13Z by `scripts/eval/preference.py report`. Human raters and the LLM judge are reported in SEPARATE sections and never combined into one number. This document reports preference counts and percentages only; it carries no single quality score of any kind.
+Generated 2026-09-02T09:43:09Z by `scripts/eval/preference.py report`. Human raters and the LLM judge are reported in SEPARATE sections and never combined into one number. This document reports preference counts and percentages only; it carries no single quality score of any kind.
 
 ## Method
 
@@ -43,7 +43,7 @@ The full per-paragraph ledger (source, disposition, note) is `docs/reviews/102-e
 
 Judge model: `gpt-5.6-sol` (pinned by `-m`, not echoed by the Codex CLI — `model_confirmed: false`). Rewrite engine(s): `claude-fable-5-1` — cross-model by construction.
 
-9 trials over 3 pairs (3 per pair, 0 failed call(s), 0 pair(s) errored and excluded from percentages).
+9 valid trials over 3 pairs (3 per pair, 0 failed call(s), 0 pair(s) errored). The percentages below come from the 9 trial(s) inside the 3 pair(s) that reached a present, non-errored verdict; an errored pair's trials are excluded.
 
 - Applied text preferred in **5** trial(s), original in **4**, no preference in **0** → applied preferred in **55.6%** of decided trials.
 - Pairs where the applied text won the majority of trials: **2 of 3**.
@@ -60,7 +60,7 @@ Judge model: `gpt-5.6-sol` (pinned by `-m`, not echoed by the Codex CLI — `mod
 - Sample size: 3 pairs. Any percentage here is a direction, not a measurement.
 - Selection: paragraphs were sampled from the owner's public design docs where the measure-only scanner reported at least one tell, so the set skews toward flagged prose; abstentions are reported, not hidden.
 - The judge model is pinned by the request and not confirmed from the CLI's output.
-- A rater who inspects the fixture directories, `judge.json`, or hashes the side texts can de-blind themselves; the page and the blind file show no role in the clear.
+- The rater-facing page carries neither `source_sha256` nor `pair_id`, so hashing the two texts on screen no longer recovers a role. A rater with repository access can still de-blind themselves from the fixture directories, the private blind file, or `judge.json` — those are operator artifacts.
 - The rewrite engine and the judge are different models; a human rating is the primary evidence and the LLM judge is secondary.
 
 ## Reproduce

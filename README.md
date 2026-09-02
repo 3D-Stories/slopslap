@@ -217,7 +217,17 @@ no edit. *When in doubt, it changes nothing.*
   through a new Codex transport, `invoke_judge`, gated on `SLOPSLAP_LIVE=1`, refusing any judge that
   token-matches the rewrite engine) runs 3 blinded trials per pair through the existing 9-dimension
   scaffold. Every pick binds to `source_sha256` plus a salted hash of the bytes on each side, so the
-  side order rides with the pick and a drifted fixture set is refused, never mis-scored. Three
+  side order rides with the pick and a drifted fixture set is refused, never mis-scored — and the
+  rater-facing page carries neither `source_sha256` nor `pair_id`, since either lets a rater hash the
+  two texts on screen and read the source side off it; `report` re-binds each page pick from its side
+  hashes, so the binding survives without the page ever holding it. A cross-model review round also
+  hardened the numbers themselves: a pair may be picked only once and one rater gives one file (a
+  repeat used to inflate the percentage); an errored pair's trials are excluded from the percentages
+  the results doc already claimed excluded them; a judge run is `completed` only when EVERY pair
+  reached a full non-errored verdict (`partial`, exit 4, otherwise); `report` recomputes a supplied
+  `judge.json` against the current fixtures before publishing it; a fixture is loaded only when the
+  committed edit script replays to its applied bytes and it names an engine model; and the Codex judge
+  child no longer inherits `CLAUDE_*`/`ANTHROPIC_*` variables across the vendor boundary. Three
   engine-applied `pair-102-*` fixtures (verbatim public design-doc paragraphs; `assemble.py apply`
   output; reproducibility guard) — the issue's floor of 5 was NOT met on the default path
   (31 sampled → 18 authorized under `spec` → 9 engine proposals → 3 verifier-accepted), stated in the
