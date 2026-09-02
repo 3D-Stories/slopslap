@@ -1,6 +1,6 @@
 # Blind paired-preference eval of slopslap's own output — results (#102)
 
-Generated 2026-09-02T09:43:09Z by `scripts/eval/preference.py report`. Human raters and the LLM judge are reported in SEPARATE sections and never combined into one number. This document reports preference counts and percentages only; it carries no single quality score of any kind.
+Generated 2026-09-02T13:39:16Z by `scripts/eval/preference.py report`. Human raters and the LLM judge are reported in SEPARATE sections and never combined into one number. This document reports preference counts and percentages only; it carries no single quality score of any kind.
 
 ## Method
 
@@ -57,6 +57,7 @@ Judge model: `gpt-5.6-sol` (pinned by `-m`, not echoed by the Codex CLI — `mod
 
 ## Limitations
 
+- A rater's picks are evidence only against the blind file the operator issued: `report` refuses `--picks` without `--pairs`, and refuses a pick whose `run_id` or `token` that file never handed out. Side hashes alone recompute from the committed fixture bytes, so a self-consistent picks file proves only that its author can run sha256.
 - Sample size: 3 pairs. Any percentage here is a direction, not a measurement.
 - Selection: paragraphs were sampled from the owner's public design docs where the measure-only scanner reported at least one tell, so the set skews toward flagged prose; abstentions are reported, not hidden.
 - The judge model is pinned by the request and not confirmed from the CLI's output.
@@ -69,5 +70,6 @@ Judge model: `gpt-5.6-sol` (pinned by `-m`, not echoed by the Codex CLI — `mod
 python3 scripts/eval/preference.py build --seed <seed> --out pairs.json
 python3 scripts/eval/preference.py human --pairs pairs.json --static rate.html   # or --rater NAME
 SLOPSLAP_LIVE=1 python3 scripts/eval/preference.py judge --pairs pairs.json --model gpt-5.6-sol --out judge.json
-python3 scripts/eval/preference.py report --picks picks-<rater>.json --judge judge.json --out results.md --json results.json
+python3 scripts/eval/preference.py report --pairs pairs.json --picks picks-<rater>.json \
+    --judge judge.json --out results.md --json results.json   # --pairs is REQUIRED with --picks
 ```

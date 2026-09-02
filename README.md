@@ -227,7 +227,20 @@ no edit. *When in doubt, it changes nothing.*
   reached a full non-errored verdict (`partial`, exit 4, otherwise); `report` recomputes a supplied
   `judge.json` against the current fixtures before publishing it; a fixture is loaded only when the
   committed edit script replays to its applied bytes and it names an engine model; and the Codex judge
-  child no longer inherits `CLAUDE_*`/`ANTHROPIC_*` variables across the vendor boundary. Three
+  child no longer inherits `CLAUDE_*`/`ANTHROPIC_*` variables across the vendor boundary. A
+  second, whole-diff review round then closed six more: a supplied `pairs.json` must now cover the
+  whole fixture set (a trimmed one used to yield a `completed` run over its own subset); a judge
+  run must cover every fixture; every per-pair counter, the `majority_applied` flag and the
+  scaffold `beat` verdict are re-derived from the recorded trials rather than trusted, so
+  `pairs_majority_applied` and `pairs_beat` can no longer be published unchecked; an errored pair
+  is never counted as a majority win; a fixture's `apply_result.json` must bind to its own source;
+  `report` refuses `--picks` without the blind file the operator issued, and refuses a pick whose
+  `run_id` or `token` that file never handed out; and the rating page escapes every angle bracket,
+  so no fixture byte leaves a literal `<` in it. One reviewer claim was REFUTED by direct
+  measurement and is now pinned by `tests/test_eval_artifacts_102.py`: the committed judge run's
+  roles are correctly bound, so the 55.6% figure stands. One limit is DEFERRED and stated in the
+  design doc: the Codex judge child runs under `--sandbox read-only`, which denies writes but not
+  reads (measured), so a tool-free transport is the real fix. Three
   engine-applied `pair-102-*` fixtures (verbatim public design-doc paragraphs; `assemble.py apply`
   output; reproducibility guard) — the issue's floor of 5 was NOT met on the default path
   (31 sampled → 18 authorized under `spec` → 9 engine proposals → 3 verifier-accepted), stated in the
