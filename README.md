@@ -203,8 +203,9 @@ no edit. *When in doubt, it changes nothing.*
 - **Measured (#102):** the cross-model LLM-judge A/B has **run — 8 pairs, 24 blinded trials, the
   slopslap-applied text preferred in 100% of decided trials (24 of 24; judge `gpt-5.6-sol`, model pinned
   by request and not echoed by the CLI, genre-neutral rubric; a first run under a technical-document
-  rubric gave 23 of 24 and is recorded in the design doc)**; the human paired-preference rating is
-  **built but not yet run (0 raters)**. The 8 pairs are anonymized paragraphs from the owner's own human-written documents,
+  rubric gave 23 of 24 and is recorded in the design doc)**; the human paired-preference rating has
+  **run with 1 rater (the owner, blind, via AskUserQuestion): the applied text preferred in 6 of 8
+  pairs (75% of decided), the original in 2**. The 8 pairs are anonymized paragraphs from the owner's own human-written documents,
   approved one by one; 101 paragraphs entered the funnel and slopslap left 86 of them untouched. Both
   results sit in `docs/reviews/2026-09-02-102-blind-paired-preference-results.md`, which leads with that
   funnel. A first set of 3 pairs was discarded before publication: every one was a paragraph of a
@@ -260,7 +261,9 @@ no edit. *When in doubt, it changes nothing.*
   document" (`judge.py` and the rating page); the owner chose to make it genre-neutral and re-run.
   Measured (published, neutral rubric): applied preferred in 24 of 24 trials (100% of decided),
   applied majority on 8 of 8 pairs, scaffold BEAT on 6 of 8; the first run under the old rubric gave
-  23 of 24 and is recorded in the design doc. Human: built, 0 raters yet. Results:
+  23 of 24 and is recorded in the design doc. Human: 1 rater (the owner, blind), applied preferred
+  in 6 of 8 pairs (75% of decided), original in 2 — picks committed as
+  `docs/reviews/102-eval/picks-chris.json`. Results:
   `docs/reviews/2026-09-02-102-blind-paired-preference-results.md`. Engine behavior unchanged: no
   scanner rule, table, threshold or genre profile moved.
 

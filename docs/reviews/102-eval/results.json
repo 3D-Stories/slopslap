@@ -1,7 +1,7 @@
 {
  "schema_version": 1,
  "issue": 102,
- "created_at": "2026-09-02T16:57:31Z",
+ "created_at": "2026-09-02T17:24:36Z",
  "fixtures": [
   {
    "dir_name": "pair-102-p008-leadership-program-intensifier",
@@ -1743,7 +1743,84 @@
   "file": "docs/reviews/102-eval/sampled-paragraphs.json"
  },
  "human": {
-  "raters": []
+  "raters": [
+   {
+    "rater": "chris",
+    "mode": "askuserquestion",
+    "run_id": "257f3edc3a450a4527157d41959583e5",
+    "pairs_rated": 8,
+    "applied_preferred": 6,
+    "original_preferred": 2,
+    "equal": 0,
+    "applied_pct_of_decided": 75.0,
+    "picks": [
+     {
+      "pair_id": "21ba57a51f81f2be",
+      "dir_name": "pair-102-p008-leadership-program-intensifier",
+      "pick": "B",
+      "source_sha256": "b26b5b9a8e5cfd74e4c9eb6180a948649d1e6663c36f0df17b55ff159aa65a5b",
+      "applied_side": "B",
+      "role": "applied"
+     },
+     {
+      "pair_id": "00191c3aa2e36b7b",
+      "dir_name": "pair-102-p040-unique-insights-intensifier",
+      "pick": "A",
+      "source_sha256": "c86ef6a74d79954abeae992398a20b16ed4d93b655df998f0fde5e73dfc17b1c",
+      "applied_side": "B",
+      "role": "original"
+     },
+     {
+      "pair_id": "e6147f16c164e536",
+      "dir_name": "pair-102-p087-knowledge-gained-passive",
+      "pick": "B",
+      "source_sha256": "8f088b340cdbc0599848d4cdad2cec40ca8398bc74d8763b8f4f3b1b188a52d9",
+      "applied_side": "B",
+      "role": "applied"
+     },
+     {
+      "pair_id": "df7edb42b9ee2864",
+      "dir_name": "pair-102-p093-thought-leadership-transition",
+      "pick": "B",
+      "source_sha256": "9712987fb09f994efb071ea2d5256734b45898c52eec372c4d741db04074d0c0",
+      "applied_side": "B",
+      "role": "applied"
+     },
+     {
+      "pair_id": "1703ed5c5b62b30e",
+      "dir_name": "pair-102-p104-detached-leadership-syntax",
+      "pick": "A",
+      "source_sha256": "334ee4e4491fcabd0c0fa3a59b606a70bdecefc8c630bef8530a191e4f6b9ed6",
+      "applied_side": "A",
+      "role": "applied"
+     },
+     {
+      "pair_id": "32e2aac826f4cf00",
+      "dir_name": "pair-102-p128-safe-environment-passive",
+      "pick": "B",
+      "source_sha256": "0bb28e953c452b00656392f9af440425d921498a443d7a42d559fd44227b59d8",
+      "applied_side": "B",
+      "role": "applied"
+     },
+     {
+      "pair_id": "bf52a6cedbf1c818",
+      "dir_name": "pair-102-p133-recognition-filler",
+      "pick": "B",
+      "source_sha256": "e3635525cf6effcdf24cea2d4084b106a0c76aceccacabf2e095b580490be50e",
+      "applied_side": "B",
+      "role": "applied"
+     },
+     {
+      "pair_id": "f560cbea279df8de",
+      "dir_name": "pair-102-p139-planning-style-passive",
+      "pick": "A",
+      "source_sha256": "d2f552d58b396fc7a99db1ac6f181bf207b13c703b0f4e5ed73f9ef40e4b6899",
+      "applied_side": "B",
+      "role": "original"
+     }
+    ]
+   }
+  ]
  },
  "llm_judge": {
   "schema_version": 1,

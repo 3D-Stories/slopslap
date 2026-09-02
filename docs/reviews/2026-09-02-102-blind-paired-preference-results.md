@@ -1,6 +1,6 @@
 # Blind paired-preference eval of slopslap's own output — results (#102)
 
-Generated 2026-09-02T16:57:31Z by `scripts/eval/preference.py report`. Human raters and the LLM judge are reported in SEPARATE sections and never combined into one number. This document reports preference counts and percentages only; it carries no single quality score of any kind.
+Generated 2026-09-02T17:24:36Z by `scripts/eval/preference.py report`. Human raters and the LLM judge are reported in SEPARATE sections and never combined into one number. This document reports preference counts and percentages only; it carries no single quality score of any kind.
 
 ## Abstention funnel — read this first
 
@@ -55,7 +55,13 @@ The full per-paragraph ledger (source, disposition, note) is `docs/reviews/102-e
 
 ## Human raters
 
-**Human mode: not yet run — 0 raters.** The rating page and the terminal loop are built (`preference.py human`), but no human has rated these pairs yet. No human preference percentage exists to report.
+1 rater(s). Percentages are of DECIDED picks (A or B); no-preference picks are counted separately and never folded into a percentage.
+
+| rater | mode | pairs rated | applied preferred | original preferred | no preference | applied % of decided |
+|---|---|---|---|---|---|---|
+| chris | askuserquestion | 8 pairs | 6 | 2 | 0 | 75% |
+
+Sample: 1 rater(s) over 8 pairs — a small sample; read the percentage as a direction, not a measurement.
 
 ## LLM judge
 
