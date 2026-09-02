@@ -1,0 +1,422 @@
+{
+ "schema_version": 1,
+ "run_id": "d2f552d58b39",
+ "status": "ok",
+ "semantic_mode": "live",
+ "stages": [
+  {
+   "stage": "audit",
+   "status": "ok",
+   "code": "ok",
+   "message": "audit complete",
+   "data": {
+    "schema_version": 1,
+    "run_id": "d2f552d58b39",
+    "source_path": "/home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p139/doc.md",
+    "source_sha256": "d2f552d58b396fc7a99db1ac6f181bf207b13c703b0f4e5ed73f9ef40e4b6899",
+    "byte_length": 694,
+    "fmt": "markdown",
+    "genre": "spec",
+    "genre_confidence": "low",
+    "genre_reason": "no usable genre signal; asymmetric-failure fallback to the most-preservation-heavy profile (spec)",
+    "audit_status": "flagged",
+    "metrics": {
+     "sentence_length_distribution": {
+      "eligible_units": 5,
+      "count": 5,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "sent-dist-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "distribution": {
+       "min": 2,
+       "p10": 9.2,
+       "p25": 20.0,
+       "median": 21.0,
+       "p75": 21.0,
+       "p90": 35.400000000000006,
+       "max": 45,
+       "mean": 21.8,
+       "sd": 13.673
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "sentence_length_dispersion": {
+      "eligible_units": 5,
+      "count": 5,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "sent-disp-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "dispersion": {
+       "iqr_over_median": 0.048,
+       "cov": 0.627,
+       "median_adjacent_diff": 13.0
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "punctuation_rates": {
+      "eligible_units": 109,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "punct-v2",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "rates": {
+       "em_dash_per_1k": 0.0,
+       "semicolon_per_1k": 0.0,
+       "em_dash": 0,
+       "semicolon": 0
+      },
+      "thresholds": {
+       "em_dash_per_1k": 12.0,
+       "semicolon_per_1k": 8.0
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "negative_parallelism": {
+      "eligible_units": 109,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "negparallel-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "thresholds": {
+       "flag_at_count": 5
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "rule_of_three": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "tricolon-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "paragraph_sentence_count_runs": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "para-runs-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "bold_label_density": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "bold-label-v2",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "repeated_openers": {
+      "eligible_units": 5,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "openers-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "transition_clusters": {
+      "eligible_units": 109,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "transition-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "vague_attribution": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "vague-attr-tables-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "stock_lexical_clusters": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "stock-tables-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "generic_diction": {
+      "eligible_units": 1,
+      "count": 1,
+      "rate": null,
+      "locations": [
+       {
+        "word": "synergy",
+        "kind": "buzzword",
+        "line_start": 1
+       }
+      ],
+      "soft_flag": false,
+      "metric_version": "generic-diction-tables-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     }
+    },
+    "authorization": {
+     "state": "authorized",
+     "ranges": [
+      {
+       "start_byte": 0,
+       "end_byte": 694
+      }
+     ]
+    },
+    "protected_spans": [],
+    "invariant_regions": [
+     {
+      "start_byte": 307,
+      "end_byte": 452,
+      "checks": [
+       "conditions"
+      ]
+     },
+     {
+      "start_byte": 453,
+      "end_byte": 576,
+      "checks": [
+       "modality",
+       "negation"
+      ]
+     },
+     {
+      "start_byte": 577,
+      "end_byte": 693,
+      "checks": [
+       "modality",
+       "conditions"
+      ]
+     }
+    ],
+    "ledger": {
+     "canonical": {
+      "schema_version": 1,
+      "source_sha256": "d2f552d58b396fc7a99db1ac6f181bf207b13c703b0f4e5ed73f9ef40e4b6899",
+      "entries": [
+       {
+        "id": "e0_conditions",
+        "kind": "condition",
+        "source": {
+         "start_byte": 307,
+         "end_byte": 452,
+         "text_hash": "005a11732a64d70a8f232606e5ff21644695564d8d8cb91c606a287e0a98fe42"
+        },
+        "extracted": {
+         "when": 1
+        },
+        "preservation": "relationship_exact",
+        "confidence": 850
+       },
+       {
+        "id": "e1_modality",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 453,
+         "end_byte": 576,
+         "text_hash": "9d0b3038346c995cab36e2b46b073bd289f36542a0d1dcb9177933d6d39f7a27"
+        },
+        "extracted": {
+         "modals": {
+          "should not": 1
+         },
+         "neg": {
+          "not": 1
+         }
+        },
+        "preservation": "semantic_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e1_negation",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 453,
+         "end_byte": 576,
+         "text_hash": "9d0b3038346c995cab36e2b46b073bd289f36542a0d1dcb9177933d6d39f7a27"
+        },
+        "extracted": {
+         "modals": {
+          "should not": 1
+         },
+         "neg": {
+          "not": 1
+         }
+        },
+        "preservation": "semantic_exact",
+        "confidence": 900
+       },
+       {
+        "id": "e2_conditions",
+        "kind": "condition",
+        "source": {
+         "start_byte": 577,
+         "end_byte": 693,
+         "text_hash": "4e1fb2303710e3bb688b3dd84d18bb2bd6bc310830c20011b0de1acfd1de55ab"
+        },
+        "extracted": {
+         "when": 1
+        },
+        "preservation": "relationship_exact",
+        "confidence": 850
+       },
+       {
+        "id": "e2_modality",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 577,
+         "end_byte": 693,
+         "text_hash": "4e1fb2303710e3bb688b3dd84d18bb2bd6bc310830c20011b0de1acfd1de55ab"
+        },
+        "extracted": {
+         "modals": {
+          "will": 1
+         },
+         "neg": {}
+        },
+        "preservation": "semantic_exact",
+        "confidence": 950
+       }
+      ],
+      "protected_spans": []
+     },
+     "sha256": "9814071f70f95b72bb81a1da3b0cf3edce39717c134e659e9feb332322d5cece"
+    }
+   },
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "candidate",
+   "status": "ok",
+   "code": "ok",
+   "message": "candidate validated",
+   "data": [
+    {
+     "start_byte": 453,
+     "end_byte": 521,
+     "replacement_b64": "V2hhdGV2ZXIgc3R5bGUgb2YgcGxhbm5pbmcgdGhlIGxlYWRlciB1c2VzLCB0aGV5IHNob3VsZCBub3QgbG9zZSBzaWdodA=="
+    },
+    {
+     "start_byte": 577,
+     "end_byte": 608,
+     "replacement_b64": "VGhlcmUgd2lsbCBiZSB0aW1lcw=="
+    }
+   ],
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "verify",
+   "status": "ok",
+   "code": "ok",
+   "message": "proposal is shippable",
+   "data": {
+    "decision": "ACCEPT",
+    "proposal_status": "ACCEPT",
+    "semantic_status": "clean",
+    "findings": [],
+    "hunks": [
+     {
+      "hunk_id": "h0",
+      "original_range": [
+       453,
+       521
+      ],
+      "decision": "ACCEPT",
+      "finding_ids": [],
+      "revertable": true
+     },
+     {
+      "hunk_id": "h1",
+      "original_range": [
+       577,
+       608
+      ],
+      "decision": "ACCEPT",
+      "finding_ids": [],
+      "revertable": true
+     }
+    ],
+    "ledger_sha256": "9814071f70f95b72bb81a1da3b0cf3edce39717c134e659e9feb332322d5cece"
+   },
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "apply",
+   "status": "ok",
+   "code": "ok",
+   "message": "apply applied",
+   "data": {
+    "status": "applied",
+    "mutated": true,
+    "source": "/home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p139/doc.md",
+    "backup": {
+     "path": "/home/rocky00717/.local/state/slopslap/backups/20260902T160922Z_01788365362398605291_5bf5b53b_doc.md.bak",
+     "metadata": "/home/rocky00717/.local/state/slopslap/backups/20260902T160922Z_01788365362398605291_5bf5b53b_doc.md.bak.json",
+     "restore_command": "cp -- /home/rocky00717/.local/state/slopslap/backups/20260902T160922Z_01788365362398605291_5bf5b53b_doc.md.bak /home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p139/doc.md",
+     "restore_argv": [
+      "cp",
+      "--",
+      "/home/rocky00717/.local/state/slopslap/backups/20260902T160922Z_01788365362398605291_5bf5b53b_doc.md.bak",
+      "/home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p139/doc.md"
+     ],
+     "containment": "external"
+    },
+    "warnings": [
+     "fsync skipped (durability best-effort; set SLOPSLAP_FSYNC=1)"
+    ],
+    "errors": [],
+    "original_digest": "d2f552d58b396fc7a99db1ac6f181bf207b13c703b0f4e5ed73f9ef40e4b6899",
+    "verification_attempts": 2,
+    "applied_hunks": [
+     "h0",
+     "h1"
+    ],
+    "withheld_hunks": [],
+    "final_verification": "ACCEPT",
+    "final_digest": "595bee7fa16a54ae93e304900a7a42aa2b6faaf21e9dfe40ff3798cadde20acc"
+   },
+   "errors": [],
+   "warnings": [
+    "fsync skipped (durability best-effort; set SLOPSLAP_FSYNC=1)"
+   ]
+  }
+ ]
+}

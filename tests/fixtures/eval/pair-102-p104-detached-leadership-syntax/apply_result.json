@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "run_id": "bb3699228179",
+ "run_id": "334ee4e4491f",
  "status": "ok",
  "semantic_mode": "live",
  "stages": [
@@ -11,10 +11,10 @@
    "message": "audit complete",
    "data": {
     "schema_version": 1,
-    "run_id": "bb3699228179",
-    "source_path": "/tmp/wf2-102/work/15/doc.md",
-    "source_sha256": "bb3699228179ee3a84569ef08d081198fe2afa3cea5cc805a7af6b27c88391ff",
-    "byte_length": 1034,
+    "run_id": "334ee4e4491f",
+    "source_path": "/home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p104/doc.md",
+    "source_sha256": "334ee4e4491fcabd0c0fa3a59b606a70bdecefc8c630bef8530a191e4f6b9ed6",
+    "byte_length": 452,
     "fmt": "markdown",
     "genre": "spec",
     "genre_confidence": "low",
@@ -22,8 +22,8 @@
     "audit_status": "flagged",
     "metrics": {
      "sentence_length_distribution": {
-      "eligible_units": 7,
-      "count": 7,
+      "eligible_units": 2,
+      "count": 2,
       "rate": null,
       "locations": [],
       "soft_flag": null,
@@ -31,21 +31,21 @@
       "confidence": "normal",
       "purpose": "candidate_selection_only",
       "distribution": {
-       "min": 13,
-       "p10": 14.8,
-       "p25": 16.5,
-       "median": 23.0,
-       "p75": 29.0,
-       "p90": 31.8,
-       "max": 33,
-       "mean": 22.857,
-       "sd": 7.22
+       "min": 23,
+       "p10": 24.6,
+       "p25": 27.0,
+       "median": 31.0,
+       "p75": 35.0,
+       "p90": 37.4,
+       "max": 39,
+       "mean": 31,
+       "sd": 8.0
       },
       "extraction_profile": "commonmark-3.0.0-v1"
      },
      "sentence_length_dispersion": {
-      "eligible_units": 7,
-      "count": 7,
+      "eligible_units": 2,
+      "count": 2,
       "rate": null,
       "locations": [],
       "soft_flag": null,
@@ -53,15 +53,15 @@
       "confidence": "normal",
       "purpose": "candidate_selection_only",
       "dispersion": {
-       "iqr_over_median": 0.543,
-       "cov": 0.316,
-       "median_adjacent_diff": 12.0
+       "iqr_over_median": 0.258,
+       "cov": 0.258,
+       "median_adjacent_diff": 16
       },
       "extraction_profile": "commonmark-3.0.0-v1"
      },
      "punctuation_rates": {
-      "eligible_units": 160,
-      "count": 1,
+      "eligible_units": 62,
+      "count": 0,
       "rate": null,
       "locations": [],
       "soft_flag": false,
@@ -69,9 +69,9 @@
       "confidence": "normal",
       "purpose": "candidate_selection_only",
       "rates": {
-       "em_dash_per_1k": 6.25,
+       "em_dash_per_1k": 0.0,
        "semicolon_per_1k": 0.0,
-       "em_dash": 1,
+       "em_dash": 0,
        "semicolon": 0
       },
       "thresholds": {
@@ -81,7 +81,7 @@
       "extraction_profile": "commonmark-3.0.0-v1"
      },
      "negative_parallelism": {
-      "eligible_units": 160,
+      "eligible_units": 62,
       "count": 0,
       "rate": 0.0,
       "locations": [],
@@ -128,31 +128,23 @@
       "extraction_profile": "commonmark-3.0.0-v1"
      },
      "repeated_openers": {
-      "eligible_units": 7,
-      "count": 1,
+      "eligible_units": 2,
+      "count": 0,
       "rate": null,
-      "locations": [
-       {
-        "prefix": "the",
-        "prefix_len": 1,
-        "line_start": 1,
-        "line_end": 1,
-        "sentences": 4
-       }
-      ],
-      "soft_flag": true,
+      "locations": [],
+      "soft_flag": false,
       "metric_version": "openers-v1",
       "confidence": "medium",
       "purpose": "candidate_selection_only",
       "extraction_profile": "commonmark-3.0.0-v1"
      },
      "transition_clusters": {
-      "eligible_units": 160,
+      "eligible_units": 62,
       "count": 1,
-      "rate": 6.25,
+      "rate": 16.129,
       "locations": [
        {
-        "opener": "however",
+        "opener": "therefore",
         "line_start": 1
        }
       ],
@@ -201,218 +193,85 @@
      "ranges": [
       {
        "start_byte": 0,
-       "end_byte": 1034
+       "end_byte": 452
       }
      ]
     },
-    "protected_spans": [
-     {
-      "start_byte": 293,
-      "end_byte": 318,
-      "sha256": "329247f0b0551ebc231cace8b98cb377a2854228402fd3b6ebb95e28e8aeb302",
-      "kind": "url"
-     }
-    ],
+    "protected_spans": [],
     "invariant_regions": [
      {
-      "start_byte": 102,
-      "end_byte": 274,
-      "checks": [
-       "numbers",
-       "units"
-      ]
-     },
-     {
-      "start_byte": 275,
-      "end_byte": 375,
-      "checks": [
-       "numbers",
-       "units"
-      ]
-     },
-     {
-      "start_byte": 514,
-      "end_byte": 722,
-      "checks": [
-       "conditions"
-      ]
-     },
-     {
-      "start_byte": 723,
-      "end_byte": 807,
-      "checks": [
-       "negation",
-       "conditions"
-      ]
-     },
-     {
-      "start_byte": 808,
-      "end_byte": 1033,
+      "start_byte": 0,
+      "end_byte": 288,
       "checks": [
        "modality",
-       "negation"
+       "conditions"
+      ]
+     },
+     {
+      "start_byte": 289,
+      "end_byte": 451,
+      "checks": [
+       "modality"
       ]
      }
     ],
     "ledger": {
      "canonical": {
       "schema_version": 1,
-      "source_sha256": "bb3699228179ee3a84569ef08d081198fe2afa3cea5cc805a7af6b27c88391ff",
+      "source_sha256": "334ee4e4491fcabd0c0fa3a59b606a70bdecefc8c630bef8530a191e4f6b9ed6",
       "entries": [
        {
-        "id": "e0_numbers",
-        "kind": "number_or_quantity",
-        "source": {
-         "start_byte": 102,
-         "end_byte": 274,
-         "text_hash": "fbf74913ba5c5cc94d84c59a90489e079987e7b579d6fa0d494ffc6ac6db2b4c"
-        },
-        "extracted": {
-         "5|": 1,
-         "3|dstories": 1
-        },
-        "preservation": "lexically_exact",
-        "confidence": 950
-       },
-       {
-        "id": "e0_units",
-        "kind": "number_or_quantity",
-        "source": {
-         "start_byte": 102,
-         "end_byte": 274,
-         "text_hash": "fbf74913ba5c5cc94d84c59a90489e079987e7b579d6fa0d494ffc6ac6db2b4c"
-        },
-        "extracted": {
-         "5|": 1,
-         "3|dstories": 1
-        },
-        "preservation": "lexically_exact",
-        "confidence": 950
-       },
-       {
-        "id": "e1_numbers",
-        "kind": "number_or_quantity",
-        "source": {
-         "start_byte": 275,
-         "end_byte": 375,
-         "text_hash": "de8cfd1864cd50ffa0b543e353811b03f11c6f4cdb6ab244575f1f76f6f56be9"
-        },
-        "extracted": {
-         "3|dstories": 1
-        },
-        "preservation": "lexically_exact",
-        "confidence": 950
-       },
-       {
-        "id": "e1_units",
-        "kind": "number_or_quantity",
-        "source": {
-         "start_byte": 275,
-         "end_byte": 375,
-         "text_hash": "de8cfd1864cd50ffa0b543e353811b03f11c6f4cdb6ab244575f1f76f6f56be9"
-        },
-        "extracted": {
-         "3|dstories": 1
-        },
-        "preservation": "lexically_exact",
-        "confidence": 950
-       },
-       {
-        "id": "e2_conditions",
+        "id": "e0_conditions",
         "kind": "condition",
         "source": {
-         "start_byte": 514,
-         "end_byte": 722,
-         "text_hash": "e159c1b1d72094bee8e8187cb84dd3d85edc13a8a88a14d72028d1d48d836cc8"
+         "start_byte": 0,
+         "end_byte": 288,
+         "text_hash": "1ff3072f73b99962683f3602d11a6e741c3d48da1e287ea26828db8325141783"
         },
         "extracted": {
-         "if": 1
+         "whenever": 1
         },
         "preservation": "relationship_exact",
         "confidence": 850
        },
        {
-        "id": "e3_conditions",
-        "kind": "condition",
-        "source": {
-         "start_byte": 723,
-         "end_byte": 807,
-         "text_hash": "7c92e8a50ea226ac86756510ff5086f7d450a161c94e2a6b62b7f32d3e707ef0"
-        },
-        "extracted": {
-         "if": 1
-        },
-        "preservation": "relationship_exact",
-        "confidence": 850
-       },
-       {
-        "id": "e3_negation",
+        "id": "e0_modality",
         "kind": "normative_statement",
         "source": {
-         "start_byte": 723,
-         "end_byte": 807,
-         "text_hash": "7c92e8a50ea226ac86756510ff5086f7d450a161c94e2a6b62b7f32d3e707ef0"
-        },
-        "extracted": {
-         "modals": {},
-         "neg": {
-          "not": 1
-         }
-        },
-        "preservation": "semantic_exact",
-        "confidence": 900
-       },
-       {
-        "id": "e4_modality",
-        "kind": "normative_statement",
-        "source": {
-         "start_byte": 808,
-         "end_byte": 1033,
-         "text_hash": "25ff42d490b2dd73b105ef5d595782868528e8095042af369dc16992df18c2ed"
+         "start_byte": 0,
+         "end_byte": 288,
+         "text_hash": "1ff3072f73b99962683f3602d11a6e741c3d48da1e287ea26828db8325141783"
         },
         "extracted": {
          "modals": {
-          "cannot": 2
+          "can": 1
          },
-         "neg": {
-          "cannot": 2,
-          "without": 1
-         }
+         "neg": {}
         },
         "preservation": "semantic_exact",
         "confidence": 950
        },
        {
-        "id": "e4_negation",
+        "id": "e1_modality",
         "kind": "normative_statement",
         "source": {
-         "start_byte": 808,
-         "end_byte": 1033,
-         "text_hash": "25ff42d490b2dd73b105ef5d595782868528e8095042af369dc16992df18c2ed"
+         "start_byte": 289,
+         "end_byte": 451,
+         "text_hash": "bb05c1772b3da1652eed67a932d8503826e561f1f2e98411018a9d476febded4"
         },
         "extracted": {
          "modals": {
-          "cannot": 2
+          "should": 1
          },
-         "neg": {
-          "cannot": 2,
-          "without": 1
-         }
+         "neg": {}
         },
         "preservation": "semantic_exact",
-        "confidence": 900
+        "confidence": 950
        }
       ],
-      "protected_spans": [
-       {
-        "id": "ps0",
-        "start_byte": 293,
-        "end_byte": 318,
-        "sha256": "329247f0b0551ebc231cace8b98cb377a2854228402fd3b6ebb95e28e8aeb302"
-       }
-      ]
+      "protected_spans": []
      },
-     "sha256": "d67b61245674bbff7d3f9830815f88d519e38a5f78d865dca694600420551f3f"
+     "sha256": "19a092f85b06b8f78b34e900b926e15900db7575793737f5ab54d9bee696910b"
     }
    },
    "errors": [],
@@ -425,9 +284,14 @@
    "message": "candidate validated",
    "data": [
     {
-     "start_byte": 0,
-     "end_byte": 101,
-     "replacement_b64": "VGhlIGFydGlmYWN0IGRlc2NyaWJlcyB0aGUgY29udHJvbCBBUEkgYXMgcmVxdWlyaW5nIEJPVEggYSBDbG91ZGZsYXJlIEFjY2VzcyBzZXJ2aWNlIHRva2VuIEFORCBhIGJlYXJlciBzZWNyZXQu"
+     "start_byte": 20,
+     "end_byte": 40,
+     "replacement_b64": "dGhhdCBpbmNyZWFzaW5n"
+    },
+    {
+     "start_byte": 137,
+     "end_byte": 154,
+     "replacement_b64": "LCBjYW4gY3JlYXRl"
     }
    ],
    "errors": [],
@@ -447,15 +311,25 @@
      {
       "hunk_id": "h0",
       "original_range": [
-       0,
-       101
+       20,
+       40
+      ],
+      "decision": "ACCEPT",
+      "finding_ids": [],
+      "revertable": true
+     },
+     {
+      "hunk_id": "h1",
+      "original_range": [
+       137,
+       154
       ],
       "decision": "ACCEPT",
       "finding_ids": [],
       "revertable": true
      }
     ],
-    "ledger_sha256": "d67b61245674bbff7d3f9830815f88d519e38a5f78d865dca694600420551f3f"
+    "ledger_sha256": "19a092f85b06b8f78b34e900b926e15900db7575793737f5ab54d9bee696910b"
    },
    "errors": [],
    "warnings": []
@@ -468,16 +342,16 @@
    "data": {
     "status": "applied",
     "mutated": true,
-    "source": "/tmp/wf2-102/work/15/doc.md",
+    "source": "/home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p104/doc.md",
     "backup": {
-     "path": "/home/rocky00717/.local/state/slopslap/backups/20260902T084154Z_01788338514573222131_d8f773f9_doc.md.bak",
-     "metadata": "/home/rocky00717/.local/state/slopslap/backups/20260902T084154Z_01788338514573222131_d8f773f9_doc.md.bak.json",
-     "restore_command": "cp -- /home/rocky00717/.local/state/slopslap/backups/20260902T084154Z_01788338514573222131_d8f773f9_doc.md.bak /tmp/wf2-102/work/15/doc.md",
+     "path": "/home/rocky00717/.local/state/slopslap/backups/20260902T155906Z_01788364746550481205_b9049643_doc.md.bak",
+     "metadata": "/home/rocky00717/.local/state/slopslap/backups/20260902T155906Z_01788364746550481205_b9049643_doc.md.bak.json",
+     "restore_command": "cp -- /home/rocky00717/.local/state/slopslap/backups/20260902T155906Z_01788364746550481205_b9049643_doc.md.bak /home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p104/doc.md",
      "restore_argv": [
       "cp",
       "--",
-      "/home/rocky00717/.local/state/slopslap/backups/20260902T084154Z_01788338514573222131_d8f773f9_doc.md.bak",
-      "/tmp/wf2-102/work/15/doc.md"
+      "/home/rocky00717/.local/state/slopslap/backups/20260902T155906Z_01788364746550481205_b9049643_doc.md.bak",
+      "/home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p104/doc.md"
      ],
      "containment": "external"
     },
@@ -485,14 +359,15 @@
      "fsync skipped (durability best-effort; set SLOPSLAP_FSYNC=1)"
     ],
     "errors": [],
-    "original_digest": "bb3699228179ee3a84569ef08d081198fe2afa3cea5cc805a7af6b27c88391ff",
+    "original_digest": "334ee4e4491fcabd0c0fa3a59b606a70bdecefc8c630bef8530a191e4f6b9ed6",
     "verification_attempts": 2,
     "applied_hunks": [
-     "h0"
+     "h0",
+     "h1"
     ],
     "withheld_hunks": [],
     "final_verification": "ACCEPT",
-    "final_digest": "02df8a4b151bdba58c7c4ea1724588fff992a85bbb1d607423a6e2414bdfbb9f"
+    "final_digest": "735e2d4d9e0c32d7ffbcd7edbb5c578500d210d71835d0a42ca06b936f135d0d"
    },
    "errors": [],
    "warnings": [

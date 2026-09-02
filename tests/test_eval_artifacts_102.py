@@ -60,7 +60,7 @@ def test_every_committed_trial_applied_side_recomputes_from_its_own_side_hashes(
             recomputed = "A" if tr["a_side_hash"] == h_app else "B"
             assert tr["applied_side"] == recomputed, (jp["pair_id"], tr["trial"])
             checked += 1
-    assert checked == 9, "three pairs, three trials each"
+    assert checked == len(fixture_pairs) * judge["trials_per_pair"], "every pair, every trial"
 
 
 def test_the_blind_file_and_the_judge_run_share_one_run_id(fixture_pairs):
@@ -69,18 +69,38 @@ def test_the_blind_file_and_the_judge_run_share_one_run_id(fixture_pairs):
 
 
 def test_the_published_numbers_are_the_ones_the_trials_support(fixture_pairs):
+    """No number is pinned by hand here: the first version of this test pinned 3 pairs, 9 trials
+    and 55.6%, and those were measured on machine-authored prose (the #102 critical finding). So
+    the figures are RECOMPUTED from the trials the committed judge.json carries, then compared with
+    its own summary and with the results object the document renders from."""
     judge = _load(JUDGE_FILE)
     s = judge["summary"]
-    assert judge["status"] == "completed" and s["pairs"] == len(fixture_pairs) == 3
-    assert s["pairs_completed"] == 3 and s["pairs_errored"] == 0
-    assert s["trials_valid"] == 9 and s["trials_scored"] == 9 and s["trials_failed"] == 0
-    assert s["applied_preferred_trials"] == 5 and s["original_preferred_trials"] == 4
-    assert s["equal_trials"] == 0 and s["applied_preference_pct_of_decided"] == 55.6
-    assert s["pairs_majority_applied"] == 2 and s["pairs_beat"] == 2
+    n = len(fixture_pairs)
+    assert judge["status"] == "completed" and s["pairs"] == n and n >= 1
+    assert s["pairs_completed"] == n and s["pairs_errored"] == 0 and s["trials_failed"] == 0
+    assert s["trials_valid"] == s["trials_scored"] == n * judge["trials_per_pair"]
+    applied = original = equal = 0
+    majority = 0
+    for jp in judge["pairs"]:
+        ok = [tr for tr in jp["trials"] if tr.get("ok")]
+        assert len(ok) == judge["trials_per_pair"], jp["pair_id"]
+        a = sum(1 for tr in ok if tr["preferred_role"] == "applied")
+        o = sum(1 for tr in ok if tr["preferred_role"] == "original")
+        e = len(ok) - a - o
+        assert (jp["applied_preferred_trials"], jp["original_preferred_trials"], jp["equal_trials"]) == (a, o, e), jp["pair_id"]
+        assert jp["majority_applied"] is (a > o), jp["pair_id"]
+        applied += a; original += o; equal += e
+        majority += 1 if a > o else 0
+    assert (s["applied_preferred_trials"], s["original_preferred_trials"], s["equal_trials"]) == (applied, original, equal)
+    decided = applied + original
+    assert s["applied_preference_pct_of_decided"] == (round(100.0 * applied / decided, 1) if decided else None)
+    assert s["pairs_majority_applied"] == majority
+    assert 0 <= s["pairs_beat"] <= n
     # the results object the document renders from carries the same figures
     published = _load(RESULTS_FILE)["llm_judge"]["summary"]
-    assert published["applied_preference_pct_of_decided"] == 55.6
-    assert published["applied_preferred_trials"] == 5
+    for k in ("applied_preferred_trials", "original_preferred_trials", "equal_trials",
+              "applied_preference_pct_of_decided", "pairs_majority_applied", "pairs_beat", "trials_scored"):
+        assert published[k] == s[k], k
 
 
 def test_the_judge_model_differs_from_every_engine_model(fixture_pairs):

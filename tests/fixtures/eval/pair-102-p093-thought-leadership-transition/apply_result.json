@@ -1,0 +1,401 @@
+{
+ "schema_version": 1,
+ "run_id": "9712987fb09f",
+ "status": "ok",
+ "semantic_mode": "live",
+ "stages": [
+  {
+   "stage": "audit",
+   "status": "ok",
+   "code": "ok",
+   "message": "audit complete",
+   "data": {
+    "schema_version": 1,
+    "run_id": "9712987fb09f",
+    "source_path": "/home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p093/doc.md",
+    "source_sha256": "9712987fb09f994efb071ea2d5256734b45898c52eec372c4d741db04074d0c0",
+    "byte_length": 725,
+    "fmt": "markdown",
+    "genre": "spec",
+    "genre_confidence": "low",
+    "genre_reason": "no usable genre signal; asymmetric-failure fallback to the most-preservation-heavy profile (spec)",
+    "audit_status": "flagged",
+    "metrics": {
+     "sentence_length_distribution": {
+      "eligible_units": 4,
+      "count": 4,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "sent-dist-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "distribution": {
+       "min": 18,
+       "p10": 20.1,
+       "p25": 23.25,
+       "median": 26.5,
+       "p75": 30.25,
+       "p90": 34.300000000000004,
+       "max": 37,
+       "mean": 27,
+       "sd": 6.819
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "sentence_length_dispersion": {
+      "eligible_units": 4,
+      "count": 4,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "sent-disp-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "dispersion": {
+       "iqr_over_median": 0.264,
+       "cov": 0.253,
+       "median_adjacent_diff": 9
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "punctuation_rates": {
+      "eligible_units": 108,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "punct-v2",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "rates": {
+       "em_dash_per_1k": 0.0,
+       "semicolon_per_1k": 0.0,
+       "em_dash": 0,
+       "semicolon": 0
+      },
+      "thresholds": {
+       "em_dash_per_1k": 12.0,
+       "semicolon_per_1k": 8.0
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "negative_parallelism": {
+      "eligible_units": 108,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "negparallel-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "thresholds": {
+       "flag_at_count": 5
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "rule_of_three": {
+      "eligible_units": 1,
+      "count": 1,
+      "rate": null,
+      "locations": [
+       {
+        "match": "strategy, product, and client",
+        "line_start": 1
+       }
+      ],
+      "soft_flag": null,
+      "metric_version": "tricolon-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "paragraph_sentence_count_runs": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "para-runs-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "bold_label_density": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "bold-label-v2",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "repeated_openers": {
+      "eligible_units": 4,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "openers-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "transition_clusters": {
+      "eligible_units": 108,
+      "count": 1,
+      "rate": 9.259,
+      "locations": [
+       {
+        "opener": "furthermore",
+        "line_start": 1
+       }
+      ],
+      "soft_flag": true,
+      "metric_version": "transition-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "vague_attribution": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "vague-attr-tables-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "stock_lexical_clusters": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "stock-tables-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "generic_diction": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "generic-diction-tables-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     }
+    },
+    "authorization": {
+     "state": "authorized",
+     "ranges": [
+      {
+       "start_byte": 0,
+       "end_byte": 725
+      }
+     ]
+    },
+    "protected_spans": [],
+    "invariant_regions": [
+     {
+      "start_byte": 0,
+      "end_byte": 123,
+      "checks": [
+       "modality"
+      ]
+     },
+     {
+      "start_byte": 124,
+      "end_byte": 353,
+      "checks": [
+       "modality"
+      ]
+     },
+     {
+      "start_byte": 354,
+      "end_byte": 558,
+      "checks": [
+       "modality"
+      ]
+     },
+     {
+      "start_byte": 559,
+      "end_byte": 724,
+      "checks": [
+       "modality"
+      ]
+     }
+    ],
+    "ledger": {
+     "canonical": {
+      "schema_version": 1,
+      "source_sha256": "9712987fb09f994efb071ea2d5256734b45898c52eec372c4d741db04074d0c0",
+      "entries": [
+       {
+        "id": "e0_modality",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 0,
+         "end_byte": 123,
+         "text_hash": "699c1fd545f3d63c04b68fc36b41d14e292ffa6dc43baebae6a5dae10b6202ac"
+        },
+        "extracted": {
+         "modals": {
+          "must": 1
+         },
+         "neg": {}
+        },
+        "preservation": "semantic_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e1_modality",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 124,
+         "end_byte": 353,
+         "text_hash": "7b2ad09b740d6b3bc0f2ce1f999cc13f4b5fabc5a3087f89d722439dd91dadce"
+        },
+        "extracted": {
+         "modals": {
+          "will": 2,
+          "must": 1
+         },
+         "neg": {}
+        },
+        "preservation": "semantic_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e2_modality",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 354,
+         "end_byte": 558,
+         "text_hash": "b60b3369150f81e07e68e920210aed6cf5cfa61d3d541ff1a92407bfbbb0d93a"
+        },
+        "extracted": {
+         "modals": {
+          "should": 1
+         },
+         "neg": {}
+        },
+        "preservation": "semantic_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e3_modality",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 559,
+         "end_byte": 724,
+         "text_hash": "0a7eba960906911ebbaa6c261db7f3d09b7c4675e44a6665c94dfb1494a3b739"
+        },
+        "extracted": {
+         "modals": {
+          "can": 1
+         },
+         "neg": {}
+        },
+        "preservation": "semantic_exact",
+        "confidence": 950
+       }
+      ],
+      "protected_spans": []
+     },
+     "sha256": "46d665f002d19232aaa640d8dcbc2d2e322735c8d2e1a2cd7c9aac5a6835a0af"
+    }
+   },
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "candidate",
+   "status": "ok",
+   "code": "ok",
+   "message": "candidate validated",
+   "data": [
+    {
+     "start_byte": 354,
+     "end_byte": 409,
+     "replacement_b64": "Q29tcGFueSBsZWFkZXJzIHNob3VsZCBhY3RpdmVseSBjb250cmlidXRl"
+    }
+   ],
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "verify",
+   "status": "ok",
+   "code": "ok",
+   "message": "proposal is shippable",
+   "data": {
+    "decision": "ACCEPT",
+    "proposal_status": "ACCEPT",
+    "semantic_status": "clean",
+    "findings": [],
+    "hunks": [
+     {
+      "hunk_id": "h0",
+      "original_range": [
+       354,
+       409
+      ],
+      "decision": "ACCEPT",
+      "finding_ids": [],
+      "revertable": true
+     }
+    ],
+    "ledger_sha256": "46d665f002d19232aaa640d8dcbc2d2e322735c8d2e1a2cd7c9aac5a6835a0af"
+   },
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "apply",
+   "status": "ok",
+   "code": "ok",
+   "message": "apply applied",
+   "data": {
+    "status": "applied",
+    "mutated": true,
+    "source": "/home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p093/doc.md",
+    "backup": {
+     "path": "/home/rocky00717/.local/state/slopslap/backups/20260902T160135Z_01788364895666417599_1ff7a44b_doc.md.bak",
+     "metadata": "/home/rocky00717/.local/state/slopslap/backups/20260902T160135Z_01788364895666417599_1ff7a44b_doc.md.bak.json",
+     "restore_command": "cp -- /home/rocky00717/.local/state/slopslap/backups/20260902T160135Z_01788364895666417599_1ff7a44b_doc.md.bak /home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p093/doc.md",
+     "restore_argv": [
+      "cp",
+      "--",
+      "/home/rocky00717/.local/state/slopslap/backups/20260902T160135Z_01788364895666417599_1ff7a44b_doc.md.bak",
+      "/home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p093/doc.md"
+     ],
+     "containment": "external"
+    },
+    "warnings": [
+     "fsync skipped (durability best-effort; set SLOPSLAP_FSYNC=1)"
+    ],
+    "errors": [],
+    "original_digest": "9712987fb09f994efb071ea2d5256734b45898c52eec372c4d741db04074d0c0",
+    "verification_attempts": 2,
+    "applied_hunks": [
+     "h0"
+    ],
+    "withheld_hunks": [],
+    "final_verification": "ACCEPT",
+    "final_digest": "1d2e05b6ec8d7a16ff7680c29a6fe7d756c2356a422d6a64036d86d72673c390"
+   },
+   "errors": [],
+   "warnings": [
+    "fsync skipped (durability best-effort; set SLOPSLAP_FSYNC=1)"
+   ]
+  }
+ ]
+}

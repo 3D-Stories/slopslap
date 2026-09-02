@@ -29,6 +29,7 @@ import hashlib
 import json
 import os
 import random
+import re
 import secrets
 import sys
 from dataclasses import dataclass
@@ -78,6 +79,32 @@ class EvalPair:
     genre: str
 
 
+_MACHINE_HEADER = re.compile(
+    r"^\s*(#\s*Adversarial Review|#\s*Peer\b|#\s*Code Review|- Reviewer:|- Model:|- Backend:|Reviewer:\s)",
+    re.I | re.M)
+_REVIEWS_PATH = re.compile(r"(^|[\s`'\"(/,])docs/reviews/", re.I)
+
+
+def _refuse_machine_prose(name: str, manifest: dict, ep: dict, original: bytes) -> None:
+    """#102 critical finding: every pair the first run shipped was a paragraph of a machine-authored
+    adversarial review under `docs/reviews/`, and two cross-model review rounds missed it — so the
+    published percentage measured slopslap on deepseek prose. The eval exists to measure slopslap on
+    the owner's writing. A fixture whose provenance (structured `source.path` or the free-text
+    `provenance`) names a path under `docs/reviews/`, or whose source opens with a review header
+    (`# Adversarial Review`, `- Reviewer:`, `- Model:` …), is refused here, before it can be judged.
+    """
+    src = ep.get("source") if isinstance(ep.get("source"), dict) else {}
+    src_path = str(src.get("path") or "")
+    if _REVIEWS_PATH.search(src_path) or _REVIEWS_PATH.search(str(manifest.get("provenance") or "")):
+        raise PairError(f"{name}: provenance names a path under docs/reviews/ — the reports there are "
+                        f"machine-authored review output, not the owner's prose; an eval pair must come "
+                        f"from human-written text")
+    head = "\n".join(original[:1024].decode("utf-8", "replace").splitlines()[:12])
+    if _MACHINE_HEADER.search(head):
+        raise PairError(f"{name}: original.md opens with a machine-authored review header — not eligible "
+                        f"as a source paragraph for an eval of slopslap on human prose")
+
+
 def load_eval_pairs(fixtures_dir: str) -> List[EvalPair]:
     """Every `pair-*` manifest with an `eval_pair` block, sorted by directory name.
 
@@ -101,6 +128,7 @@ def load_eval_pairs(fixtures_dir: str) -> List[EvalPair]:
             continue  # a hand-written golden pair: its after side is not slopslap output
         with open(os.path.join(d, "original.md"), "rb") as fh:
             original = fh.read()
+        _refuse_machine_prose(name, manifest, ep, original)
         with open(os.path.join(d, manifest.get("clean_file", "applied.md")), "rb") as fh:
             applied = fh.read()
         src, app = _sha(original), _sha(applied)
@@ -651,17 +679,84 @@ def _pct(v) -> str:
     return "n/a" if v is None else f"{v:g}%"
 
 
+_DISPOSITION_MEANING = {
+    "shipped": "engine repair authorized, verifier ACCEPT, applied — a pair",
+    "verifier_blocked": "engine proposed a repair; the byte-exact verifier rejected it and no safe alternative existed",
+    "verifier_withheld": "engine proposed a repair and the verify stage accepted it, but the live Layer-3 semantic check withheld the hunk at apply time; nothing was written",
+    "not_authorized": "no strip-recommended tell under the auto-classified genre, so the autonomous path authorized no range",
+    "abstained": "authorized, but the engine found no demonstrated harm",
+    "excluded_circular": "quotes slop examples itself; excluded as circular",
+    "excluded_third_party": "authorized, but the paragraph quotes or paraphrases a third party; excluded",
+    "excluded_machine_authored": "the source file is a machine-authored review report, not the owner's prose; excluded",
+    "dropped_on_anonymization": "authorized before anonymization; the audit found nothing once the names were replaced",
+}
+
+
+def _funnel_rows(ab: dict, n_pairs: int) -> list:
+    """The abstention funnel, top to bottom: sampled → authorized → repaired → paired. A ledger may
+    carry it explicitly as `funnel: [{stage, count, meaning}, ...]`; an older ledger with only
+    `sampled` + `breakdown` gets the four rows derived, so the funnel is never absent."""
+    explicit = ab.get("funnel")
+    if isinstance(explicit, list) and explicit:
+        return [(str(r.get("stage")), r.get("count"), str(r.get("meaning") or "")) for r in explicit]
+    bd = ab.get("breakdown") or {}
+    sampled = ab.get("sampled", len(ab.get("items", [])))
+    excluded = sum(v for k, v in bd.items() if k.startswith("excluded_"))
+    authorized = max(0, int(sampled) - int(bd.get("not_authorized", 0)) - int(excluded))
+    return [("sampled", sampled, "paragraphs the run examined (each carried at least one scanner tell)"),
+            ("authorized", authorized, "the offline audit authorized at least one range under the auto-classified genre"),
+            ("repaired", bd.get("shipped", 0), "the engine proposed a repair, the byte-exact verifier accepted it, apply wrote it"),
+            ("paired", n_pairs, "shipped as a blind A/B pair in this fixture set")]
+
+
+def _source_cell(src: Optional[dict]) -> str:
+    if not src:
+        return "(see fixture.json provenance)"
+    if src.get("kind") == "owner-supplied":
+        parts = ["owner-supplied", str(src.get("document") or "")]
+        if src.get("anonymized"):
+            parts.append("anonymized")
+        parts.append(str(src.get("license") or ""))
+        return " · ".join(p for p in parts if p)
+    return " · ".join(str(src.get(k)) for k in ("repo", "path", "lines") if src.get(k)) or "(see fixture.json provenance)"
+
+
 def render_results_md(results: dict) -> str:
     fx = results["fixtures"]
+    ab = results.get("abstentions")
     lines = [
         "# Blind paired-preference eval of slopslap's own output — results (#102)", "",
         f"Generated {results['created_at']} by `scripts/eval/preference.py report`. Human raters and the "
         "LLM judge are reported in SEPARATE sections and never combined into one number. This document "
         "reports preference counts and percentages only; it carries no single quality score of any kind.", "",
-        "## Method", "",
-        "- Each fixture is one real design-doc paragraph (`original.md`) and the output of "
-        "`scripts/slopslap_assemble/assemble.py apply` on it (`applied.md`), produced from a committed "
-        "edit-script authored by the slopslap engine — never hand-written.",
+        "## Abstention funnel — read this first", "",
+    ]
+    # ---- the funnel leads: how many paragraphs went in, how few came out as pairs. A preference
+    # percentage further down is measured over the LAST row only, so it is read in that light.
+    if ab:
+        sampled = ab.get("sampled", len(ab.get("items", [])))
+        lines += [f"{sampled} paragraphs sampled, {len(fx)} shipped as pairs. Every row below counts paragraphs; "
+                  f"any preference percentage in this document is measured over the last row only.", ""]
+        if ab.get("selection"):
+            lines += [str(ab["selection"]), ""]
+        lines += ["| stage | paragraphs | meaning |", "|---|---|---|"]
+        for stage, count, meaning in _funnel_rows(ab, len(fx)):
+            lines.append(f"| {stage} | {count} | {meaning} |")
+        bd = ab.get("breakdown") or {}
+        if bd:
+            lines += ["", "Per-paragraph dispositions:", "", "| disposition | paragraphs | meaning |", "|---|---|---|"]
+            for k in sorted(bd, key=lambda k: -bd[k]):
+                lines.append(f"| {k} | {bd[k]} | {_DISPOSITION_MEANING.get(k, '')} |")
+        lines += ["", f"The full per-paragraph ledger (source, disposition, note) is `{ab.get('file', 'the sampling ledger')}`."]
+        if ab.get("status_note"):
+            lines += ["", "### Status against the issue", "", str(ab["status_note"])]
+    else:
+        lines += ["Sampling: not recorded for this run. Without a funnel the pair count below has no denominator."]
+    lines += [
+        "", "## Method", "",
+        "- Each fixture is one source paragraph (`original.md`; its provenance is the pair's `fixture.json`) "
+        "and the output of `scripts/slopslap_assemble/assemble.py apply` on it (`applied.md`), produced from a "
+        "committed edit-script authored by the slopslap engine — never hand-written.",
         "- `build` shows the two as sides A and B in a seeded random order per pair; a rater picks A, B, or "
         "no preference. The pick is recorded with both side hashes (so the side order rides with the pick) "
         "and bound to the pair's `source_sha256`.",
@@ -671,33 +766,10 @@ def render_results_md(results: dict) -> str:
         "- Roles are recovered per fixture from the recorded hashes at report time; a pick that does not "
         "resolve to exactly one original and one applied side is refused, never counted.", "",
         f"## Fixture set — {len(fx)} pairs", "",
-        "| pair | source (repo · path · lines) | genre | engine |", "|---|---|---|---|",
+        "| pair | source | genre | engine |", "|---|---|---|---|",
     ]
     for f in fx:
-        src = f.get("source") or {}
-        where = " · ".join(str(src.get(k)) for k in ("repo", "path", "lines") if src.get(k)) or "(see fixture.json provenance)"
-        lines.append(f"| `{f['dir_name']}` | {where} | {f['genre']} | `{f['engine_model']}` |")
-    ab = results.get("abstentions")
-    if ab:
-        sampled = ab.get("sampled", len(ab.get("items", [])))
-        lines += ["", f"### Sampling — {sampled} paragraphs sampled, {len(fx)} shipped as pairs", ""]
-        if ab.get("selection"):
-            lines += [str(ab["selection"]), ""]
-        bd = ab.get("breakdown") or {}
-        if bd:
-            lines += ["| disposition | paragraphs | meaning |", "|---|---|---|"]
-            meaning = {"shipped": "engine repair authorized, verifier ACCEPT, applied — a pair",
-                       "verifier_blocked": "engine proposed a repair; the byte-exact verifier rejected it and no safe alternative existed",
-                       "not_authorized": "no strip-recommended tell under the auto-classified genre, so the autonomous path authorized no range",
-                       "abstained": "authorized, but the engine found no demonstrated harm",
-                       "excluded_circular": "quotes slop examples itself; excluded as circular"}
-            for k in sorted(bd, key=lambda k: -bd[k]):
-                lines.append(f"| {k} | {bd[k]} | {meaning.get(k, '')} |")
-        lines += ["", f"The full per-paragraph ledger (source, disposition, note) is `{ab.get('file', 'the sampling ledger')}`."]
-        if ab.get("status_note"):
-            lines += ["", "### Status against the issue", "", str(ab["status_note"])]
-    else:
-        lines += ["", "Sampling: not recorded for this run."]
+        lines.append(f"| `{f['dir_name']}` | {_source_cell(f.get('source'))} | {f['genre']} | `{f['engine_model']}` |")
     # ---- human
     lines += ["", "## Human raters", ""]
     raters = results["human"]["raters"]
@@ -757,8 +829,8 @@ def render_results_md(results: dict) -> str:
               "fixture bytes, so a self-consistent picks file proves only that its author can run "
               "sha256.",
               f"- Sample size: {len(fx)} pairs. Any percentage here is a direction, not a measurement.",
-              "- Selection: paragraphs were sampled from the owner's public design docs where the measure-only scanner "
-              "reported at least one tell, so the set skews toward flagged prose; abstentions are reported, not hidden.",
+              "- Selection: see the abstention funnel at the top. Only paragraphs carrying at least one scanner tell "
+              "entered the funnel, so the set skews toward flagged prose; abstentions are reported, not hidden.",
               "- The judge model is pinned by the request and not confirmed from the CLI's output.",
               "- The rater-facing page carries neither `source_sha256` nor `pair_id`, so hashing the two texts on "
               "screen no longer recovers a role. A rater with repository access can still de-blind themselves from "

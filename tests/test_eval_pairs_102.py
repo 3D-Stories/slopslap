@@ -5,10 +5,10 @@ For every pair: replaying the committed edit-script over original.md with the pr
 apply exited 0; a fresh offline dry-run through the real seam still reaches ACCEPT; the sides
 differ; and the provenance names the public source (repo, path, lines, commit, license).
 
-Count pin: the issue's AC4 asked for 5 to 10 pairs. The shipped set is SMALLER — slopslap's default
-autonomous path (auto-classified genre, byte-exact verifier) produced 3 verifier-clean pairs out of
-31 sampled public design-doc paragraphs; the results document states the shortfall and the owner
-decides how to widen it. This guard pins the shipped floor so a fixture cannot silently vanish.
+Count pin: the issue's AC4 asked for 5 to 10 pairs. The shipped set is 8, all from human-written
+documents the owner supplied and anonymized (the first run's 3 pairs were paragraphs of a
+machine-authored review report and were discarded — see the results document's abstention funnel).
+This guard pins the shipped floor so a fixture cannot silently vanish.
 """
 import base64
 import glob
@@ -28,7 +28,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FX = os.path.join(REPO, "tests", "fixtures", "eval")
 SEAM = os.path.join(REPO, "scripts", "slopslap_assemble", "assemble.py")
 PAIRS = sorted(d for d in glob.glob(os.path.join(FX, "pair-102-*")) if os.path.isdir(d))
-SHIPPED_FLOOR = 3  # see the module docstring; the AC4 floor of 5 was NOT met on the default path
+SHIPPED_FLOOR = 8  # the re-sourced set: 8 owner-supplied, anonymized, human-written paragraphs; AC4's floor of 5 is met
 
 
 def _sha(b: bytes) -> str:
@@ -94,11 +94,26 @@ def test_offline_dry_run_through_the_real_seam_still_accepts(d, tmp_path):
 
 
 @pytest.mark.parametrize("d", PAIRS, ids=[os.path.basename(p) for p in PAIRS])
-def test_provenance_names_a_public_source(d):
+def test_provenance_names_a_licence_clean_human_source(d):
+    """Two provenance shapes are admissible. PUBLIC: repo + path + lines + commit + MIT, from one of
+    the owner's two public repos. OWNER-SUPPLIED (the shape the re-sourced set uses): the owner
+    handed over a human-written document from their own files, the text was anonymized before
+    publication and the owner approved each paragraph, and the licence is the owner's own grant.
+    Either way the paragraph must NOT come from a review report under docs/reviews/ — every pair
+    the first run shipped did, and that is the critical finding this test now guards against."""
     _, manifest = load_fixture(d)
     src = manifest["eval_pair"]["source"]
-    for k in ("repo", "path", "lines", "commit", "license"):
-        assert src.get(k), k
-    assert src["repo"] in ("3D-Stories/slopslap", "3D-Stories/design-doc-publish")  # the two PUBLIC repos
-    assert len(src["commit"]) == 40 and src["license"] == "MIT"
-    assert "verbatim" in manifest["provenance"] and "never hand-written" in manifest["provenance"]
+    prov = manifest["provenance"]
+    if src.get("kind") == "owner-supplied":
+        assert src.get("document") and src.get("anonymized") is True
+        assert src.get("license") == "owner-granted"
+        assert "anonymized" in prov and "approved" in prov
+    else:
+        for k in ("repo", "path", "lines", "commit", "license"):
+            assert src.get(k), k
+        assert src["repo"] in ("3D-Stories/slopslap", "3D-Stories/design-doc-publish")  # the two PUBLIC repos
+        assert len(src["commit"]) == 40 and src["license"] == "MIT"
+        assert "verbatim" in prov
+        assert "docs/reviews/" not in src["path"], "a review report is machine-authored, not the owner's prose"
+    assert "docs/reviews/" not in prov
+    assert "never hand-written" in prov

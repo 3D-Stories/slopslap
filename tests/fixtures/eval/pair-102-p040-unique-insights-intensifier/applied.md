@@ -1,0 +1,1 @@
+People look to you because you are a strategic and data-driven leader. Your insights help you identify, analyze, and carve out impactful opportunities to contribute to our audacious goals. Whether you are solving complex problems or navigating change, you empower your team through understanding and awareness.

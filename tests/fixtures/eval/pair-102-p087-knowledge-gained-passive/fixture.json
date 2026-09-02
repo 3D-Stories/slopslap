@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "genre": "spec",
+  "control": false,
+  "pair": true,
+  "clean_file": "applied.md",
+  "provenance": "#102 eval pair. original.md = an owner-supplied, human-authored paragraph from an internal leadership handbook (June 2021), human-authored, supplied by the repository owner from their own files; company, program, principle and person names replaced with neutral words before publication; the anonymized text is byte-exact as the owner approved it for publication on 2026-09-02 (one yes per paragraph). applied.md = the bytes `scripts/slopslap_assemble/assemble.py apply --path <copy> --edits edits.json` wrote (SLOPSLAP_LIVE=1, semantic_mode live, exit 0); the edit-script was authored by the slopslap engine (session model claude-fable-5-1 applying skills/slopslap/SKILL.md) on 2026-09-02 — never hand-written. apply_result.json is the RunResult (no source bytes).",
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [
+    {
+      "start_byte": 0,
+      "end_byte": 451
+    }
+  ],
+  "protected_spans": [],
+  "invariant_regions": [],
+  "expected_invariants": [],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "epistemic_distortion",
+      "region": "sentence 3",
+      "note": "'it must be gained through training…' hides who gains it while the same sentence names the actor ('The company’s leaders'). Repair: 'they must gain it through training, mentoring and experience'. Modal 'must' preserved; no new claim atom. editorial-harm: low · diagnosis-confidence: med. Authorized range: transition_clusters tell."
+    }
+  ],
+  "control_reason": null,
+  "eval_pair": {
+    "schema_version": 1,
+    "engine_model": "claude-fable-5-1",
+    "source_sha256": "8f088b340cdbc0599848d4cdad2cec40ca8398bc74d8763b8f4f3b1b188a52d9",
+    "applied_sha256": "6c89ff4818cd7b17b6666c2d797f043ac531847a754258373ef054254ee282ad",
+    "apply_exit": 0,
+    "semantic_mode": "live",
+    "apply_path": "assemble.py apply --edits",
+    "declared_genre": null,
+    "classified_genre": "spec",
+    "authorization_state": "authorized",
+    "edits_file": "edits.json",
+    "apply_result_file": "apply_result.json",
+    "authored_at": "2026-09-02",
+    "source": {
+      "kind": "owner-supplied",
+      "document": "an internal leadership handbook (June 2021), human-authored, supplied by the repository owner from their own files; company, program, principle and person names replaced with neutral words before publication",
+      "anonymized": true,
+      "license": "owner-granted",
+      "extract_id": "p087"
+    }
+  }
+}

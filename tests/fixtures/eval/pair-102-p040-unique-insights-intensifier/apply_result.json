@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "run_id": "b4f43f7f2b81",
+ "run_id": "c86ef6a74d79",
  "status": "ok",
  "semantic_mode": "live",
  "stages": [
@@ -11,10 +11,10 @@
    "message": "audit complete",
    "data": {
     "schema_version": 1,
-    "run_id": "b4f43f7f2b81",
-    "source_path": "/tmp/wf2-102/work/21/doc.md",
-    "source_sha256": "b4f43f7f2b81f06d3c84cf8091b48514e8d1113ddec1403f907745a60a00e52f",
-    "byte_length": 839,
+    "run_id": "c86ef6a74d79",
+    "source_path": "/home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p040/doc.md",
+    "source_sha256": "c86ef6a74d79954abeae992398a20b16ed4d93b655df998f0fde5e73dfc17b1c",
+    "byte_length": 318,
     "fmt": "markdown",
     "genre": "spec",
     "genre_confidence": "low",
@@ -22,8 +22,8 @@
     "audit_status": "flagged",
     "metrics": {
      "sentence_length_distribution": {
-      "eligible_units": 6,
-      "count": 6,
+      "eligible_units": 3,
+      "count": 3,
       "rate": null,
       "locations": [],
       "soft_flag": null,
@@ -32,20 +32,20 @@
       "purpose": "candidate_selection_only",
       "distribution": {
        "min": 13,
-       "p10": 14.5,
-       "p25": 17.0,
-       "median": 21.5,
-       "p75": 23.75,
-       "p90": 32.0,
-       "max": 40,
-       "mean": 22.667,
-       "sd": 8.635
+       "p10": 13.8,
+       "p25": 15.0,
+       "median": 17.0,
+       "p75": 17.5,
+       "p90": 17.8,
+       "max": 18,
+       "mean": 16,
+       "sd": 2.16
       },
       "extraction_profile": "commonmark-3.0.0-v1"
      },
      "sentence_length_dispersion": {
-      "eligible_units": 6,
-      "count": 6,
+      "eligible_units": 3,
+      "count": 3,
       "rate": null,
       "locations": [],
       "soft_flag": null,
@@ -53,14 +53,14 @@
       "confidence": "normal",
       "purpose": "candidate_selection_only",
       "dispersion": {
-       "iqr_over_median": 0.314,
-       "cov": 0.381,
-       "median_adjacent_diff": 7
+       "iqr_over_median": 0.147,
+       "cov": 0.135,
+       "median_adjacent_diff": 3.0
       },
       "extraction_profile": "commonmark-3.0.0-v1"
      },
      "punctuation_rates": {
-      "eligible_units": 136,
+      "eligible_units": 48,
       "count": 0,
       "rate": null,
       "locations": [],
@@ -81,7 +81,7 @@
       "extraction_profile": "commonmark-3.0.0-v1"
      },
      "negative_parallelism": {
-      "eligible_units": 136,
+      "eligible_units": 48,
       "count": 0,
       "rate": 0.0,
       "locations": [],
@@ -96,9 +96,14 @@
      },
      "rule_of_three": {
       "eligible_units": 1,
-      "count": 0,
+      "count": 1,
       "rate": null,
-      "locations": [],
+      "locations": [
+       {
+        "match": "identify, analyze, and carve",
+        "line_start": 1
+       }
+      ],
       "soft_flag": null,
       "metric_version": "tricolon-v1",
       "confidence": "low",
@@ -128,35 +133,22 @@
       "extraction_profile": "commonmark-3.0.0-v1"
      },
      "repeated_openers": {
-      "eligible_units": 6,
-      "count": 1,
+      "eligible_units": 3,
+      "count": 0,
       "rate": null,
-      "locations": [
-       {
-        "prefix": "the",
-        "prefix_len": 1,
-        "line_start": 1,
-        "line_end": 1,
-        "sentences": 4
-       }
-      ],
-      "soft_flag": true,
+      "locations": [],
+      "soft_flag": false,
       "metric_version": "openers-v1",
       "confidence": "medium",
       "purpose": "candidate_selection_only",
       "extraction_profile": "commonmark-3.0.0-v1"
      },
      "transition_clusters": {
-      "eligible_units": 136,
-      "count": 1,
-      "rate": 7.353,
-      "locations": [
-       {
-        "opener": "however",
-        "line_start": 1
-       }
-      ],
-      "soft_flag": true,
+      "eligible_units": 48,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": false,
       "metric_version": "transition-v1",
       "confidence": "medium",
       "purpose": "candidate_selection_only",
@@ -186,9 +178,15 @@
      },
      "generic_diction": {
       "eligible_units": 1,
-      "count": 0,
+      "count": 1,
       "rate": null,
-      "locations": [],
+      "locations": [
+       {
+        "word": "empower",
+        "kind": "buzzword",
+        "line_start": 1
+       }
+      ],
       "soft_flag": false,
       "metric_version": "generic-diction-tables-v1",
       "confidence": "medium",
@@ -201,141 +199,20 @@
      "ranges": [
       {
        "start_byte": 0,
-       "end_byte": 839
+       "end_byte": 318
       }
      ]
     },
     "protected_spans": [],
-    "invariant_regions": [
-     {
-      "start_byte": 310,
-      "end_byte": 446,
-      "checks": [
-       "numbers",
-       "units",
-       "modality"
-      ]
-     },
-     {
-      "start_byte": 447,
-      "end_byte": 672,
-      "checks": [
-       "negation",
-       "conditions"
-      ]
-     },
-     {
-      "start_byte": 673,
-      "end_byte": 838,
-      "checks": [
-       "modality"
-      ]
-     }
-    ],
+    "invariant_regions": [],
     "ledger": {
      "canonical": {
       "schema_version": 1,
-      "source_sha256": "b4f43f7f2b81f06d3c84cf8091b48514e8d1113ddec1403f907745a60a00e52f",
-      "entries": [
-       {
-        "id": "e0_modality",
-        "kind": "normative_statement",
-        "source": {
-         "start_byte": 310,
-         "end_byte": 446,
-         "text_hash": "38943c7c4d1d7af768d68affab0d942fc5d6017c60522d6436487a6fed0c87ab"
-        },
-        "extracted": {
-         "modals": {
-          "may": 1
-         },
-         "neg": {}
-        },
-        "preservation": "semantic_exact",
-        "confidence": 950
-       },
-       {
-        "id": "e0_numbers",
-        "kind": "number_or_quantity",
-        "source": {
-         "start_byte": 310,
-         "end_byte": 446,
-         "text_hash": "38943c7c4d1d7af768d68affab0d942fc5d6017c60522d6436487a6fed0c87ab"
-        },
-        "extracted": {
-         "5|": 1,
-         "3|d": 1
-        },
-        "preservation": "lexically_exact",
-        "confidence": 950
-       },
-       {
-        "id": "e0_units",
-        "kind": "number_or_quantity",
-        "source": {
-         "start_byte": 310,
-         "end_byte": 446,
-         "text_hash": "38943c7c4d1d7af768d68affab0d942fc5d6017c60522d6436487a6fed0c87ab"
-        },
-        "extracted": {
-         "5|": 1,
-         "3|d": 1
-        },
-        "preservation": "lexically_exact",
-        "confidence": 950
-       },
-       {
-        "id": "e1_conditions",
-        "kind": "condition",
-        "source": {
-         "start_byte": 447,
-         "end_byte": 672,
-         "text_hash": "3820b7089f1c0e7fe78d0e91d6cbe6e7a5df81912fa55b272a68ae39b56c2a47"
-        },
-        "extracted": {
-         "if": 1
-        },
-        "preservation": "relationship_exact",
-        "confidence": 850
-       },
-       {
-        "id": "e1_negation",
-        "kind": "normative_statement",
-        "source": {
-         "start_byte": 447,
-         "end_byte": 672,
-         "text_hash": "3820b7089f1c0e7fe78d0e91d6cbe6e7a5df81912fa55b272a68ae39b56c2a47"
-        },
-        "extracted": {
-         "modals": {},
-         "neg": {
-          "not": 1
-         }
-        },
-        "preservation": "semantic_exact",
-        "confidence": 900
-       },
-       {
-        "id": "e2_modality",
-        "kind": "normative_statement",
-        "source": {
-         "start_byte": 673,
-         "end_byte": 838,
-         "text_hash": "4a6de7b5fa02d0b32f0602cfafc95607bd344a20370c21d0aefca072d5129f44"
-        },
-        "extracted": {
-         "modals": {
-          "may": 1
-         },
-         "neg": {}
-        },
-        "preservation": "semantic_exact",
-        "confidence": 950
-       }
-      ],
+      "source_sha256": "c86ef6a74d79954abeae992398a20b16ed4d93b655df998f0fde5e73dfc17b1c",
+      "entries": [],
       "protected_spans": []
      },
-     "sha256": "b488ceca0142a4ef6ff5fa948c98257e67b98f4eddf99a9d2037ca33e8af8153"
+     "sha256": "92bcb68ecb9d1313adf36c39ca49bbb39ac978e96d50963d731e30bb5a42e110"
     }
    },
    "errors": [],
@@ -348,9 +225,9 @@
    "message": "candidate validated",
    "data": [
     {
-     "start_byte": 187,
-     "end_byte": 309,
-     "replacement_b64": "VGhlIGFydGlmYWN0IGV4cGVjdHMgdGhlIHNlcnZlciB0byBpbmRlcGVuZGVudGx5IHZlcmlmeSB0aGF0IHRoZSBkZWNsYXJlZCBmaWxlcyBleGlzdCBhdCB0aGUgZGVjbGFyZWQgcGF0aHMgaW4gdGhlIGRlY2xhcmVkIGNvbW1pdC4="
+     "start_byte": 71,
+     "end_byte": 91,
+     "replacement_b64": "WW91ciBpbnNpZ2h0cw=="
     }
    ],
    "errors": [],
@@ -370,15 +247,15 @@
      {
       "hunk_id": "h0",
       "original_range": [
-       187,
-       309
+       71,
+       91
       ],
       "decision": "ACCEPT",
       "finding_ids": [],
       "revertable": true
      }
     ],
-    "ledger_sha256": "b488ceca0142a4ef6ff5fa948c98257e67b98f4eddf99a9d2037ca33e8af8153"
+    "ledger_sha256": "92bcb68ecb9d1313adf36c39ca49bbb39ac978e96d50963d731e30bb5a42e110"
    },
    "errors": [],
    "warnings": []
@@ -391,16 +268,16 @@
    "data": {
     "status": "applied",
     "mutated": true,
-    "source": "/tmp/wf2-102/work/21/doc.md",
+    "source": "/home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p040/doc.md",
     "backup": {
-     "path": "/home/rocky00717/.local/state/slopslap/backups/20260902T085700Z_01788339420973264047_c8e33782_doc.md.bak",
-     "metadata": "/home/rocky00717/.local/state/slopslap/backups/20260902T085700Z_01788339420973264047_c8e33782_doc.md.bak.json",
-     "restore_command": "cp -- /home/rocky00717/.local/state/slopslap/backups/20260902T085700Z_01788339420973264047_c8e33782_doc.md.bak /tmp/wf2-102/work/21/doc.md",
+     "path": "/home/rocky00717/.local/state/slopslap/backups/20260902T155456Z_01788364496721791118_06084ad5_doc.md.bak",
+     "metadata": "/home/rocky00717/.local/state/slopslap/backups/20260902T155456Z_01788364496721791118_06084ad5_doc.md.bak.json",
+     "restore_command": "cp -- /home/rocky00717/.local/state/slopslap/backups/20260902T155456Z_01788364496721791118_06084ad5_doc.md.bak /home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p040/doc.md",
      "restore_argv": [
       "cp",
       "--",
-      "/home/rocky00717/.local/state/slopslap/backups/20260902T085700Z_01788339420973264047_c8e33782_doc.md.bak",
-      "/tmp/wf2-102/work/21/doc.md"
+      "/home/rocky00717/.local/state/slopslap/backups/20260902T155456Z_01788364496721791118_06084ad5_doc.md.bak",
+      "/home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p040/doc.md"
      ],
      "containment": "external"
     },
@@ -408,14 +285,14 @@
      "fsync skipped (durability best-effort; set SLOPSLAP_FSYNC=1)"
     ],
     "errors": [],
-    "original_digest": "b4f43f7f2b81f06d3c84cf8091b48514e8d1113ddec1403f907745a60a00e52f",
+    "original_digest": "c86ef6a74d79954abeae992398a20b16ed4d93b655df998f0fde5e73dfc17b1c",
     "verification_attempts": 2,
     "applied_hunks": [
      "h0"
     ],
     "withheld_hunks": [],
     "final_verification": "ACCEPT",
-    "final_digest": "a4e5b71b19a1acc30d3858e93fa484abf9a06ea1388bdc9d648cc4810bd3db19"
+    "final_digest": "11653cc1d0737688e350ce3b60d1bae0e8e626158d342ac6282392c726e6ad19"
    },
    "errors": [],
    "warnings": [

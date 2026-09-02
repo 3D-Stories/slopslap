@@ -1,0 +1,12 @@
+[
+ {
+  "start_byte": 20,
+  "end_byte": 40,
+  "replacement_b64": "dGhhdCBpbmNyZWFzaW5n"
+ },
+ {
+  "start_byte": 137,
+  "end_byte": 154,
+  "replacement_b64": "LCBjYW4gY3JlYXRl"
+ }
+]
