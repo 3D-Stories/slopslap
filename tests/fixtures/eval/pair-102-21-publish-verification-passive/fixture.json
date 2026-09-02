@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "genre": "spec",
+  "control": false,
+  "pair": true,
+  "clean_file": "applied.md",
+  "provenance": "#102 eval pair. original.md = verbatim paragraph from 3D-Stories/design-doc-publish (MIT), docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md lines 53-53 at commit 0aa220d3c5a392ea43e85de6659c7856a4b4853d. applied.md = the bytes the slopslap apply engine wrote — `assemble.py apply --path <copy> --edits edits.json`, or for a paragraph whose Layer-3 call outran the CLI's 120 s timeout the same engine via `assemble(..., write=True)` with a 300 s timeout (recorded in eval_pair.apply_path) — (SLOPSLAP_LIVE=1, semantic_mode live, exit 0); the edit-script was authored by the slopslap engine (session model claude-fable-5-1 applying skills/slopslap/SKILL.md) on 2026-09-02 — never hand-written. apply_result.json is the RunResult (no source bytes).",
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [
+    {
+      "start_byte": 0,
+      "end_byte": 839
+    }
+  ],
+  "protected_spans": [],
+  "invariant_regions": [],
+  "expected_invariants": [],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "epistemic_distortion",
+      "region": "sentence 3",
+      "note": "Passive 'The server is expected to independently verify…' hides who expects it; the paragraph's first sentence names the actor ('The artifact states…'). Repair: 'The artifact expects the server to independently verify…'. No new claim atom; the quoted PAT phrase, the D5 quote, every negation and modal untouched. editorial-harm: low · diagnosis-confidence: med."
+    }
+  ],
+  "control_reason": null,
+  "eval_pair": {
+    "schema_version": 1,
+    "engine_model": "claude-fable-5-1",
+    "source_sha256": "b4f43f7f2b81f06d3c84cf8091b48514e8d1113ddec1403f907745a60a00e52f",
+    "applied_sha256": "a4e5b71b19a1acc30d3858e93fa484abf9a06ea1388bdc9d648cc4810bd3db19",
+    "apply_exit": 0,
+    "semantic_mode": "live",
+    "apply_path": "assemble(path, edits, semantic_fn=live_semantic_fn(timeout_s=300.0), write=True) — the CLI apply (120 s semantic timeout) timed out twice on this paragraph",
+    "declared_genre": null,
+    "classified_genre": "spec",
+    "authorization_state": "authorized",
+    "edits_file": "edits.json",
+    "apply_result_file": "apply_result.json",
+    "authored_at": "2026-09-02",
+    "source": {
+      "repo": "3D-Stories/design-doc-publish",
+      "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+      "lines": "53-53",
+      "commit": "0aa220d3c5a392ea43e85de6659c7856a4b4853d",
+      "license": "MIT"
+    }
+  }
+}

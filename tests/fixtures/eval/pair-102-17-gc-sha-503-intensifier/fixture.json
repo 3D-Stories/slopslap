@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "genre": "spec",
+  "control": false,
+  "pair": true,
+  "clean_file": "applied.md",
+  "provenance": "#102 eval pair. original.md = verbatim paragraph from 3D-Stories/design-doc-publish (MIT), docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md lines 78-78 at commit 0aa220d3c5a392ea43e85de6659c7856a4b4853d. applied.md = the bytes `scripts/slopslap_assemble/assemble.py apply --path <copy> --edits edits.json` wrote (SLOPSLAP_LIVE=1, semantic_mode live, exit 0); the edit-script was authored by the slopslap engine (session model claude-fable-5-1 applying skills/slopslap/SKILL.md) on 2026-09-02 — never hand-written. apply_result.json is the RunResult (no source bytes).",
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [
+    {
+      "start_byte": 0,
+      "end_byte": 745
+    }
+  ],
+  "protected_spans": [],
+  "invariant_regions": [],
+  "expected_invariants": [],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "emptiness",
+      "region": "sentence 3",
+      "note": "'the blob simply doesn't exist' — 'simply' adds nothing (an intensifier posing as explanation). Repair: delete the word; the negation 'doesn't exist' survives byte-identically. The engine's FIRST proposal — deleting the restated sentence 'The artifact does not specify how the harness makes this distinction.' — was BLOCKED by the byte-exact verifier (entry_dropped: the sentence carries a negation entry) and was NOT applied. editorial-harm: low · diagnosis-confidence: high."
+    }
+  ],
+  "control_reason": null,
+  "eval_pair": {
+    "schema_version": 1,
+    "engine_model": "claude-fable-5-1",
+    "source_sha256": "5d2026b1600a4626c0494e31c348b28fb68a5e775a4e14ce08b529652773fa9b",
+    "applied_sha256": "89f37480506003d79ee0a9336ab45454fc8e99cfff959d90a35366bfc98484e6",
+    "apply_exit": 0,
+    "semantic_mode": "live",
+    "apply_path": "assemble.py apply --edits",
+    "declared_genre": null,
+    "classified_genre": "spec",
+    "authorization_state": "authorized",
+    "edits_file": "edits.json",
+    "apply_result_file": "apply_result.json",
+    "authored_at": "2026-09-02",
+    "source": {
+      "repo": "3D-Stories/design-doc-publish",
+      "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+      "lines": "78-78",
+      "commit": "0aa220d3c5a392ea43e85de6659c7856a4b4853d",
+      "license": "MIT"
+    }
+  }
+}

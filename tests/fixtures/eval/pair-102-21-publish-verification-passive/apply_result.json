@@ -1,0 +1,426 @@
+{
+ "schema_version": 1,
+ "run_id": "b4f43f7f2b81",
+ "status": "ok",
+ "semantic_mode": "live",
+ "stages": [
+  {
+   "stage": "audit",
+   "status": "ok",
+   "code": "ok",
+   "message": "audit complete",
+   "data": {
+    "schema_version": 1,
+    "run_id": "b4f43f7f2b81",
+    "source_path": "/tmp/wf2-102/work/21/doc.md",
+    "source_sha256": "b4f43f7f2b81f06d3c84cf8091b48514e8d1113ddec1403f907745a60a00e52f",
+    "byte_length": 839,
+    "fmt": "markdown",
+    "genre": "spec",
+    "genre_confidence": "low",
+    "genre_reason": "no usable genre signal; asymmetric-failure fallback to the most-preservation-heavy profile (spec)",
+    "audit_status": "flagged",
+    "metrics": {
+     "sentence_length_distribution": {
+      "eligible_units": 6,
+      "count": 6,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "sent-dist-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "distribution": {
+       "min": 13,
+       "p10": 14.5,
+       "p25": 17.0,
+       "median": 21.5,
+       "p75": 23.75,
+       "p90": 32.0,
+       "max": 40,
+       "mean": 22.667,
+       "sd": 8.635
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "sentence_length_dispersion": {
+      "eligible_units": 6,
+      "count": 6,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "sent-disp-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "dispersion": {
+       "iqr_over_median": 0.314,
+       "cov": 0.381,
+       "median_adjacent_diff": 7
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "punctuation_rates": {
+      "eligible_units": 136,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "punct-v2",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "rates": {
+       "em_dash_per_1k": 0.0,
+       "semicolon_per_1k": 0.0,
+       "em_dash": 0,
+       "semicolon": 0
+      },
+      "thresholds": {
+       "em_dash_per_1k": 12.0,
+       "semicolon_per_1k": 8.0
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "negative_parallelism": {
+      "eligible_units": 136,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "negparallel-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "thresholds": {
+       "flag_at_count": 5
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "rule_of_three": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "tricolon-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "paragraph_sentence_count_runs": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "para-runs-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "bold_label_density": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "bold-label-v2",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "repeated_openers": {
+      "eligible_units": 6,
+      "count": 1,
+      "rate": null,
+      "locations": [
+       {
+        "prefix": "the",
+        "prefix_len": 1,
+        "line_start": 1,
+        "line_end": 1,
+        "sentences": 4
+       }
+      ],
+      "soft_flag": true,
+      "metric_version": "openers-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "transition_clusters": {
+      "eligible_units": 136,
+      "count": 1,
+      "rate": 7.353,
+      "locations": [
+       {
+        "opener": "however",
+        "line_start": 1
+       }
+      ],
+      "soft_flag": true,
+      "metric_version": "transition-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "vague_attribution": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "vague-attr-tables-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "stock_lexical_clusters": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "stock-tables-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "generic_diction": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "generic-diction-tables-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     }
+    },
+    "authorization": {
+     "state": "authorized",
+     "ranges": [
+      {
+       "start_byte": 0,
+       "end_byte": 839
+      }
+     ]
+    },
+    "protected_spans": [],
+    "invariant_regions": [
+     {
+      "start_byte": 310,
+      "end_byte": 446,
+      "checks": [
+       "numbers",
+       "units",
+       "modality"
+      ]
+     },
+     {
+      "start_byte": 447,
+      "end_byte": 672,
+      "checks": [
+       "negation",
+       "conditions"
+      ]
+     },
+     {
+      "start_byte": 673,
+      "end_byte": 838,
+      "checks": [
+       "modality"
+      ]
+     }
+    ],
+    "ledger": {
+     "canonical": {
+      "schema_version": 1,
+      "source_sha256": "b4f43f7f2b81f06d3c84cf8091b48514e8d1113ddec1403f907745a60a00e52f",
+      "entries": [
+       {
+        "id": "e0_modality",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 310,
+         "end_byte": 446,
+         "text_hash": "38943c7c4d1d7af768d68affab0d942fc5d6017c60522d6436487a6fed0c87ab"
+        },
+        "extracted": {
+         "modals": {
+          "may": 1
+         },
+         "neg": {}
+        },
+        "preservation": "semantic_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e0_numbers",
+        "kind": "number_or_quantity",
+        "source": {
+         "start_byte": 310,
+         "end_byte": 446,
+         "text_hash": "38943c7c4d1d7af768d68affab0d942fc5d6017c60522d6436487a6fed0c87ab"
+        },
+        "extracted": {
+         "5|": 1,
+         "3|d": 1
+        },
+        "preservation": "lexically_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e0_units",
+        "kind": "number_or_quantity",
+        "source": {
+         "start_byte": 310,
+         "end_byte": 446,
+         "text_hash": "38943c7c4d1d7af768d68affab0d942fc5d6017c60522d6436487a6fed0c87ab"
+        },
+        "extracted": {
+         "5|": 1,
+         "3|d": 1
+        },
+        "preservation": "lexically_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e1_conditions",
+        "kind": "condition",
+        "source": {
+         "start_byte": 447,
+         "end_byte": 672,
+         "text_hash": "3820b7089f1c0e7fe78d0e91d6cbe6e7a5df81912fa55b272a68ae39b56c2a47"
+        },
+        "extracted": {
+         "if": 1
+        },
+        "preservation": "relationship_exact",
+        "confidence": 850
+       },
+       {
+        "id": "e1_negation",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 447,
+         "end_byte": 672,
+         "text_hash": "3820b7089f1c0e7fe78d0e91d6cbe6e7a5df81912fa55b272a68ae39b56c2a47"
+        },
+        "extracted": {
+         "modals": {},
+         "neg": {
+          "not": 1
+         }
+        },
+        "preservation": "semantic_exact",
+        "confidence": 900
+       },
+       {
+        "id": "e2_modality",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 673,
+         "end_byte": 838,
+         "text_hash": "4a6de7b5fa02d0b32f0602cfafc95607bd344a20370c21d0aefca072d5129f44"
+        },
+        "extracted": {
+         "modals": {
+          "may": 1
+         },
+         "neg": {}
+        },
+        "preservation": "semantic_exact",
+        "confidence": 950
+       }
+      ],
+      "protected_spans": []
+     },
+     "sha256": "b488ceca0142a4ef6ff5fa948c98257e67b98f4eddf99a9d2037ca33e8af8153"
+    }
+   },
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "candidate",
+   "status": "ok",
+   "code": "ok",
+   "message": "candidate validated",
+   "data": [
+    {
+     "start_byte": 187,
+     "end_byte": 309,
+     "replacement_b64": "VGhlIGFydGlmYWN0IGV4cGVjdHMgdGhlIHNlcnZlciB0byBpbmRlcGVuZGVudGx5IHZlcmlmeSB0aGF0IHRoZSBkZWNsYXJlZCBmaWxlcyBleGlzdCBhdCB0aGUgZGVjbGFyZWQgcGF0aHMgaW4gdGhlIGRlY2xhcmVkIGNvbW1pdC4="
+    }
+   ],
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "verify",
+   "status": "ok",
+   "code": "ok",
+   "message": "proposal is shippable",
+   "data": {
+    "decision": "ACCEPT",
+    "proposal_status": "ACCEPT",
+    "semantic_status": "clean",
+    "findings": [],
+    "hunks": [
+     {
+      "hunk_id": "h0",
+      "original_range": [
+       187,
+       309
+      ],
+      "decision": "ACCEPT",
+      "finding_ids": [],
+      "revertable": true
+     }
+    ],
+    "ledger_sha256": "b488ceca0142a4ef6ff5fa948c98257e67b98f4eddf99a9d2037ca33e8af8153"
+   },
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "apply",
+   "status": "ok",
+   "code": "ok",
+   "message": "apply applied",
+   "data": {
+    "status": "applied",
+    "mutated": true,
+    "source": "/tmp/wf2-102/work/21/doc.md",
+    "backup": {
+     "path": "/home/rocky00717/.local/state/slopslap/backups/20260902T085700Z_01788339420973264047_c8e33782_doc.md.bak",
+     "metadata": "/home/rocky00717/.local/state/slopslap/backups/20260902T085700Z_01788339420973264047_c8e33782_doc.md.bak.json",
+     "restore_command": "cp -- /home/rocky00717/.local/state/slopslap/backups/20260902T085700Z_01788339420973264047_c8e33782_doc.md.bak /tmp/wf2-102/work/21/doc.md",
+     "restore_argv": [
+      "cp",
+      "--",
+      "/home/rocky00717/.local/state/slopslap/backups/20260902T085700Z_01788339420973264047_c8e33782_doc.md.bak",
+      "/tmp/wf2-102/work/21/doc.md"
+     ],
+     "containment": "external"
+    },
+    "warnings": [
+     "fsync skipped (durability best-effort; set SLOPSLAP_FSYNC=1)"
+    ],
+    "errors": [],
+    "original_digest": "b4f43f7f2b81f06d3c84cf8091b48514e8d1113ddec1403f907745a60a00e52f",
+    "verification_attempts": 2,
+    "applied_hunks": [
+     "h0"
+    ],
+    "withheld_hunks": [],
+    "final_verification": "ACCEPT",
+    "final_digest": "a4e5b71b19a1acc30d3858e93fa484abf9a06ea1388bdc9d648cc4810bd3db19"
+   },
+   "errors": [],
+   "warnings": [
+    "fsync skipped (durability best-effort; set SLOPSLAP_FSYNC=1)"
+   ]
+  }
+ ]
+}

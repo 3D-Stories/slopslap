@@ -1,0 +1,572 @@
+{
+ "schema_version": 1,
+ "run_id": "5d2026b1600a",
+ "status": "ok",
+ "semantic_mode": "live",
+ "stages": [
+  {
+   "stage": "audit",
+   "status": "ok",
+   "code": "ok",
+   "message": "audit complete",
+   "data": {
+    "schema_version": 1,
+    "run_id": "5d2026b1600a",
+    "source_path": "/tmp/wf2-102/work/17/doc.md",
+    "source_sha256": "5d2026b1600a4626c0494e31c348b28fb68a5e775a4e14ce08b529652773fa9b",
+    "byte_length": 745,
+    "fmt": "markdown",
+    "genre": "spec",
+    "genre_confidence": "low",
+    "genre_reason": "no usable genre signal; asymmetric-failure fallback to the most-preservation-heavy profile (spec)",
+    "audit_status": "flagged",
+    "metrics": {
+     "sentence_length_distribution": {
+      "eligible_units": 6,
+      "count": 6,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "sent-dist-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "distribution": {
+       "min": 11,
+       "p10": 14.0,
+       "p25": 17.0,
+       "median": 18.5,
+       "p75": 25.25,
+       "p90": 28.0,
+       "max": 29,
+       "mean": 20.167,
+       "sd": 6.176
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "sentence_length_dispersion": {
+      "eligible_units": 6,
+      "count": 6,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "sent-disp-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "dispersion": {
+       "iqr_over_median": 0.446,
+       "cov": 0.306,
+       "median_adjacent_diff": 9
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "punctuation_rates": {
+      "eligible_units": 121,
+      "count": 1,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "punct-v2",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "rates": {
+       "em_dash_per_1k": 8.264,
+       "semicolon_per_1k": 0.0,
+       "em_dash": 1,
+       "semicolon": 0
+      },
+      "thresholds": {
+       "em_dash_per_1k": 12.0,
+       "semicolon_per_1k": 8.0
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "negative_parallelism": {
+      "eligible_units": 121,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "negparallel-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "thresholds": {
+       "flag_at_count": 5
+      },
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "rule_of_three": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "tricolon-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "paragraph_sentence_count_runs": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "para-runs-v1",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "bold_label_density": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": 0.0,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "bold-label-v2",
+      "confidence": "normal",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "repeated_openers": {
+      "eligible_units": 6,
+      "count": 1,
+      "rate": null,
+      "locations": [
+       {
+        "prefix": "the",
+        "prefix_len": 1,
+        "line_start": 1,
+        "line_end": 1,
+        "sentences": 5
+       }
+      ],
+      "soft_flag": true,
+      "metric_version": "openers-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "transition_clusters": {
+      "eligible_units": 121,
+      "count": 1,
+      "rate": 8.264,
+      "locations": [
+       {
+        "opener": "however",
+        "line_start": 1
+       }
+      ],
+      "soft_flag": true,
+      "metric_version": "transition-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "vague_attribution": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "vague-attr-tables-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "stock_lexical_clusters": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": null,
+      "metric_version": "stock-tables-v1",
+      "confidence": "low",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     },
+     "generic_diction": {
+      "eligible_units": 1,
+      "count": 0,
+      "rate": null,
+      "locations": [],
+      "soft_flag": false,
+      "metric_version": "generic-diction-tables-v1",
+      "confidence": "medium",
+      "purpose": "candidate_selection_only",
+      "extraction_profile": "commonmark-3.0.0-v1"
+     }
+    },
+    "authorization": {
+     "state": "authorized",
+     "ranges": [
+      {
+       "start_byte": 0,
+       "end_byte": 745
+      }
+     ]
+    },
+    "protected_spans": [],
+    "invariant_regions": [
+     {
+      "start_byte": 0,
+      "end_byte": 117,
+      "checks": [
+       "numbers",
+       "units",
+       "modality",
+       "conditions"
+      ]
+     },
+     {
+      "start_byte": 118,
+      "end_byte": 221,
+      "checks": [
+       "negation"
+      ]
+     },
+     {
+      "start_byte": 222,
+      "end_byte": 375,
+      "checks": [
+       "numbers",
+       "units",
+       "negation"
+      ]
+     },
+     {
+      "start_byte": 376,
+      "end_byte": 508,
+      "checks": [
+       "numbers",
+       "units",
+       "negation",
+       "conditions"
+      ]
+     },
+     {
+      "start_byte": 509,
+      "end_byte": 578,
+      "checks": [
+       "negation"
+      ]
+     },
+     {
+      "start_byte": 579,
+      "end_byte": 744,
+      "checks": [
+       "modality"
+      ]
+     }
+    ],
+    "ledger": {
+     "canonical": {
+      "schema_version": 1,
+      "source_sha256": "5d2026b1600a4626c0494e31c348b28fb68a5e775a4e14ce08b529652773fa9b",
+      "entries": [
+       {
+        "id": "e0_conditions",
+        "kind": "condition",
+        "source": {
+         "start_byte": 0,
+         "end_byte": 117,
+         "text_hash": "1cf64f555bf0fbe7b6a88afcb8d871574ca2002d7d1c9af5042c983bf3813e9a"
+        },
+        "extracted": {
+         "when": 1
+        },
+        "preservation": "relationship_exact",
+        "confidence": 850
+       },
+       {
+        "id": "e0_modality",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 0,
+         "end_byte": 117,
+         "text_hash": "1cf64f555bf0fbe7b6a88afcb8d871574ca2002d7d1c9af5042c983bf3813e9a"
+        },
+        "extracted": {
+         "modals": {
+          "will": 1
+         },
+         "neg": {}
+        },
+        "preservation": "semantic_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e0_numbers",
+        "kind": "number_or_quantity",
+        "source": {
+         "start_byte": 0,
+         "end_byte": 117,
+         "text_hash": "1cf64f555bf0fbe7b6a88afcb8d871574ca2002d7d1c9af5042c983bf3813e9a"
+        },
+        "extracted": {
+         "503|errors": 1
+        },
+        "preservation": "lexically_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e0_units",
+        "kind": "number_or_quantity",
+        "source": {
+         "start_byte": 0,
+         "end_byte": 117,
+         "text_hash": "1cf64f555bf0fbe7b6a88afcb8d871574ca2002d7d1c9af5042c983bf3813e9a"
+        },
+        "extracted": {
+         "503|errors": 1
+        },
+        "preservation": "lexically_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e1_negation",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 118,
+         "end_byte": 221,
+         "text_hash": "66a2e4fc30c2738e7e4a641cbe66e510a4b39d25590f40f2b029d4611176c927"
+        },
+        "extracted": {
+         "modals": {},
+         "neg": {
+          "not": 1
+         }
+        },
+        "preservation": "semantic_exact",
+        "confidence": 900
+       },
+       {
+        "id": "e2_negation",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 222,
+         "end_byte": 375,
+         "text_hash": "0df1cc147816df51535b3d1d02c516ad0cabde02cbfd8f1f3b64b1ccf7e11ecc"
+        },
+        "extracted": {
+         "modals": {},
+         "neg": {
+          "not": 1,
+          "n't": 1
+         }
+        },
+        "preservation": "semantic_exact",
+        "confidence": 900
+       },
+       {
+        "id": "e2_numbers",
+        "kind": "number_or_quantity",
+        "source": {
+         "start_byte": 222,
+         "end_byte": 375,
+         "text_hash": "0df1cc147816df51535b3d1d02c516ad0cabde02cbfd8f1f3b64b1ccf7e11ecc"
+        },
+        "extracted": {
+         "503|with": 1
+        },
+        "preservation": "lexically_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e2_units",
+        "kind": "number_or_quantity",
+        "source": {
+         "start_byte": 222,
+         "end_byte": 375,
+         "text_hash": "0df1cc147816df51535b3d1d02c516ad0cabde02cbfd8f1f3b64b1ccf7e11ecc"
+        },
+        "extracted": {
+         "503|with": 1
+        },
+        "preservation": "lexically_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e3_conditions",
+        "kind": "condition",
+        "source": {
+         "start_byte": 376,
+         "end_byte": 508,
+         "text_hash": "ab49f0f78e9b58d11770eea4ca446640f2ffba24d47cca6ae858838c48327723"
+        },
+        "extracted": {
+         "if": 1
+        },
+        "preservation": "relationship_exact",
+        "confidence": 850
+       },
+       {
+        "id": "e3_negation",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 376,
+         "end_byte": 508,
+         "text_hash": "ab49f0f78e9b58d11770eea4ca446640f2ffba24d47cca6ae858838c48327723"
+        },
+        "extracted": {
+         "modals": {},
+         "neg": {
+          "no": 1
+         }
+        },
+        "preservation": "semantic_exact",
+        "confidence": 900
+       },
+       {
+        "id": "e3_numbers",
+        "kind": "number_or_quantity",
+        "source": {
+         "start_byte": 376,
+         "end_byte": 508,
+         "text_hash": "ab49f0f78e9b58d11770eea4ca446640f2ffba24d47cca6ae858838c48327723"
+        },
+        "extracted": {
+         "503|": 1
+        },
+        "preservation": "lexically_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e3_units",
+        "kind": "number_or_quantity",
+        "source": {
+         "start_byte": 376,
+         "end_byte": 508,
+         "text_hash": "ab49f0f78e9b58d11770eea4ca446640f2ffba24d47cca6ae858838c48327723"
+        },
+        "extracted": {
+         "503|": 1
+        },
+        "preservation": "lexically_exact",
+        "confidence": 950
+       },
+       {
+        "id": "e4_negation",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 509,
+         "end_byte": 578,
+         "text_hash": "fcb84600d70679b3cdd74c52cfceadf3bf61c900062028924099693d1f9ec1e6"
+        },
+        "extracted": {
+         "modals": {},
+         "neg": {
+          "not": 1
+         }
+        },
+        "preservation": "semantic_exact",
+        "confidence": 900
+       },
+       {
+        "id": "e5_modality",
+        "kind": "normative_statement",
+        "source": {
+         "start_byte": 579,
+         "end_byte": 744,
+         "text_hash": "4fa13c9bcee020b30d7a441162859bf292edd922a4b4c6f2834de2025bd365ed"
+        },
+        "extracted": {
+         "modals": {
+          "may": 2
+         },
+         "neg": {}
+        },
+        "preservation": "semantic_exact",
+        "confidence": 950
+       }
+      ],
+      "protected_spans": []
+     },
+     "sha256": "4042eafefb976ce4527d952ea907f27c6f0f3bfb4d35d8059e78fcd4247c571a"
+    }
+   },
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "candidate",
+   "status": "ok",
+   "code": "ok",
+   "message": "candidate validated",
+   "data": [
+    {
+     "start_byte": 345,
+     "end_byte": 374,
+     "replacement_b64": "dGhlIGJsb2IgZG9lc24ndCBleGlzdA=="
+    }
+   ],
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "verify",
+   "status": "ok",
+   "code": "ok",
+   "message": "proposal is shippable",
+   "data": {
+    "decision": "ACCEPT",
+    "proposal_status": "ACCEPT",
+    "semantic_status": "clean",
+    "findings": [],
+    "hunks": [
+     {
+      "hunk_id": "h0",
+      "original_range": [
+       345,
+       374
+      ],
+      "decision": "ACCEPT",
+      "finding_ids": [],
+      "revertable": true
+     }
+    ],
+    "ledger_sha256": "4042eafefb976ce4527d952ea907f27c6f0f3bfb4d35d8059e78fcd4247c571a"
+   },
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "stage": "apply",
+   "status": "ok",
+   "code": "ok",
+   "message": "apply applied",
+   "data": {
+    "status": "applied",
+    "mutated": true,
+    "source": "/tmp/wf2-102/work/17/doc.md",
+    "backup": {
+     "path": "/home/rocky00717/.local/state/slopslap/backups/20260902T084324Z_01788338604384153404_19806a4b_doc.md.bak",
+     "metadata": "/home/rocky00717/.local/state/slopslap/backups/20260902T084324Z_01788338604384153404_19806a4b_doc.md.bak.json",
+     "restore_command": "cp -- /home/rocky00717/.local/state/slopslap/backups/20260902T084324Z_01788338604384153404_19806a4b_doc.md.bak /tmp/wf2-102/work/17/doc.md",
+     "restore_argv": [
+      "cp",
+      "--",
+      "/home/rocky00717/.local/state/slopslap/backups/20260902T084324Z_01788338604384153404_19806a4b_doc.md.bak",
+      "/tmp/wf2-102/work/17/doc.md"
+     ],
+     "containment": "external"
+    },
+    "warnings": [
+     "fsync skipped (durability best-effort; set SLOPSLAP_FSYNC=1)"
+    ],
+    "errors": [],
+    "original_digest": "5d2026b1600a4626c0494e31c348b28fb68a5e775a4e14ce08b529652773fa9b",
+    "verification_attempts": 2,
+    "applied_hunks": [
+     "h0"
+    ],
+    "withheld_hunks": [],
+    "final_verification": "ACCEPT",
+    "final_digest": "89f37480506003d79ee0a9336ab45454fc8e99cfff959d90a35366bfc98484e6"
+   },
+   "errors": [],
+   "warnings": [
+    "fsync skipped (durability best-effort; set SLOPSLAP_FSYNC=1)"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "genre": "spec",
+  "control": false,
+  "pair": true,
+  "clean_file": "applied.md",
+  "provenance": "#102 eval pair. original.md = verbatim paragraph from 3D-Stories/design-doc-publish (MIT), docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md lines 19-19 at commit 0aa220d3c5a392ea43e85de6659c7856a4b4853d. applied.md = the bytes `scripts/slopslap_assemble/assemble.py apply --path <copy> --edits edits.json` wrote (SLOPSLAP_LIVE=1, semantic_mode live, exit 0); the edit-script was authored by the slopslap engine (session model claude-fable-5-1 applying skills/slopslap/SKILL.md) on 2026-09-02 — never hand-written. apply_result.json is the RunResult (no source bytes).",
+  "byte_policy": {
+    "encoding": "utf-8",
+    "trailing_newline": "preserve"
+  },
+  "editable_ranges": [
+    {
+      "start_byte": 0,
+      "end_byte": 1034
+    }
+  ],
+  "protected_spans": [],
+  "invariant_regions": [],
+  "expected_invariants": [],
+  "allowed_claim_atoms": [],
+  "seeded_defects": [
+    {
+      "class": "epistemic_distortion",
+      "region": "sentence 1",
+      "note": "Passive 'The control API is described as requiring…' hides the actor while the same paragraph names it ('the artifact also says…'). Repair: name the actor already present — 'The artifact describes the control API as requiring…'. No new claim atom; every quoted term, negation and modal untouched. editorial-harm: low · diagnosis-confidence: med. Authorized range: the scanner's transition_clusters tell (strip under spec) made the whole paragraph the autonomous path's authorized range."
+    }
+  ],
+  "control_reason": null,
+  "eval_pair": {
+    "schema_version": 1,
+    "engine_model": "claude-fable-5-1",
+    "source_sha256": "bb3699228179ee3a84569ef08d081198fe2afa3cea5cc805a7af6b27c88391ff",
+    "applied_sha256": "02df8a4b151bdba58c7c4ea1724588fff992a85bbb1d607423a6e2414bdfbb9f",
+    "apply_exit": 0,
+    "semantic_mode": "live",
+    "apply_path": "assemble.py apply --edits",
+    "declared_genre": null,
+    "classified_genre": "spec",
+    "authorization_state": "authorized",
+    "edits_file": "edits.json",
+    "apply_result_file": "apply_result.json",
+    "authored_at": "2026-09-02",
+    "source": {
+      "repo": "3D-Stories/design-doc-publish",
+      "path": "docs/reviews/2026-08-23-github-doc-harness-spec-md-2026-08-23.md",
+      "lines": "19-19",
+      "commit": "0aa220d3c5a392ea43e85de6659c7856a4b4853d",
+      "license": "MIT"
+    }
+  }
+}
