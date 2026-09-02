@@ -8,12 +8,22 @@ import hashlib
 import io
 import json
 import os
+import tempfile
 
 import pytest
 
 from eval import preference as P
 
 ENGINE = "claude-fable-5-1"
+
+# A minimal, internally consistent sampling ledger for the 2-pair `fixtures` set: `report` refuses to
+# publish a judge run or human picks without one (Step 11 re-run F0). No explicit funnel, so it binds
+# to no particular pair count and serves every fixture set the tests build.
+_LEDGER_DIR = tempfile.mkdtemp(prefix="p102-ledger-")
+LEDGER = os.path.join(_LEDGER_DIR, "sampled.json")
+with open(LEDGER, "w", encoding="utf-8") as _fh:
+    json.dump({"schema_version": 1, "sampled": 2, "count": 0, "breakdown": {"shipped": 2}, "items": []}, _fh)
+
 
 
 def _sha(b: bytes) -> str:
@@ -34,7 +44,10 @@ def _manifest(original: bytes, applied: bytes, *, eval_pair: bool = True, engine
     if eval_pair:
         m["eval_pair"] = {"schema_version": 1, "engine_model": engine, "source_sha256": _sha(original),
                           "applied_sha256": _sha(applied), "apply_exit": 0, "semantic_mode": "live",
-                          "edits_file": "edits.json", "apply_result_file": "apply_result.json"}
+                          "edits_file": "edits.json", "apply_result_file": "apply_result.json",
+                          # the loader fails closed on a missing provenance contract (Step 11 re-run F3)
+                          "source": {"kind": "owner-supplied", "document": "a test document", "anonymized": True,
+                                     "license": "owner-granted"}}
     return m
 
 
@@ -390,7 +403,7 @@ def test_report_scores_human_picks_and_renders_separate_sections(fixtures, tmp_p
     picks = tmp_path / "picks.json"
     picks.write_text(json.dumps(_picks_preferring(fixtures, blind, "applied")))
     md, js = tmp_path / "results.md", tmp_path / "results.json"
-    rc = P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf), "--picks", str(picks),
+    rc = P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--pairs", str(pf), "--picks", str(picks),
                  "--out", str(md), "--json", str(js)])
     assert rc == 0
     text = md.read_text(encoding="utf-8")
@@ -412,7 +425,7 @@ def test_report_counts_equal_and_original_separately(fixtures, tmp_path):
     p1.write_text(json.dumps(_picks_preferring(fixtures, blind, "original", rater="r1")))
     p2.write_text(json.dumps(_picks_preferring(fixtures, blind, "equal", rater="r2")))
     js = tmp_path / "r.json"
-    assert P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf), "--picks", str(p1),
+    assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--pairs", str(pf), "--picks", str(p1),
                    "--picks", str(p2), "--out", str(tmp_path / "r.md"), "--json", str(js)]) == 0
     raters = {x["rater"]: x for x in json.loads(js.read_text())["human"]["raters"]}
     assert raters["r1"]["original_preferred"] == 2 and raters["r1"]["applied_pct_of_decided"] == 0.0
@@ -421,7 +434,7 @@ def test_report_counts_equal_and_original_separately(fixtures, tmp_path):
 
 def test_report_with_no_picks_says_the_human_mode_has_not_run(fixtures, tmp_path):
     md = tmp_path / "r.md"
-    assert P.main(["report", "--fixtures", str(fixtures), "--out", str(md)]) == 0
+    assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--out", str(md)]) == 0
     text = md.read_text(encoding="utf-8")
     assert "## Human raters" in text and "not yet run" in text and "0 raters" in text
 
@@ -439,7 +452,7 @@ def test_report_refuses_drifted_or_tampered_picks(fixtures, tmp_path, capsys):
     for name, mutate in cases.items():
         bad = json.loads(json.dumps(good)); mutate(bad)
         f = tmp_path / f"bad-{name.replace(' ', '_')}.json"; f.write_text(json.dumps(bad))
-        rc = P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf), "--picks", str(f),
+        rc = P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--pairs", str(pf), "--picks", str(f),
                      "--out", str(tmp_path / "r.md")])
         assert rc == 2, name
         # the refusal always names the offending FILE; which identifier it can name depends on how
@@ -454,7 +467,7 @@ def test_report_renders_the_judge_section_from_judge_json(fixtures, tmp_path, mo
     P.main(["judge", "--fixtures", str(fixtures), "--model", "gpt-5.6-sol", "--out", str(jf)],
            judge_transport=_Transport([_judge_reply("A")] * 6))
     md, js = tmp_path / "r.md", tmp_path / "r.json"
-    assert P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf), "--out", str(md), "--json", str(js)]) == 0
+    assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--judge", str(jf), "--out", str(md), "--json", str(js)]) == 0
     text = md.read_text(encoding="utf-8")
     assert "## LLM judge" in text and "gpt-5.6-sol" in text and "pinned" in text
     assert "6 valid trials" in text and "excluded" in text
@@ -466,7 +479,7 @@ def test_report_renders_a_not_run_judge_honestly(fixtures, tmp_path, monkeypatch
     jf = tmp_path / "judge.json"
     P.main(["judge", "--fixtures", str(fixtures), "--model", "m", "--out", str(jf)], judge_transport=_Transport([]))
     md = tmp_path / "r.md"
-    assert P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf), "--out", str(md)]) == 0
+    assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--judge", str(jf), "--out", str(md)]) == 0
     text = md.read_text(encoding="utf-8")
     assert "## LLM judge" in text and "not run" in text and "SLOPSLAP_LIVE" in text
 
@@ -483,7 +496,7 @@ def test_report_renders_the_sampling_breakdown(fixtures, tmp_path):
     assert "| verifier_blocked | 3 |" in text and "| not_authorized | 2 |" in text
     assert "AI %" not in text and "sloppiness score" not in text
     # an explicit status note renders under its own heading when the ledger carries one
-    ledger.write_text(json.dumps({"schema_version": 1, "sampled": 7, "count": 5, "breakdown": {"shipped": 2},
+    ledger.write_text(json.dumps({"schema_version": 1, "sampled": 7, "count": 5, "breakdown": {"shipped": 2, "not_authorized": 5},
                                   "status_note": "AC4 asked for 5; this run ships 2.", "items": []}))
     assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", str(ledger), "--out", str(md)]) == 0
     assert "### Status against the issue" in md.read_text(encoding="utf-8") and "this run ships 2" in md.read_text(encoding="utf-8")
@@ -534,7 +547,7 @@ def test_report_scores_page_picks_carrying_only_a_token_and_side_hashes(fixtures
     picks_file.write_text(json.dumps({"schema_version": 1, "run_id": blind["run_id"], "rater": "web",
                                       "mode": "static", "picks": picks}))
     js = tmp_path / "r.json"
-    assert P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf),
+    assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--pairs", str(pf),
                    "--picks", str(picks_file),
                    "--out", str(tmp_path / "r.md"), "--json", str(js)]) == 0
     rater = json.loads(js.read_text())["human"]["raters"][0]
@@ -552,7 +565,7 @@ def test_report_refuses_the_same_pair_picked_twice(fixtures, tmp_path, capsys):
     dup["picks"].append(json.loads(json.dumps(dup["picks"][0])))
     f = tmp_path / "dup.json"
     f.write_text(json.dumps(dup))
-    rc = P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf), "--picks", str(f),
+    rc = P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--pairs", str(pf), "--picks", str(f),
                  "--out", str(tmp_path / "r.md")])
     assert rc == 2 and "twice" in capsys.readouterr().err
 
@@ -563,7 +576,7 @@ def test_report_refuses_two_picks_files_from_one_rater_and_run(fixtures, tmp_pat
     p1, p2 = tmp_path / "a.json", tmp_path / "b.json"
     p1.write_text(body)
     p2.write_text(body)
-    rc = P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf), "--picks", str(p1),
+    rc = P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--pairs", str(pf), "--picks", str(p1),
                  "--picks", str(p2), "--out", str(tmp_path / "r.md")])
     assert rc == 2 and "same rater" in capsys.readouterr().err
 
@@ -640,7 +653,7 @@ def test_report_refuses_an_object_that_is_merely_shaped_like_a_judge_run(fixture
     f = tmp_path / "fake.json"
     f.write_text(json.dumps({"status": "completed", "pairs": [{"pair_id": "deadbeefdeadbeef"}],
                              "summary": {"applied_preference_pct_of_decided": 99.9}}))
-    rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(f), "--out", str(tmp_path / "r.md")])
+    rc = P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--judge", str(f), "--out", str(tmp_path / "r.md")])
     assert rc == 2 and "judge" in capsys.readouterr().err.lower()
 
 
@@ -658,7 +671,7 @@ def test_report_refuses_a_judge_run_naming_a_pair_the_fixture_set_does_not_hold(
     j = json.loads(jf.read_text())
     j["pairs"][0]["pair_id"] = "0" * 16
     jf.write_text(json.dumps(j))
-    rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf), "--out", str(tmp_path / "r.md")])
+    rc = P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--judge", str(jf), "--out", str(tmp_path / "r.md")])
     assert rc == 2 and "pair_id" in capsys.readouterr().err
 
 
@@ -668,7 +681,7 @@ def test_report_refuses_a_judge_summary_that_does_not_recompute(fixtures, tmp_pa
     j = json.loads(jf.read_text())
     j["summary"]["applied_preferred_trials"] = 99
     jf.write_text(json.dumps(j))
-    rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf), "--out", str(tmp_path / "r.md")])
+    rc = P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--judge", str(jf), "--out", str(tmp_path / "r.md")])
     assert rc == 2 and "summary" in capsys.readouterr().err
 
 
@@ -679,7 +692,7 @@ def test_report_refuses_a_trial_whose_applied_side_does_not_recompute(fixtures, 
     tr = j["pairs"][0]["trials"][0]
     tr["applied_side"] = "B" if tr["applied_side"] == "A" else "A"
     jf.write_text(json.dumps(j))
-    rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf), "--out", str(tmp_path / "r.md")])
+    rc = P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--judge", str(jf), "--out", str(tmp_path / "r.md")])
     assert rc == 2 and "applied_side" in capsys.readouterr().err
 
 
@@ -759,7 +772,7 @@ def test_report_refuses_a_judge_run_that_does_not_cover_every_fixture(fixtures, 
         applied_preference_pct_of_decided=(
             round(100.0 * p["applied_preferred_trials"] / d, 1) if d else None))
     jf.write_text(json.dumps(j))
-    rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf),
+    rc = P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--judge", str(jf),
                  "--out", str(tmp_path / "r.md")])
     assert rc == 2 and "every" in capsys.readouterr().err
 
@@ -786,7 +799,7 @@ def test_report_refuses_a_tampered_pair_level_summary_counter(fixtures, tmp_path
     jf, j = _judge_run(fixtures, tmp_path, [_judge_reply("A")] * 6)
     j["summary"][field] = 99
     jf.write_text(json.dumps(j))
-    rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf),
+    rc = P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--judge", str(jf),
                  "--out", str(tmp_path / "r.md")])
     assert rc == 2 and field in capsys.readouterr().err
 
@@ -796,7 +809,7 @@ def test_report_refuses_a_tampered_per_pair_counter(fixtures, tmp_path, monkeypa
     jf, j = _judge_run(fixtures, tmp_path, [_judge_reply("A")] * 6)
     j["pairs"][0]["applied_preferred_trials"] = 99
     jf.write_text(json.dumps(j))
-    rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf),
+    rc = P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--judge", str(jf),
                  "--out", str(tmp_path / "r.md")])
     assert rc == 2 and "applied_preferred_trials" in capsys.readouterr().err
 
@@ -809,7 +822,7 @@ def test_report_refuses_a_fabricated_beat_verdict(fixtures, tmp_path, monkeypatc
     j["pairs"][0]["verdict"]["beat"] = True
     j["summary"]["pairs_beat"] = 1
     jf.write_text(json.dumps(j))
-    rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf),
+    rc = P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--judge", str(jf),
                  "--out", str(tmp_path / "r.md")])
     assert rc == 2 and "beat" in capsys.readouterr().err
 
@@ -818,7 +831,7 @@ def test_report_refuses_a_fabricated_beat_verdict(fixtures, tmp_path, monkeypatc
 def test_report_requires_the_blind_file_alongside_picks(fixtures, tmp_path, capsys):
     picks = tmp_path / "picks.json"
     picks.write_text(json.dumps(_picks_preferring(fixtures, _blind(fixtures), "applied")))
-    rc = P.main(["report", "--fixtures", str(fixtures), "--picks", str(picks),
+    rc = P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--picks", str(picks),
                  "--out", str(tmp_path / "r.md")])
     assert rc == 2 and "--pairs" in capsys.readouterr().err
 
@@ -830,7 +843,7 @@ def test_report_refuses_picks_from_a_run_id_the_operator_never_issued(fixtures, 
     forged = P.build_pairs(P.load_eval_pairs(str(fixtures)), seed="s")  # a DIFFERENT run_id
     picks = tmp_path / "picks.json"
     picks.write_text(json.dumps(_picks_preferring(fixtures, forged, "applied", rater="attacker")))
-    rc = P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf), "--picks", str(picks),
+    rc = P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--pairs", str(pf), "--picks", str(picks),
                  "--out", str(tmp_path / "r.md")])
     assert rc == 2 and "run_id" in capsys.readouterr().err
 
@@ -842,7 +855,7 @@ def test_report_refuses_a_pick_whose_token_the_blind_file_does_not_hold(fixtures
     obj["picks"][0]["token"] = "0" * 16
     picks = tmp_path / "picks.json"
     picks.write_text(json.dumps(obj))
-    rc = P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf), "--picks", str(picks),
+    rc = P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--pairs", str(pf), "--picks", str(picks),
                  "--out", str(tmp_path / "r.md")])
     assert rc == 2 and "token" in capsys.readouterr().err
 
@@ -853,7 +866,7 @@ def test_report_scores_picks_that_match_the_issued_blind_file(fixtures, tmp_path
     picks = tmp_path / "picks.json"
     picks.write_text(json.dumps(_picks_preferring(fixtures, json.loads(pf.read_text()), "applied")))
     js = tmp_path / "r.json"
-    assert P.main(["report", "--fixtures", str(fixtures), "--pairs", str(pf), "--picks", str(picks),
+    assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", LEDGER, "--pairs", str(pf), "--picks", str(picks),
                    "--out", str(tmp_path / "r.md"), "--json", str(js)]) == 0
     rater = json.loads(js.read_text())["human"]["raters"][0]
     assert rater["pairs_rated"] == 2 and rater["applied_preferred"] == 2

@@ -12,7 +12,7 @@
    "data": {
     "schema_version": 1,
     "run_id": "0bb28e953c45",
-    "source_path": "/home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p128/doc.md",
+    "source_path": "<workspace-state>/p128/doc.md",
     "source_sha256": "0bb28e953c452b00656392f9af440425d921498a443d7a42d559fd44227b59d8",
     "byte_length": 493,
     "fmt": "markdown",
@@ -429,16 +429,16 @@
    "data": {
     "status": "applied",
     "mutated": true,
-    "source": "/home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p128/doc.md",
+    "source": "<workspace-state>/p128/doc.md",
     "backup": {
-     "path": "/home/rocky00717/.local/state/slopslap/backups/20260902T160435Z_01788365075681890211_98843f29_doc.md.bak",
-     "metadata": "/home/rocky00717/.local/state/slopslap/backups/20260902T160435Z_01788365075681890211_98843f29_doc.md.bak.json",
-     "restore_command": "cp -- /home/rocky00717/.local/state/slopslap/backups/20260902T160435Z_01788365075681890211_98843f29_doc.md.bak /home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p128/doc.md",
+     "path": "<state-home>/slopslap/backups/20260902T160435Z_01788365075681890211_98843f29_doc.md.bak",
+     "metadata": "<state-home>/slopslap/backups/20260902T160435Z_01788365075681890211_98843f29_doc.md.bak.json",
+     "restore_command": "cp -- <state-home>/slopslap/backups/20260902T160435Z_01788365075681890211_98843f29_doc.md.bak <workspace-state>/p128/doc.md",
      "restore_argv": [
       "cp",
       "--",
-      "/home/rocky00717/.local/state/slopslap/backups/20260902T160435Z_01788365075681890211_98843f29_doc.md.bak",
-      "/home/rocky00717/rawgentic/projects/slopslap/claude_docs/.wf2-state/102/hg/work/p128/doc.md"
+      "<state-home>/slopslap/backups/20260902T160435Z_01788365075681890211_98843f29_doc.md.bak",
+      "<workspace-state>/p128/doc.md"
      ],
      "containment": "external"
     },

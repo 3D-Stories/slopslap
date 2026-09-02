@@ -201,9 +201,10 @@ no edit. *When in doubt, it changes nothing.*
 - **Engine:** whatever Claude tier the session provides (Opus 4.8 / Sonnet 5) at high effort;
   Fable 5 is a bonus rewrite tier *if* API access exists — never required.
 - **Measured (#102):** the cross-model LLM-judge A/B has **run — 8 pairs, 24 blinded trials, the
-  slopslap-applied text preferred in 95.8% of decided trials (23 of 24; judge `gpt-5.6-sol`, model pinned
-  by request and not echoed by the CLI)**; the human paired-preference rating is **built but not yet
-  run (0 raters)**. The 8 pairs are anonymized paragraphs from the owner's own human-written documents,
+  slopslap-applied text preferred in 100% of decided trials (24 of 24; judge `gpt-5.6-sol`, model pinned
+  by request and not echoed by the CLI, genre-neutral rubric; a first run under a technical-document
+  rubric gave 23 of 24 and is recorded in the design doc)**; the human paired-preference rating is
+  **built but not yet run (0 raters)**. The 8 pairs are anonymized paragraphs from the owner's own human-written documents,
   approved one by one; 101 paragraphs entered the funnel and slopslap left 86 of them untouched. Both
   results sit in `docs/reviews/2026-09-02-102-blind-paired-preference-results.md`, which leads with that
   funnel. A first set of 3 pairs was discarded before publication: every one was a paragraph of a
@@ -252,9 +253,14 @@ no edit. *When in doubt, it changes nothing.*
   offline audit → 11 anonymized (names → neutral words) and approved by the owner one by one → 9
   engine edit scripts → 8 live-applied pairs (`SHIPPED_FLOOR = 8`; the issue's floor of 5 is met).
   `load_eval_pairs` now refuses any fixture sourced from `docs/reviews/` or opening with a review
-  header, and the results document leads with the abstention funnel before any percentage.
-  Measured: LLM judge run, applied preferred in 23 of 24 trials (95.8% of decided), applied
-  majority on 8 of 8 pairs, scaffold BEAT on 6 of 8; human: built, 0 raters yet. Results:
+  header, fails closed on a missing or unknown `eval_pair.source`, and the results document leads
+  with the abstention funnel before any percentage — `report` refuses to publish a judge run or
+  human picks without the sampling ledger, and checks the ledger's arithmetic against its items. A
+  Step 11 re-run over the re-sourced commits found the judge rubric anchored to "a technical design
+  document" (`judge.py` and the rating page); the owner chose to make it genre-neutral and re-run.
+  Measured (published, neutral rubric): applied preferred in 24 of 24 trials (100% of decided),
+  applied majority on 8 of 8 pairs, scaffold BEAT on 6 of 8; the first run under the old rubric gave
+  23 of 24 and is recorded in the design doc. Human: built, 0 raters yet. Results:
   `docs/reviews/2026-09-02-102-blind-paired-preference-results.md`. Engine behavior unchanged: no
   scanner rule, table, threshold or genre profile moved.
 

@@ -149,7 +149,9 @@ DIMENSION_GUIDE: Dict[str, Dict[str, str]] = {
     "unresolved_intent_visibility": {"better": "an open question stays visibly open", "worse": "an open question is presented as settled"},
     "editorial_cost_reduction": {"better": "less work for the reader to extract the meaning", "worse": "more work for the reader"},
     "voice_distance_from_samples": {"better": "a distinctive voice is preserved while only true harm is removed", "worse": "a distinctive voice is flattened or normalized"},
-    "genre_fitness": {"better": "fits the function of a technical design document", "worse": "violates that function"},
+    # Genre-neutral since the #102 Step 11 re-run: the anchor used to read "fits the function of a
+    # technical design document", which graded leadership prose against the wrong kind of document.
+    "genre_fitness": {"better": "fits the function of the kind of document it is", "worse": "violates that function"},
     "edit_locality_and_justification": {"better": "every difference between the two is minimal and justified", "worse": "differences sprawl beyond what any harm justifies"},
     "seeded_defect_fixed_without_normalizing": {"better": "a real defect is fixed cleanly with no collateral normalizing", "worse": "surrounding distinctive prose is normalized"},
 }
@@ -176,9 +178,9 @@ JUDGE_SCHEMA: dict = {
 }
 
 _JUDGE_INSTRUCTION = (
-    "You are a blind editorial judge for technical prose. Two versions of ONE paragraph follow as "
+    "You are a blind editorial judge for prose. Two versions of ONE paragraph follow as "
     "text_a and text_b. You do not know which came first or who wrote either; judge only what is "
-    "on the page, as a reader of a technical design document would. For EACH dimension in "
+    "on the page, as a careful reader of that kind of document would. For EACH dimension in "
     "dimensions_guide, say which version is better — \"A\", \"B\", or \"equal\" — using that "
     "dimension's better/worse anchors. Then give one overall preference (\"A\", \"B\", or "
     "\"equal\") and a short reason. Reply with ONE strict JSON object that matches the required "

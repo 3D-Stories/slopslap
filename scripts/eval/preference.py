@@ -93,7 +93,31 @@ def _refuse_machine_prose(name: str, manifest: dict, ep: dict, original: bytes) 
     `provenance`) names a path under `docs/reviews/`, or whose source opens with a review header
     (`# Adversarial Review`, `- Reviewer:`, `- Model:` …), is refused here, before it can be judged.
     """
-    src = ep.get("source") if isinstance(ep.get("source"), dict) else {}
+    # The boundary fails CLOSED (Step 11 re-run F3): a pair must state where its original came from,
+    # in one of two canonical shapes. Path and header detection below are an extra deny-list only.
+    src = ep.get("source")
+    if not isinstance(src, dict):
+        raise PairError(f"{name}: eval_pair.source is missing — a pair must state where its original "
+                        f"came from (public-repo shape: repo/path/lines/commit/license; owner-supplied "
+                        f"shape: kind/document/anonymized/license)")
+    kind = src.get("kind")
+    if kind == "owner-supplied":
+        for k in ("document", "license"):
+            if not src.get(k):
+                raise PairError(f"{name}: eval_pair.source.{k} is missing from an owner-supplied source")
+        if src.get("anonymized") is not True:
+            raise PairError(f"{name}: eval_pair.source.anonymized must be true — owner-supplied prose "
+                            f"is published only after every identifying name was replaced")
+        if src.get("license") != "owner-granted":
+            raise PairError(f"{name}: eval_pair.source.license {src.get('license')!r} is not "
+                            f"'owner-granted' for an owner-supplied source")
+    elif kind in (None, "public-repo"):
+        missing = [k for k in ("repo", "path", "lines", "commit", "license") if not src.get(k)]
+        if missing:
+            raise PairError(f"{name}: eval_pair.source is incomplete for a public-repo source "
+                            f"(missing {', '.join(missing)})")
+    else:
+        raise PairError(f"{name}: eval_pair.source.kind {kind!r} is not a known provenance shape")
     src_path = str(src.get("path") or "")
     if _REVIEWS_PATH.search(src_path) or _REVIEWS_PATH.search(str(manifest.get("provenance") or "")):
         raise PairError(f"{name}: provenance names a path under docs/reviews/ — the reports there are "
@@ -362,7 +386,7 @@ button.on{background:#2b6cb0;color:#fff;border-color:#2b6cb0} .bar{position:stic
 input{padding:.3rem .5rem;font:14px system-ui,sans-serif} #status{color:#555}
 </style></head><body>
 <h1>Blind A/B rating</h1>
-<div class="sub">Two versions of one paragraph. Pick the one that reads better for a technical design document. Side order is random per pair. When you finish, export your picks.</div>
+<div class="sub">Two versions of one paragraph. Pick the one that reads better for the kind of document it is. Side order is random per pair. When you finish, export your picks.</div>
 <div class="bar"><label>Rater <input id="rater" placeholder="your name"></label><span id="status"></span><button id="export">Export picks</button></div>
 <div id="pairs"></div>
 <script id="data" type="application/json">__DATA__</script>
@@ -700,13 +724,72 @@ def _funnel_rows(ab: dict, n_pairs: int) -> list:
     if isinstance(explicit, list) and explicit:
         return [(str(r.get("stage")), r.get("count"), str(r.get("meaning") or "")) for r in explicit]
     bd = ab.get("breakdown") or {}
-    sampled = ab.get("sampled", len(ab.get("items", [])))
-    excluded = sum(v for k, v in bd.items() if k.startswith("excluded_"))
-    authorized = max(0, int(sampled) - int(bd.get("not_authorized", 0)) - int(excluded))
-    return [("sampled", sampled, "paragraphs the run examined (each carried at least one scanner tell)"),
+    items = ab.get("items") or []
+    sampled = ab.get("sampled", len(items))
+    # Authorized comes from item-level authorization when the ledger carries items: an excluded
+    # paragraph may well have been authorized first (the old ledger's circular one was), so it must
+    # not be subtracted (Step 11 re-run F5). Without items, only `not_authorized` is known to be out.
+    if items:
+        authorized = sum(1 for it in items if isinstance(it, dict) and it.get("authorization")
+                         and it.get("authorization") != "reject_all")
+    else:
+        authorized = max(0, int(sampled) - int(bd.get("not_authorized", 0)))
+    return [("sampled", sampled, "paragraphs the run examined"),
             ("authorized", authorized, "the offline audit authorized at least one range under the auto-classified genre"),
             ("repaired", bd.get("shipped", 0), "the engine proposed a repair, the byte-exact verifier accepted it, apply wrote it"),
             ("paired", n_pairs, "shipped as a blind A/B pair in this fixture set")]
+
+
+def validate_ledger(ab: dict, n_pairs: int, *, name: str = "sampling ledger") -> None:
+    """The funnel is evidence only if its numbers add up (Step 11 re-run F0/F2): `sampled` is a
+    non-negative integer, every `breakdown` count is one and they sum to `sampled`, an explicit
+    `funnel` is non-increasing with non-negative integer counts, and its last row is THIS fixture
+    set's pair count — a ledger from another run is refused, never rendered under these pairs."""
+    def _count(v, what):
+        if isinstance(v, bool) or not isinstance(v, int) or v < 0:
+            raise PairError(f"{name}: {what} must be a non-negative integer, got {v!r}")
+        return v
+    items = ab.get("items") or []
+    sampled = _count(ab.get("sampled", len(items)), "sampled")
+    if items and len(items) != sampled:
+        raise PairError(f"{name}: sampled is {sampled} but the ledger carries {len(items)} items")
+    bd = ab.get("breakdown")
+    if bd:
+        if not isinstance(bd, dict):
+            raise PairError(f"{name}: breakdown is not an object")
+        total = sum(_count(v, f"breakdown[{k}]") for k, v in bd.items())
+        if total != sampled:
+            raise PairError(f"{name}: breakdown sums to {total} but sampled is {sampled}")
+    # With items present, `breakdown` and the explicit funnel are ASSERTIONS about them, not
+    # free-standing numbers (Step 11 re-run D4): each is recomputed from the items and must agree.
+    if items:
+        if not all(isinstance(it, dict) for it in items):
+            raise PairError(f"{name}: items is not a list of objects")
+        seen: dict = {}
+        for it in items:
+            seen[str(it.get("disposition"))] = seen.get(str(it.get("disposition")), 0) + 1
+        if bd and dict(bd) != seen:
+            raise PairError(f"{name}: breakdown {dict(bd)} does not match the items' dispositions {seen}")
+    funnel = ab.get("funnel")
+    if funnel:
+        if not isinstance(funnel, list) or not all(isinstance(r, dict) for r in funnel):
+            raise PairError(f"{name}: funnel is not a list of rows")
+        counts = [_count(r.get("count"), f"funnel[{r.get('stage')}]") for r in funnel]
+        if items:
+            by_stage = {str(r.get("stage")): c for r, c in zip(funnel, counts)}
+            derived = {"sampled": len(items),
+                       "authorized": sum(1 for it in items if it.get("authorization") and it.get("authorization") != "reject_all"),
+                       "repaired": sum(1 for it in items if it.get("disposition") == "shipped")}
+            for stage, want in derived.items():
+                if stage in by_stage and by_stage[stage] != want:
+                    raise PairError(f"{name}: funnel row {stage!r} says {by_stage[stage]} but the items give {want}")
+        if any(a < b for a, b in zip(counts, counts[1:])):
+            raise PairError(f"{name}: funnel counts must not increase from one stage to the next: {counts}")
+        if counts and counts[0] != sampled:
+            raise PairError(f"{name}: the funnel's first row is {counts[0]} but sampled is {sampled}")
+        if counts and counts[-1] != n_pairs:
+            raise PairError(f"{name}: the funnel's last row is {counts[-1]} but this fixture set has "
+                            f"{n_pairs} pair(s) — the ledger belongs to a different run")
 
 
 def _source_cell(src: Optional[dict]) -> str:
@@ -755,8 +838,10 @@ def render_results_md(results: dict) -> str:
     lines += [
         "", "## Method", "",
         "- Each fixture is one source paragraph (`original.md`; its provenance is the pair's `fixture.json`) "
-        "and the output of `scripts/slopslap_assemble/assemble.py apply` on it (`applied.md`), produced from a "
-        "committed edit-script authored by the slopslap engine — never hand-written.",
+        "and the output of `scripts/slopslap_assemble/assemble.py apply` on it (`applied.md`). The committed "
+        "edit-script replays to `applied.md` byte for byte, and the recorded apply exited 0 with a live "
+        "semantic pass; that the slopslap ENGINE authored the edit-script is process-reported in each "
+        "fixture's provenance and is not something the committed artifacts can prove.",
         "- `build` shows the two as sides A and B in a seeded random order per pair; a rater picks A, B, or "
         "no preference. The pick is recorded with both side hashes (so the side order rides with the pick) "
         "and bound to the pair's `source_sha256`.",
@@ -829,8 +914,9 @@ def render_results_md(results: dict) -> str:
               "fixture bytes, so a self-consistent picks file proves only that its author can run "
               "sha256.",
               f"- Sample size: {len(fx)} pairs. Any percentage here is a direction, not a measurement.",
-              "- Selection: see the abstention funnel at the top. Only paragraphs carrying at least one scanner tell "
-              "entered the funnel, so the set skews toward flagged prose; abstentions are reported, not hidden.",
+              "- Selection: every paragraph in the funnel's `sampled` row entered the run (the selection line at the "
+              "top says how it was drawn); the audit's tell policy decided authorization, so the preference results "
+              "cover only the repaired subset. Abstentions are reported, not hidden.",
               "- The judge model is pinned by the request and not confirmed from the CLI's output.",
               "- The rater-facing page carries neither `source_sha256` nor `pair_id`, so hashing the two texts on "
               "screen no longer recovers a role. A rater with repository access can still de-blind themselves from "
@@ -1069,7 +1155,16 @@ def _cmd_report(args, stdin, stdout) -> int:
     if args.abstentions:
         with open(args.abstentions, "r", encoding="utf-8") as fh:
             abst = json.load(fh)
-        abst = dict(abst, file=os.path.relpath(args.abstentions, REPO)) if isinstance(abst, dict) else None
+        if not isinstance(abst, dict):
+            raise PairError(f"{args.abstentions}: the sampling ledger is not a JSON object")
+        validate_ledger(abst, len(pairs), name=args.abstentions)
+        abst = dict(abst, file=os.path.relpath(args.abstentions, REPO))
+    elif args.judge or args.picks:
+        # Step 11 re-run F0: a preference percentage with no funnel has no denominator. The funnel-first
+        # layout is not a safeguard if the ledger can simply be left off, so publishing a judge run or
+        # human picks REQUIRES the sampling ledger. A fixture-only render (no percentage) still works.
+        raise PairError("--abstentions is required with --judge or --picks: a preference percentage "
+                        "without the sampling funnel has no denominator")
     fixtures = []
     for p in pairs:
         with open(os.path.join(p.path, "fixture.json"), "r", encoding="utf-8") as fh:

@@ -1,6 +1,6 @@
 # Blind paired-preference eval of slopslap's own output — results (#102)
 
-Generated 2026-09-02T16:17:40Z by `scripts/eval/preference.py report`. Human raters and the LLM judge are reported in SEPARATE sections and never combined into one number. This document reports preference counts and percentages only; it carries no single quality score of any kind.
+Generated 2026-09-02T16:57:31Z by `scripts/eval/preference.py report`. Human raters and the LLM judge are reported in SEPARATE sections and never combined into one number. This document reports preference counts and percentages only; it carries no single quality score of any kind.
 
 ## Abstention funnel — read this first
 
@@ -31,11 +31,11 @@ The full per-paragraph ledger (source, disposition, note) is `docs/reviews/102-e
 
 ### Status against the issue
 
-**AC4 asked for 5 to 10 pairs; this run ships 8** — the floor is met. The set is the owner's own human-written prose, anonymized and approved one paragraph at a time; the first run's 3 pairs were machine-authored review prose and were discarded (see `superseded_public_sample`). Funnel: 101 sampled → 15 authorized → 11 eligible → 8 repaired → 8 paired. The 86 paragraphs the audit did not authorize are the honest majority result: on this prose the autonomous path finds nothing to strip most of the time.
+**AC4 asked for 5 to 10 pairs; this run ships 8** — the floor is met. The set is the owner's own human-written prose, anonymized and approved one paragraph at a time; the first run's 3 pairs were machine-authored review prose and were discarded (see `superseded_public_sample`). Funnel: 101 sampled → 15 authorized → 11 eligible → 8 repaired → 8 paired. The 86 paragraphs the audit did not authorize are the honest majority result: on this prose the autonomous path finds nothing to strip most of the time. The published judge run uses the genre-neutral rubric adopted at the Step 11 re-run (the rubric had anchored genre fitness to a technical design document); the first run under that rubric — 23 of 24 trials — is recorded in the design document beside the re-run.
 
 ## Method
 
-- Each fixture is one source paragraph (`original.md`; its provenance is the pair's `fixture.json`) and the output of `scripts/slopslap_assemble/assemble.py apply` on it (`applied.md`), produced from a committed edit-script authored by the slopslap engine — never hand-written.
+- Each fixture is one source paragraph (`original.md`; its provenance is the pair's `fixture.json`) and the output of `scripts/slopslap_assemble/assemble.py apply` on it (`applied.md`). The committed edit-script replays to `applied.md` byte for byte, and the recorded apply exited 0 with a live semantic pass; that the slopslap ENGINE authored the edit-script is process-reported in each fixture's provenance and is not something the committed artifacts can prove.
 - `build` shows the two as sides A and B in a seeded random order per pair; a rater picks A, B, or no preference. The pick is recorded with both side hashes (so the side order rides with the pick) and bound to the pair's `source_sha256`.
 - The LLM judge sees the same blind A/B, three trials per pair with a fresh side order each time, and answers per dimension plus an overall preference; the nine-dimension scaffold in `scripts/eval/judge.py` scores each trial as applied-vs-original.
 - Roles are recovered per fixture from the recorded hashes at report time; a pick that does not resolve to exactly one original and one applied side is refused, never counted.
@@ -63,7 +63,7 @@ Judge model: `gpt-5.6-sol` (pinned by `-m`, not echoed by the Codex CLI — `mod
 
 24 valid trials over 8 pairs (3 per pair, 0 failed call(s), 0 pair(s) errored). The percentages below come from the 24 trial(s) inside the 8 pair(s) that reached a present, non-errored verdict; an errored pair's trials are excluded.
 
-- Applied text preferred in **23** trial(s), original in **1**, no preference in **0** → applied preferred in **95.8%** of decided trials.
+- Applied text preferred in **24** trial(s), original in **0**, no preference in **0** → applied preferred in **100%** of decided trials.
 - Pairs where the applied text won the majority of trials: **8 of 8**.
 - Pairs that BEAT the original on the nine-dimension scaffold criterion: **6 of 8**.
 
@@ -75,14 +75,14 @@ Judge model: `gpt-5.6-sol` (pinned by `-m`, not echoed by the Codex CLI — `mod
 | `pair-102-p093-thought-leadership-transition` | 3 | 3 | 0 | 0 | yes |
 | `pair-102-p104-detached-leadership-syntax` | 3 | 3 | 0 | 0 | yes |
 | `pair-102-p128-safe-environment-passive` | 3 | 3 | 0 | 0 | no |
-| `pair-102-p133-recognition-filler` | 3 | 2 | 1 | 0 | yes |
+| `pair-102-p133-recognition-filler` | 3 | 3 | 0 | 0 | yes |
 | `pair-102-p139-planning-style-passive` | 3 | 3 | 0 | 0 | no |
 
 ## Limitations
 
 - A rater's picks are evidence only against the blind file the operator issued: `report` refuses `--picks` without `--pairs`, and refuses a pick whose `run_id` or `token` that file never handed out. Side hashes alone recompute from the committed fixture bytes, so a self-consistent picks file proves only that its author can run sha256.
 - Sample size: 8 pairs. Any percentage here is a direction, not a measurement.
-- Selection: see the abstention funnel at the top. Only paragraphs carrying at least one scanner tell entered the funnel, so the set skews toward flagged prose; abstentions are reported, not hidden.
+- Selection: every paragraph in the funnel's `sampled` row entered the run (the selection line at the top says how it was drawn); the audit's tell policy decided authorization, so the preference results cover only the repaired subset. Abstentions are reported, not hidden.
 - The judge model is pinned by the request and not confirmed from the CLI's output.
 - The rater-facing page carries neither `source_sha256` nor `pair_id`, so hashing the two texts on screen no longer recovers a role. A rater with repository access can still de-blind themselves from the fixture directories, the private blind file, or `judge.json` — those are operator artifacts.
 - The rewrite engine and the judge are different models; a human rating is the primary evidence and the LLM judge is secondary.

@@ -82,7 +82,8 @@ def test_report_leads_with_the_abstention_funnel(fixtures, tmp_path):
                    {"stage": "authorized", "count": 15, "meaning": "m2"},
                    {"stage": "repaired", "count": 9, "meaning": "m3"},
                    {"stage": "paired", "count": 2, "meaning": "m4"}],
-        "breakdown": {"shipped": 2, "not_authorized": 86, "excluded_third_party": 2}, "items": []}))
+        "breakdown": {"shipped": 2, "not_authorized": 86, "excluded_third_party": 2, "abstained": 7,
+                      "dropped_on_anonymization": 4}, "items": []}))
     md = tmp_path / "r.md"
     assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", str(ledger), "--out", str(md)]) == 0
     text = md.read_text(encoding="utf-8")
@@ -96,6 +97,7 @@ def test_report_leads_with_the_abstention_funnel(fixtures, tmp_path):
 
 
 def test_report_derives_a_funnel_from_an_older_ledger(fixtures, tmp_path):
+    """The old 31-item ledger: 18 authorized (the circular exclusion was authorized first), not 17."""
     ledger = tmp_path / "sampled.json"
     ledger.write_text(json.dumps({
         "schema_version": 1, "sampled": 31, "count": 28,
@@ -104,7 +106,7 @@ def test_report_derives_a_funnel_from_an_older_ledger(fixtures, tmp_path):
     md = tmp_path / "r.md"
     assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", str(ledger), "--out", str(md)]) == 0
     text = md.read_text(encoding="utf-8")
-    for row in ("| sampled | 31 |", "| authorized | 17 |", "| repaired | 3 |", "| paired | 2 |"):
+    for row in ("| sampled | 31 |", "| authorized | 18 |", "| repaired | 3 |", "| paired | 2 |"):
         assert row in text, row
 
 
@@ -114,3 +116,96 @@ def test_report_without_a_ledger_still_opens_with_the_funnel_heading(fixtures, t
     text = md.read_text(encoding="utf-8")
     assert text.index("## Abstention funnel") < text.index("## Method")
     assert "Sampling: not recorded for this run" in text
+
+
+# ------------------------------------------------------------------ Step 11 re-run findings (F0, F3, F5)
+def test_loader_refuses_a_fixture_with_no_source_contract(tmp_path):
+    """F3: the provenance boundary must fail CLOSED. A manifest with no `eval_pair.source`, or one of an
+    unknown shape, is not admissible — path and header detection stay as an extra deny-list only."""
+    root = _root(tmp_path)
+    d = _write_pair(root, "pair-102-01-nosrc", ALPHA_O, ALPHA_A)
+    _patch_manifest(d, lambda m: m["eval_pair"].pop("source", None))
+    with pytest.raises(P.PairError, match="source"):
+        P.load_eval_pairs(str(root))
+    _patch_manifest(d, lambda m: m["eval_pair"].__setitem__("source", {"kind": "scraped", "document": "x"}))
+    with pytest.raises(P.PairError, match="source"):
+        P.load_eval_pairs(str(root))
+    _patch_manifest(d, lambda m: m["eval_pair"].__setitem__("source", {
+        "kind": "owner-supplied", "document": "an internal handbook", "anonymized": False,
+        "license": "owner-granted", "extract_id": "p001"}))
+    with pytest.raises(P.PairError, match="anonymized"):
+        P.load_eval_pairs(str(root))
+
+
+def test_report_refuses_to_publish_a_percentage_without_a_ledger(fixtures, tmp_path, monkeypatch):
+    """F0: a preference percentage with no funnel has no denominator, so `report` refuses --judge or
+    --picks unless --abstentions supplies a ledger. A fixture-only render (no percentage) still works."""
+    monkeypatch.delenv("SLOPSLAP_LIVE", raising=False)
+    from test_preference import _Transport
+    jf = tmp_path / "judge.json"
+    P.main(["judge", "--fixtures", str(fixtures), "--model", "m", "--out", str(jf)], judge_transport=_Transport([]))
+    md = tmp_path / "r.md"
+    assert P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf), "--out", str(md)]) == 2
+    assert not md.exists()
+    ledger = tmp_path / "sampled.json"
+    ledger.write_text(json.dumps({"schema_version": 1, "sampled": 5, "count": 3, "breakdown": {"shipped": 2, "not_authorized": 3},
+                                  "funnel": [{"stage": "sampled", "count": 5}, {"stage": "authorized", "count": 2},
+                                             {"stage": "repaired", "count": 2}, {"stage": "paired", "count": 2}], "items": []}))
+    assert P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf), "--abstentions", str(ledger), "--out", str(md)]) == 0
+
+
+def test_report_refuses_a_ledger_whose_numbers_do_not_add_up(fixtures, tmp_path):
+    md = tmp_path / "r.md"
+    bad = tmp_path / "bad.json"
+    # breakdown does not sum to sampled
+    bad.write_text(json.dumps({"schema_version": 1, "sampled": 5, "count": 3, "breakdown": {"shipped": 2, "not_authorized": 2}, "items": []}))
+    assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", str(bad), "--out", str(md)]) == 2
+    # funnel's last row is not this fixture set's pair count
+    bad.write_text(json.dumps({"schema_version": 1, "sampled": 5, "count": 3, "breakdown": {"shipped": 2, "not_authorized": 3},
+                               "funnel": [{"stage": "sampled", "count": 5}, {"stage": "paired", "count": 3}], "items": []}))
+    assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", str(bad), "--out", str(md)]) == 2
+    # funnel not monotonic
+    bad.write_text(json.dumps({"schema_version": 1, "sampled": 5, "count": 3, "breakdown": {"shipped": 2, "not_authorized": 3},
+                               "funnel": [{"stage": "sampled", "count": 5}, {"stage": "authorized", "count": 6}, {"stage": "paired", "count": 2}], "items": []}))
+    assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", str(bad), "--out", str(md)]) == 2
+
+
+def test_derived_funnel_counts_authorized_from_items_when_present(fixtures, tmp_path):
+    """F5: an excluded paragraph may still have been AUTHORIZED (the old ledger's circular one was), so
+    the derived authorized row comes from item-level authorization when items exist."""
+    ledger = tmp_path / "sampled.json"
+    items = ([{"authorization": "authorized", "disposition": "shipped"}] * 2
+             + [{"authorization": "authorized", "disposition": "excluded_circular"}]
+             + [{"authorization": "reject_all", "disposition": "not_authorized"}] * 2)
+    ledger.write_text(json.dumps({"schema_version": 1, "sampled": 5, "count": 3,
+                                  "breakdown": {"shipped": 2, "excluded_circular": 1, "not_authorized": 2}, "items": items}))
+    md = tmp_path / "r.md"
+    assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", str(ledger), "--out", str(md)]) == 0
+    text = md.read_text(encoding="utf-8")
+    assert "| authorized | 3 |" in text
+
+
+def test_report_refuses_a_ledger_whose_items_disagree_with_its_summary(fixtures, tmp_path):
+    """D4: with items present, `breakdown` and the explicit funnel are assertions about them."""
+    md = tmp_path / "r.md"
+    bad = tmp_path / "bad.json"
+    items = ([{"authorization": "authorized", "disposition": "shipped"}] * 2
+             + [{"authorization": "reject_all", "disposition": "not_authorized"}] * 3)
+    # breakdown sums to sampled but names a disposition the items do not have
+    bad.write_text(json.dumps({"schema_version": 1, "sampled": 5, "count": 3,
+                               "breakdown": {"shipped": 2, "abstained": 3}, "items": items}))
+    assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", str(bad), "--out", str(md)]) == 2
+    # funnel says 4 authorized; the items say 2
+    bad.write_text(json.dumps({"schema_version": 1, "sampled": 5, "count": 3,
+                               "breakdown": {"shipped": 2, "not_authorized": 3},
+                               "funnel": [{"stage": "sampled", "count": 5}, {"stage": "authorized", "count": 4},
+                                          {"stage": "repaired", "count": 2}, {"stage": "paired", "count": 2}],
+                               "items": items}))
+    assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", str(bad), "--out", str(md)]) == 2
+    # consistent: accepted
+    bad.write_text(json.dumps({"schema_version": 1, "sampled": 5, "count": 3,
+                               "breakdown": {"shipped": 2, "not_authorized": 3},
+                               "funnel": [{"stage": "sampled", "count": 5}, {"stage": "authorized", "count": 2},
+                                          {"stage": "repaired", "count": 2}, {"stage": "paired", "count": 2}],
+                               "items": items}))
+    assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", str(bad), "--out", str(md)]) == 0

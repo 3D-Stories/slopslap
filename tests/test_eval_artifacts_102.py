@@ -79,13 +79,26 @@ def test_the_published_numbers_are_the_ones_the_trials_support(fixture_pairs):
     assert judge["status"] == "completed" and s["pairs"] == n and n >= 1
     assert s["pairs_completed"] == n and s["pairs_errored"] == 0 and s["trials_failed"] == 0
     assert s["trials_valid"] == s["trials_scored"] == n * judge["trials_per_pair"]
+    by_id = {p.pair_id: p for p in fixture_pairs}
+    run_id = judge["run_id"]
     applied = original = equal = 0
     majority = 0
     for jp in judge["pairs"]:
         ok = [tr for tr in jp["trials"] if tr.get("ok")]
         assert len(ok) == judge["trials_per_pair"], jp["pair_id"]
-        a = sum(1 for tr in ok if tr["preferred_role"] == "applied")
-        o = sum(1 for tr in ok if tr["preferred_role"] == "original")
+        # Derive each role from the recorded PICK and the side the applied bytes actually sat on
+        # (recomputed from the side hashes) — never from the stored `preferred_role`, which is itself
+        # a derived field a hand edit could change (Step 11 re-run D3).
+        h_app = P.side_hash(run_id, by_id[jp["pair_id"]].applied)
+        roles = []
+        for tr in ok:
+            applied_side = "A" if tr["a_side_hash"] == h_app else "B"
+            assert tr["b_side_hash" if applied_side == "A" else "a_side_hash"] != h_app
+            pick = tr["preferred_side"]
+            roles.append("applied" if pick == applied_side else ("original" if pick in ("A", "B") else "equal"))
+            assert tr["preferred_role"] == roles[-1], (jp["pair_id"], tr["trial"])
+        a = roles.count("applied")
+        o = roles.count("original")
         e = len(ok) - a - o
         assert (jp["applied_preferred_trials"], jp["original_preferred_trials"], jp["equal_trials"]) == (a, o, e), jp["pair_id"]
         assert jp["majority_applied"] is (a > o), jp["pair_id"]
@@ -95,7 +108,9 @@ def test_the_published_numbers_are_the_ones_the_trials_support(fixture_pairs):
     decided = applied + original
     assert s["applied_preference_pct_of_decided"] == (round(100.0 * applied / decided, 1) if decided else None)
     assert s["pairs_majority_applied"] == majority
-    assert 0 <= s["pairs_beat"] <= n
+    beat = sum(1 for jp in judge["pairs"]
+               if jp["verdict"]["present"] and not jp["verdict"]["errored"] and jp["verdict"]["beat"])
+    assert s["pairs_beat"] == beat
     # the results object the document renders from carries the same figures
     published = _load(RESULTS_FILE)["llm_judge"]["summary"]
     for k in ("applied_preferred_trials", "original_preferred_trials", "equal_trials",
@@ -112,3 +127,26 @@ def test_the_judge_model_differs_from_every_engine_model(fixture_pairs):
         P._cross_model_guard(engines[0], engines)
     P._cross_model_guard(judge["model"], engines)  # the real pairing must NOT raise
     assert judge["model_confirmed"] is False, "the Codex CLI echoes no model identity"
+
+
+def test_pairs_beat_is_recomputed_from_the_verdicts(fixture_pairs):
+    """Step 11 re-run F6: `pairs_beat` was only range-checked; a stale value from 0 to N passed."""
+    judge = _load(JUDGE_FILE)
+    beat = sum(1 for jp in judge["pairs"]
+               if jp["verdict"]["present"] and not jp["verdict"]["errored"] and jp["verdict"]["beat"])
+    assert judge["summary"]["pairs_beat"] == beat
+    assert _load(RESULTS_FILE)["llm_judge"]["summary"]["pairs_beat"] == beat
+
+
+def test_committed_pair_artifacts_carry_no_host_paths(fixture_pairs):
+    """Step 11 re-run F8: the apply RunResults used to embed the owner's home directory and workspace
+    layout (source_path, backup path, restore command). Committed artifacts carry placeholders instead."""
+    import glob
+    offenders = []
+    for path in glob.glob(os.path.join(FX, "pair-102-*", "*.json")) + glob.glob(os.path.join(EVAL_DIR, "*.json")):
+        with open(path, "r", encoding="utf-8") as fh:
+            text = fh.read()
+        for needle in ("/home/", "rocky00717", ".wf2-state", "/tmp/"):
+            if needle in text:
+                offenders.append((os.path.relpath(path, REPO), needle))
+    assert offenders == [], offenders

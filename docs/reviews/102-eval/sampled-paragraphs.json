@@ -2,7 +2,7 @@
  "schema_version": 1,
  "issue": 102,
  "sampled": 101,
- "count": 101,
+ "count": 93,
  "engine_model": "claude-fable-5-1",
  "selection": "5 human-written documents the owner supplied from their own files (about 58,700 words: a leadership handbook, a servant-leadership reading, a talk on a data-transformation toolchain, a strategic-vision activity, a job profile). Every paragraph of 40 to 200 words was extracted (101, from 4 of the 5 — the job profile carried none of that length) and audited offline with `assemble.py audit`; every paragraph auto-classified as genre `spec`. Company, program, principle and person names were replaced with neutral words before any text entered this repository, and the owner approved each published paragraph individually. No public repo and no machine-authored text was used.",
  "funnel": [
@@ -1219,7 +1219,7 @@
    "note": "authorized on the raw text (generic_diction); after the names were replaced with neutral words the audit found no tell (reject_all) — the tell WAS the name."
   }
  ],
- "status_note": "**AC4 asked for 5 to 10 pairs; this run ships 8** — the floor is met. The set is the owner's own human-written prose, anonymized and approved one paragraph at a time; the first run's 3 pairs were machine-authored review prose and were discarded (see `superseded_public_sample`). Funnel: 101 sampled → 15 authorized → 11 eligible → 8 repaired → 8 paired. The 86 paragraphs the audit did not authorize are the honest majority result: on this prose the autonomous path finds nothing to strip most of the time.",
+ "status_note": "**AC4 asked for 5 to 10 pairs; this run ships 8** — the floor is met. The set is the owner's own human-written prose, anonymized and approved one paragraph at a time; the first run's 3 pairs were machine-authored review prose and were discarded (see `superseded_public_sample`). Funnel: 101 sampled → 15 authorized → 11 eligible → 8 repaired → 8 paired. The 86 paragraphs the audit did not authorize are the honest majority result: on this prose the autonomous path finds nothing to strip most of the time. The published judge run uses the genre-neutral rubric adopted at the Step 11 re-run (the rubric had anchored genre fitness to a technical design document); the first run under that rubric — 23 of 24 trials — is recorded in the design document beside the re-run.",
  "superseded_public_sample": {
   "note": "The FIRST run of this eval sampled 31 paragraphs from the owner's two public repos and shipped 3 pairs. Cross-referencing every sampled file's header showed 16 of the 31 were machine-authored review reports (`# Adversarial Review` / `- Reviewer: Codex (model deepseek-v4-pro)`), including ALL 3 shipped pairs and 10 of the 11 abstentions; zero pairs came from human prose. Both cross-model review rounds missed it. Those 3 pairs and every artifact derived from them were discarded; the items are kept here, marked, so the finding stays on the record.",
   "sampled": 31,
@@ -1230,15 +1230,15 @@
   "pairs_shipped_from_machine_prose": 3,
   "pairs_shipped_from_human_prose": 0,
   "classifier_caveat": "the classifier detects only self-declaring headers and review filenames; git author is the owner for every file, so 'no machine self-declaration' means exactly that and nothing more.",
-  "selection": "5 human-written documents the owner supplied from their own files (about 58,700 words: a leadership handbook, a servant-leadership reading, a talk on a data-transformation toolchain, a strategic-vision activity, a job profile). Every paragraph of 40 to 200 words was extracted (101, from 4 of the 5 — the job profile carried none of that length) and audited offline with `assemble.py audit`; every paragraph auto-classified as genre `spec`. Company, program, principle and person names were replaced with neutral words before any text entered this repository, and the owner approved each published paragraph individually. No public repo and no machine-authored text was used.",
+  "selection": "paragraphs of 40–200 words from the owner's two PUBLIC repos (3D-Stories/slopslap @1591b61, 3D-Stories/design-doc-publish @0aa220d3, both MIT) where the measure-only scanner reported at least one tell; every paragraph auto-classified as genre `spec`; private repos excluded so no private text is published.",
   "breakdown": {
-   "not_authorized": 86,
-   "excluded_third_party": 2,
-   "shipped": 8,
-   "verifier_withheld": 1,
-   "dropped_on_anonymization": 2,
-   "abstained": 2
+   "not_authorized": 13,
+   "abstained": 11,
+   "shipped": 3,
+   "verifier_blocked": 3,
+   "excluded_circular": 1
   },
+  "count": 28,
   "items": [
    {
     "id": "01",
