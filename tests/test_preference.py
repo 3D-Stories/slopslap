@@ -3,6 +3,7 @@
 Every test builds its own tiny fixture set under tmp_path in the committed `pair-*` shape, so the
 suite never depends on the real pair-102-* fixtures (those have their own reproducibility guard).
 """
+import base64
 import hashlib
 import io
 import json
@@ -32,17 +33,29 @@ def _manifest(original: bytes, applied: bytes, *, eval_pair: bool = True, engine
     }
     if eval_pair:
         m["eval_pair"] = {"schema_version": 1, "engine_model": engine, "source_sha256": _sha(original),
-                          "applied_sha256": _sha(applied), "apply_exit": 0, "semantic_mode": "live"}
+                          "applied_sha256": _sha(applied), "apply_exit": 0, "semantic_mode": "live",
+                          "edits_file": "edits.json"}
     return m
 
 
-def _write_pair(root, name, original: bytes, applied: bytes, **kw):
+def _whole_file_edits(original: bytes, applied: bytes) -> list:
+    """One edit that replaces the whole original with the applied bytes: the smallest edit-script
+    that replays to `applied`, so a test fixture carries the same provenance the loader demands."""
+    return [{"start_byte": 0, "end_byte": len(original),
+             "replacement_b64": base64.b64encode(applied).decode("ascii")}]
+
+
+def _write_pair(root, name, original: bytes, applied: bytes, *, edits=None, **kw):
     d = root / name
     d.mkdir()
     (d / "original.md").write_bytes(original)
     m = _manifest(original, applied, **kw)
     (d / m["clean_file"]).write_bytes(applied)
     (d / "fixture.json").write_text(json.dumps(m, indent=1), encoding="utf-8")
+    ep = m.get("eval_pair")
+    if ep and ep.get("edits_file"):
+        e = _whole_file_edits(original, applied) if edits is None else edits
+        (d / ep["edits_file"]).write_text(json.dumps(e, indent=1), encoding="utf-8")
     return d
 
 
@@ -105,7 +118,8 @@ def test_blind_file_reveals_no_role(fixtures):
             assert h not in (fx.source_sha256, fx.applied_sha256)
         assert p["a_side_hash"] == P.side_hash(b["run_id"], p["a_text"].encode())
         assert p["b_side_hash"] == P.side_hash(b["run_id"], p["b_text"].encode())
-        assert set(p) == {"pair_id", "source_sha256", "a_text", "b_text", "a_side_hash", "b_side_hash"}
+        assert set(p) == {"pair_id", "token", "source_sha256", "a_text", "b_text",
+                          "a_side_hash", "b_side_hash"}
 
 
 def test_build_cli_writes_the_blind_file(fixtures, tmp_path):
@@ -277,13 +291,15 @@ def test_judge_transport_failure_makes_that_pair_errored_never_a_win(fixtures, t
     monkeypatch.setenv("SLOPSLAP_LIVE", "1")
     t = _Transport([_judge_reply("A"), None, _judge_reply("A")] + [_judge_reply("A")] * 3)
     out = tmp_path / "judge.json"
-    assert P.main(["judge", "--fixtures", str(fixtures), "--model", "m", "--out", str(out)], judge_transport=t) == 0
+    # exit 4, not 0: one pair never reached a verdict, so this run is PARTIAL. It used to report
+    # `completed` and exit 0, which let automation accept an evaluation with a pair missing.
+    assert P.main(["judge", "--fixtures", str(fixtures), "--model", "m", "--out", str(out)], judge_transport=t) == 4
     j = json.loads(out.read_text())
     first, second = j["pairs"]
     assert first["valid_trials"] == 2 and first["verdict"]["errored"] is True
     assert second["valid_trials"] == 3 and second["verdict"]["errored"] is False
     assert j["summary"]["pairs_errored"] == 1 and j["summary"]["trials_failed"] == 1
-    assert j["status"] == "completed"
+    assert j["status"] == "partial" and "1 of 2 pair(s)" in j["reason"]
 
 
 def test_judge_all_failures_is_failed_not_not_run(fixtures, tmp_path, monkeypatch):
@@ -408,7 +424,8 @@ def test_report_renders_the_judge_section_from_judge_json(fixtures, tmp_path, mo
     md, js = tmp_path / "r.md", tmp_path / "r.json"
     assert P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf), "--out", str(md), "--json", str(js)]) == 0
     text = md.read_text(encoding="utf-8")
-    assert "## LLM judge" in text and "gpt-5.6-sol" in text and "pinned" in text and "6 trials" in text
+    assert "## LLM judge" in text and "gpt-5.6-sol" in text and "pinned" in text
+    assert "6 valid trials" in text and "excluded" in text
     assert json.loads(js.read_text())["llm_judge"]["status"] == "completed"
 
 
@@ -438,3 +455,193 @@ def test_report_renders_the_sampling_breakdown(fixtures, tmp_path):
                                   "status_note": "AC4 asked for 5; this run ships 2.", "items": []}))
     assert P.main(["report", "--fixtures", str(fixtures), "--abstentions", str(ledger), "--out", str(md)]) == 0
     assert "### Status against the issue" in md.read_text(encoding="utf-8") and "this run ships 2" in md.read_text(encoding="utf-8")
+
+
+# ------------------------------------------- Step 8a review round (#102): the eight confirmed Highs
+# Each test below pins one finding the cross-model reviewer (gpt-5.6-sol) and the inline pass raised
+# against 63d9897, verified against the code before it was written.
+
+# --- AC2 blinding: the rater-facing page must hand over nothing that recovers a role -------------
+def test_static_page_carries_no_source_sha256_and_no_pair_id(fixtures):
+    blind = _blind(fixtures)
+    page = P.render_static_page(blind)
+    for bp in blind["pairs"]:
+        assert bp["source_sha256"] not in page, "hashing the two texts against this de-blinds the pair"
+        assert bp["pair_id"] not in page, "pair_id is sha256(source:applied) — the order IS the tell"
+        assert bp["token"] in page
+
+
+def test_page_token_is_not_derivable_from_what_the_rater_can_see(fixtures):
+    blind = _blind(fixtures)
+    run_id = blind["run_id"]
+    for bp in blind["pairs"]:
+        ha = _sha(bp["a_text"].encode("utf-8"))
+        hb = _sha(bp["b_text"].encode("utf-8"))
+        for x, y in ((ha, hb), (hb, ha)):
+            cand = hashlib.sha256(f"{x}:{y}".encode("utf-8")).hexdigest()[:16]
+            assert bp["token"] != cand
+            assert bp["token"] != hashlib.sha256(f"{run_id}:{cand}".encode("utf-8")).hexdigest()[:16]
+
+
+def test_one_seed_repeats_the_side_order_but_never_a_token(fixtures):
+    pairs = P.load_eval_pairs(str(fixtures))
+    a, b = P.build_pairs(pairs, seed="s"), P.build_pairs(pairs, seed="s")
+    assert [p["a_text"] for p in a["pairs"]] == [p["a_text"] for p in b["pairs"]]
+    assert {p["token"] for p in a["pairs"]}.isdisjoint({p["token"] for p in b["pairs"]})
+
+
+def test_report_scores_page_picks_carrying_only_a_token_and_side_hashes(fixtures, tmp_path):
+    blind = _blind(fixtures)
+    by_id = {p.pair_id: p for p in P.load_eval_pairs(str(fixtures))}
+    picks = []
+    for bp in blind["pairs"]:
+        fx = by_id[bp["pair_id"]]
+        picks.append({"token": bp["token"], "pick": "A" if bp["a_text"].encode("utf-8") == fx.applied else "B",
+                      "a_side_hash": bp["a_side_hash"], "b_side_hash": bp["b_side_hash"]})
+    pf = tmp_path / "picks.json"
+    pf.write_text(json.dumps({"schema_version": 1, "run_id": blind["run_id"], "rater": "web",
+                              "mode": "static", "picks": picks}))
+    js = tmp_path / "r.json"
+    assert P.main(["report", "--fixtures", str(fixtures), "--picks", str(pf),
+                   "--out", str(tmp_path / "r.md"), "--json", str(js)]) == 0
+    rater = json.loads(js.read_text())["human"]["raters"][0]
+    assert rater["pairs_rated"] == 2 and rater["applied_preferred"] == 2
+    # AC2's binding is not lost: report recovers it from the fixture bytes and publishes it per pick
+    for pk in rater["picks"]:
+        assert pk["source_sha256"] == by_id[pk["pair_id"]].source_sha256
+
+
+# --- one pick per pair, one picks file per rater and run -----------------------------------------
+def test_report_refuses_the_same_pair_picked_twice(fixtures, tmp_path, capsys):
+    good = _picks_preferring(fixtures, _blind(fixtures), "applied")
+    dup = json.loads(json.dumps(good))
+    dup["picks"].append(json.loads(json.dumps(dup["picks"][0])))
+    f = tmp_path / "dup.json"
+    f.write_text(json.dumps(dup))
+    rc = P.main(["report", "--fixtures", str(fixtures), "--picks", str(f), "--out", str(tmp_path / "r.md")])
+    assert rc == 2 and "twice" in capsys.readouterr().err
+
+
+def test_report_refuses_two_picks_files_from_one_rater_and_run(fixtures, tmp_path, capsys):
+    body = json.dumps(_picks_preferring(fixtures, _blind(fixtures), "applied", rater="chris"))
+    p1, p2 = tmp_path / "a.json", tmp_path / "b.json"
+    p1.write_text(body)
+    p2.write_text(body)
+    rc = P.main(["report", "--fixtures", str(fixtures), "--picks", str(p1), "--picks", str(p2),
+                 "--out", str(tmp_path / "r.md")])
+    assert rc == 2 and "same rater" in capsys.readouterr().err
+
+
+# --- a partial judge run is never a completed one ------------------------------------------------
+def test_a_partial_judge_run_is_partial_and_exits_failed(fixtures, tmp_path, monkeypatch):
+    monkeypatch.setenv("SLOPSLAP_LIVE", "1")
+    t = _Transport([_judge_reply("A")])  # exactly one valid answer; every later call fails
+    out = tmp_path / "judge.json"
+    rc = P.main(["judge", "--fixtures", str(fixtures), "--model", "m", "--out", str(out)], judge_transport=t)
+    j = json.loads(out.read_text())
+    assert j["status"] == "partial" and rc == 4
+    assert j["summary"]["pairs_completed"] == 0 and j["summary"]["pairs_errored"] == 2
+
+
+def test_errored_pair_trials_never_enter_the_preference_percentage(fixtures, tmp_path, monkeypatch):
+    monkeypatch.setenv("SLOPSLAP_LIVE", "1")
+    # pair 1 gets two valid trials (errored: fewer than three); pair 2 gets a full three
+    t = _Transport([_judge_reply("A"), None, _judge_reply("A"),
+                    _judge_reply("B"), _judge_reply("B"), _judge_reply("B")])
+    out = tmp_path / "judge.json"
+    P.main(["judge", "--fixtures", str(fixtures), "--model", "m", "--out", str(out)], judge_transport=t)
+    j = json.loads(out.read_text())
+    first = j["pairs"][0]
+    assert first["verdict"]["errored"] is True and first["valid_trials"] == 2
+    s = j["summary"]
+    assert s["trials_valid"] == 5, "raw valid calls keep their meaning"
+    assert s["trials_scored"] == 3, "only a non-errored pair's trials are scored"
+    assert s["applied_preferred_trials"] + s["original_preferred_trials"] + s["equal_trials"] == 3
+    assert s["pairs_errored"] == 1 and s["pairs_completed"] == 1
+
+
+# --- a fixture is engine output only when the committed edit script replays to it ----------------
+def test_load_eval_pairs_refuses_a_recorded_apply_that_did_not_exit_zero(tmp_path):
+    root = tmp_path / "eval"
+    root.mkdir()
+    d = _write_pair(root, "pair-nonzero", ALPHA_O, ALPHA_A)
+    m = json.loads((d / "fixture.json").read_text(encoding="utf-8"))
+    m["eval_pair"]["apply_exit"] = 1
+    (d / "fixture.json").write_text(json.dumps(m), encoding="utf-8")
+    with pytest.raises(P.PairError, match="apply_exit"):
+        P.load_eval_pairs(str(root))
+
+
+def test_load_eval_pairs_refuses_an_applied_side_the_edit_script_does_not_reproduce(tmp_path):
+    root = tmp_path / "eval"
+    root.mkdir()
+    _write_pair(root, "pair-handwritten", ALPHA_O, b"A paragraph no edit script produced.\n",
+                edits=_whole_file_edits(ALPHA_O, ALPHA_A))
+    with pytest.raises(P.PairError, match="edit script"):
+        P.load_eval_pairs(str(root))
+
+
+def test_load_eval_pairs_refuses_an_eval_pair_with_no_edit_script(tmp_path):
+    root = tmp_path / "eval"
+    root.mkdir()
+    d = _write_pair(root, "pair-noedits", ALPHA_O, ALPHA_A)
+    os.remove(str(d / "edits.json"))
+    with pytest.raises(P.PairError, match="edits"):
+        P.load_eval_pairs(str(root))
+
+
+# --- the cross-model guard fails closed on an unknown engine ------------------------------------
+def test_load_eval_pairs_refuses_a_missing_engine_model(tmp_path):
+    root = tmp_path / "eval"
+    root.mkdir()
+    _write_pair(root, "pair-noengine", ALPHA_O, ALPHA_A, engine="")
+    with pytest.raises(P.PairError, match="engine_model"):
+        P.load_eval_pairs(str(root))
+
+
+# --- report never publishes a judge object it did not recompute ----------------------------------
+def test_report_refuses_an_object_that_is_merely_shaped_like_a_judge_run(fixtures, tmp_path, capsys):
+    f = tmp_path / "fake.json"
+    f.write_text(json.dumps({"status": "completed", "pairs": [{"pair_id": "deadbeefdeadbeef"}],
+                             "summary": {"applied_preference_pct_of_decided": 99.9}}))
+    rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(f), "--out", str(tmp_path / "r.md")])
+    assert rc == 2 and "judge" in capsys.readouterr().err.lower()
+
+
+def _live_judge_json(fixtures, tmp_path, name="judge.json"):
+    jf = tmp_path / name
+    P.main(["judge", "--fixtures", str(fixtures), "--model", "m", "--out", str(jf)],
+           judge_transport=_Transport([_judge_reply("A")] * 6))
+    return jf
+
+
+def test_report_refuses_a_judge_run_naming_a_pair_the_fixture_set_does_not_hold(fixtures, tmp_path,
+                                                                                monkeypatch, capsys):
+    monkeypatch.setenv("SLOPSLAP_LIVE", "1")
+    jf = _live_judge_json(fixtures, tmp_path)
+    j = json.loads(jf.read_text())
+    j["pairs"][0]["pair_id"] = "0" * 16
+    jf.write_text(json.dumps(j))
+    rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf), "--out", str(tmp_path / "r.md")])
+    assert rc == 2 and "pair_id" in capsys.readouterr().err
+
+
+def test_report_refuses_a_judge_summary_that_does_not_recompute(fixtures, tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("SLOPSLAP_LIVE", "1")
+    jf = _live_judge_json(fixtures, tmp_path)
+    j = json.loads(jf.read_text())
+    j["summary"]["applied_preferred_trials"] = 99
+    jf.write_text(json.dumps(j))
+    rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf), "--out", str(tmp_path / "r.md")])
+    assert rc == 2 and "summary" in capsys.readouterr().err
+
+
+def test_report_refuses_a_trial_whose_applied_side_does_not_recompute(fixtures, tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("SLOPSLAP_LIVE", "1")
+    jf = _live_judge_json(fixtures, tmp_path)
+    j = json.loads(jf.read_text())
+    tr = j["pairs"][0]["trials"][0]
+    tr["applied_side"] = "B" if tr["applied_side"] == "A" else "A"
+    jf.write_text(json.dumps(j))
+    rc = P.main(["report", "--fixtures", str(fixtures), "--judge", str(jf), "--out", str(tmp_path / "r.md")])
+    assert rc == 2 and "applied_side" in capsys.readouterr().err
